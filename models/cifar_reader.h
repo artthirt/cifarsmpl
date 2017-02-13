@@ -58,4 +58,35 @@ private:
 
 };
 
+namespace ct{
+
+/**
+ * @brief image2mats
+ * @param image
+ * @param w
+ * @param h
+ * @param bpp
+ * @param mats
+ */
+template< typename T >
+inline void image2mats(const QByteArray& image, int w, int h, int bpp, std::vector< ct::Mat_<T> >& mats)
+{
+	mats.resize(bpp);
+
+	for(int i = 0; i < bpp; ++i){
+		Mat_<T>& m = mats[i];
+		m.setSize(h, w);
+
+		T* dm = m.ptr();
+		uchar* db = (uchar*)image.data() + i * w * h;
+		for(int y = 0; y < h; ++y){
+			for(int x = 0; x < w; ++x){
+				dm[y * w + x] = db[y * w + x];
+			}
+		}
+	}
+}
+
+}
+
 #endif // MNIST_READER_H
