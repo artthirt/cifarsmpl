@@ -60,6 +60,33 @@ private:
 
 namespace ct{
 
+template< typename T >
+inline void image2mat(uchar* db, int w, int h, ct::Mat_<T>& mat)
+{
+	mat.setSize(h, w);
+	T* dm = mat.ptr();
+	for(int y = 0; y < h; ++y){
+		for(int x = 0; x < w; ++x){
+			dm[y * w + x] = db[y * w + x] / 255.;
+		}
+	}
+
+}
+
+template< typename T >
+inline void image2mats(const QByteArray& image, int w, int h,
+					   ct::Mat_<T>& matR,
+					   ct::Mat_<T>& matG,
+					   ct::Mat_<T>& matB)
+{
+	uchar* dbR = (uchar*)image.data() + 0 * w * h;
+	uchar* dbG = (uchar*)image.data() + 1 * w * h;
+	uchar* dbB = (uchar*)image.data() + 2 * w * h;
+	image2mat(dbR, w, h, matR);
+	image2mat(dbG, w, h, matG);
+	image2mat(dbB, w, h, matB);
+}
+
 /**
  * @brief image2mats
  * split image array to vector of matrix
