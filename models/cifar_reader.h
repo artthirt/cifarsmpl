@@ -62,6 +62,7 @@ namespace ct{
 
 /**
  * @brief image2mats
+ * split image array to vector of matrix
  * @param image
  * @param w
  * @param h
@@ -81,7 +82,7 @@ inline void image2mats(const QByteArray& image, int w, int h, int bpp, std::vect
 		uchar* db = (uchar*)image.data() + i * w * h;
 		for(int y = 0; y < h; ++y){
 			for(int x = 0; x < w; ++x){
-				dm[y * w + x] = db[y * w + x];
+				dm[y * w + x] = db[y * w + x] / 255.;
 			}
 		}
 	}
