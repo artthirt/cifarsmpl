@@ -13,8 +13,8 @@ class shared_memory
 {
 public:
 	shared_memory(){
-		m_val = 0;
-		m_ref = 0;
+		m_val = nullptr;
+		m_ref = nullptr;
 	}
 	shared_memory(const shared_memory<T>& val){
 		m_val = val.m_val;
@@ -42,7 +42,7 @@ public:
 			if(m_val == val.m_val){
 				//(*m_ref)++;
 			}else{
-				m_ref = 0;
+				m_ref = nullptr;
 			}
 		}
 
@@ -60,13 +60,13 @@ public:
 				delete m_ref;
 
 			}
-			m_val = 0;
-			m_ref = 0;
+			m_val = nullptr;
+			m_ref = nullptr;
 		}
 	}
 
 	bool empty() const{
-		return m_val == 0;
+		return m_val == nullptr;
 	}
 	inline T* get(){
 		return m_val;
@@ -97,8 +97,8 @@ private:
 	int *m_ref;
 
 	shared_memory(T* val){
-		m_val = 0;
-		m_ref = 0;
+		m_val = nullptr;
+		m_ref = nullptr;
 		if(val){
 			m_ref = new int(1);
 			m_val = val;

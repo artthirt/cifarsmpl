@@ -61,19 +61,31 @@ void ConvNN::setConvLayers(const std::vector<int> &layers, std::vector<int> weig
 
 void ConvNN::conv(const ct::Matf &X, ct::Matf &XOut)
 {
-	ct::Matf *pX = (ct::Matf*)&X;
+//	ct::Matf *pX = (ct::Matf*)&X;
 
 	for(size_t i = 0; i < m_conv.size(); ++i){
-		for(size_t j = 0; j < m_conv[i].size(); ++j){
-			convnnf& cnv = m_conv[i][j];
+		std::vector< convnnf >& ls = m_conv[i];
 
-			if(i == 0)
-				cnv.forward(pX, ct::RELU);
-			else{
-				int jm1 = j / m_cnvlayers[i];
-				int k = j - jm1 * m_cnvlayers[i];
-				convnnf& pcnv = m_conv[i - 1][jm1];
-				cnv.forward(&pcnv.A2[k], ct::RELU);
+		for(size_t j = 0; j < m_conv[i].size(); ++j){
+			//convnnf& cnv = m_conv[i][j];
+
+			if(i == 0){
+				convnnf& m0 = ls[0];
+				m0.forward(&X, ct::RELU);
+			}else{
+//				int jm1 = j / m_cnvlayers[i];
+//				int k = j - jm1 * m_cnvlayers[i];
+//				convnnf& pcnv = m_conv[i - 1][jm1];
+//				cnv.forward(&pcnv.A2[k], ct::RELU);
+				for(size_t j = 0; j < m_conv[i - 1].size(); ++j){
+					size_t off1 = j * m_cnvlayers[i - 1];
+					convnnf& m0 = m_conv[i - 1][j];
+					for(int k = 0; k < m_cnvlayers[i - 1]; ++k){
+						size_t col = off1 + k;
+						convnnf& mi = ls[col];
+						mi.forward(&m0.A2[k], ct::RELU);
+					}
+				}
 			}
 		}
 	}

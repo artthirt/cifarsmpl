@@ -20,9 +20,11 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	cnv.push_back(10);
 	cnv.push_back(10);
+	cnv.push_back(10);
 
 	cnv_w.push_back(5);
 	cnv_w.push_back(5);
+	cnv_w.push_back(3);
 
 	mlp.push_back(500);
 	mlp.push_back(500);

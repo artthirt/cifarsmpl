@@ -196,7 +196,7 @@ private:
 		}
 
 		for(size_t i = first, j = 0; i < last; ++i, ++j){
-			if(!ct::upsample(A1[i].DltA0, szA1, szA0, Masks[i], A0[i]))
+			if(!ct::upsample(A1[i].DltA0, szA1, szA0, Masks[j], A0[j]))
 				return false;
 		}
 		return true;
