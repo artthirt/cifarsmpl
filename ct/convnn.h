@@ -4,7 +4,7 @@
 #include "custom_types.h"
 #include "nn.h"
 
-namespace convnn{
+namespace ct{
 
 template<typename T>
 class convnn{

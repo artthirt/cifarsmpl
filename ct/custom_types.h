@@ -1971,6 +1971,26 @@ inline Mat_<T> elemwiseSqr(const Mat_<T>& m)
 }
 
 /**
+ * @brief sqr
+ * @param m
+ * @return
+ */
+template< typename T >
+void v_elemwiseSqr(Mat_<T>& m)
+{
+	if(m.empty())
+		throw new std::invalid_argument("v_elemwiseSqr: matrix is empty");
+
+	T* m_val = m.ptr();
+
+	//#pragma omp parallel for
+#pragma omp parallel for
+	for(int i = 0; i < m.total(); i++){
+		m_val[i] = m_val[i] * m_val[i];
+	}
+}
+
+/**
  * @brief division
  * @param m
  * @return

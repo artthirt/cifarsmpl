@@ -45,14 +45,14 @@ public:
 	 * @brief index
 	 * @return index of beginning of the representation
 	 */
-	uint index() const;
+	double index() const;
 	/**
 	 * @brief updatePredictfromIndex
 	 * update predict values from index
 	 * @param index
 	 * @param predict - array of predicted values
 	 */
-	void updatePredictfromIndex(uint index, const QVector<uchar>& predict);
+	void updatePredictfromIndex(const QVector<int> &predict, int index = 0);
 	/**
 	 * @brief next
 	 */
@@ -76,8 +76,8 @@ private:
 	QTimer m_timer_update;
 	int m_mode;
 
-	QVector< uchar > m_prediction_test;
-	QVector< uchar > m_prediction_train;
+	QVector< int > m_prediction_test;
+	QVector< int > m_prediction_train;
 
 	QVector<TData> m_ouput_data;
 

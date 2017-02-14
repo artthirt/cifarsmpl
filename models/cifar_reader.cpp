@@ -18,6 +18,11 @@ const int rowLen[] = {
 	3074
 };
 
+const int outLen[] = {
+	10,
+	100
+};
+
 const int countFiles = sizeof(train_images_file) / sizeof(*train_images_file);
 
 const int sizeCData = 3072;
@@ -61,11 +66,6 @@ QVector<TData> &cifar_reader::train(int batch, double percent)
 	if(batch == 0 || percent > 1)
 		return m_current_data;
 
-	if(percent < 0){
-		std::uniform_real_distribution<double> urnd(0, 1);
-		percent = urnd(generator);
-	}
-
 	int num = countFiles * percent;
 	double offset = percent - (num * 1./countFiles);
 	offset *= maxCount;
@@ -97,6 +97,104 @@ QVector<TData> &cifar_reader::train(int batch, double percent)
 	readCifar(fn, m_current_data, batch, offset);
 
 	return m_current_data;
+}
+
+bool cifar_reader::getData(double percent, TData &data)
+{
+	int num = countFiles * percent;
+	double offset = percent - (num * 1./countFiles);
+	offset *= maxCount;
+
+	QString fn = train_images_file[(int)num];
+
+	if(m_current_file == num
+			&& m_current_offset == offset){
+		return false;
+	}
+
+	m_current_file = num;
+	m_current_offset = offset;
+
+	//qDebug("next num file %d", num);
+
+	readCifar1(fn, data, offset);
+
+	return true;
+}
+
+void cifar_reader::getTrain(int batch, std::vector<ct::Matf> &X, ct::Matf &y)
+{
+	std::uniform_real_distribution<double> urnd(0, 1);
+
+	X.resize(3);
+
+	y.setSize(batch, outLen[m_data_source]);
+	y.fill(0);
+
+	for(size_t i = 0; i < X.size(); ++i){
+		X[i].setSize(batch, WidthIM * HeightIM);
+	}
+
+
+	float *dy = y.ptr();
+
+	for(int i = 0; i < batch; ++i){
+		TData data;
+		while(!getData(urnd(generator), data)){};
+
+		ct::image2mats(data.data, WidthIM, HeightIM, i, X[0], X[1], X[2]);
+
+		dy[i * y.cols + data.lb] = 1.f;
+	}
+}
+
+bool cifar_reader::getDataIt(double percent, int batch, QVector< TData > &data)
+{
+	int num = countFiles * percent;
+	double offset = percent - (num * 1./countFiles);
+	offset *= maxCount;
+
+	QString fn = train_images_file[(int)num];
+
+	if(m_current_file == num
+			&& m_current_offset == offset){
+		return false;
+	}
+
+	m_current_file = num;
+	m_current_offset = offset;
+
+	//qDebug("next num file %d", num);
+
+	readCifar(fn, data, batch, offset);
+
+	return true;
+}
+
+void cifar_reader::getTrainIt(double percent, int batch, std::vector<ct::Matf> &X, ct::Matf *y)
+{
+	X.resize(3);
+
+	for(size_t i = 0; i < X.size(); ++i){
+		X[i].setSize(batch, WidthIM * HeightIM);
+	}
+
+	QVector< TData > data;
+	getDataIt(percent, batch, data);
+
+	if(y){
+		y->setSize(batch, outLen[m_data_source]);
+		y->fill(0);
+		float *dy = y->ptr();
+		for(int i = 0; i < batch; ++i){
+			dy[i * y->cols + data[i].lb] = 1.f;
+		}
+	}
+
+
+	for(int i = 0; i < batch; ++i){
+		ct::image2mats(data[i].data, WidthIM, HeightIM, i, X[0], X[1], X[2]);
+	}
 }
 
 uint cifar_reader::count()
@@ -180,57 +278,74 @@ uint cifar_reader::readCifar(QFile &file, QVector<TData> &val, int batch, int of
 		return 0;
 
 	int sz = 0;
-	if(offset >= 0){
-		int max_off = file.size() / rowLen[m_data_source];
-		max_off -= 1;
-		m_count = max_off;
 
-		sz = std::min(max_off - offset, batch);
+	int max_off = file.size() / rowLen[m_data_source];
+	max_off -= 1;
+	m_count = max_off;
 
-		file.seek(offset * rowLen[m_data_source]);
-		qDebug("fp: %d", file.pos());
+	sz = std::min(max_off - offset, batch);
 
-		val.resize(sz);
+	file.seek(offset * rowLen[m_data_source]);
+	qDebug("fp: %d", file.pos());
 
-		for(int i = 0; i < sz; ++i){
-			val[i].data.resize(sizeCData);
+	val.resize(sz);
 
-			ULab lb;
-			file.read((char*)lb.b2, labels::lbSz[m_data_source]);
-			file.read(val[i].data.data(), sizeCData);
+	for(int i = 0; i < sz; ++i){
+		val[i].data.resize(sizeCData);
 
-			val[i].toImage();
+		ULab lb;
+		file.read((char*)lb.b2, labels::lbSz[m_data_source]);
+		file.read(val[i].data.data(), sizeCData);
 
-			val[i].labels = labels::getLb(lb, m_data_source);
-		}
-	}else{
-		int max_off = file.size() / rowLen[m_data_source];
-		max_off -= 1;
+		val[i].toImage();
 
-		std::uniform_int_distribution<int> urnd(0, max_off);
-
-		sz = std::min(max_off - offset, batch);
-		val.resize(sz);
-
-		for(int i = 0; i < batch; ++i){
-			int loff = urnd(generator);
-			int goff = loff * rowLen[m_data_source];
-
-			file.seek(goff);
-
-			val[i].data.resize(sizeCData);
-
-			ULab lb;
-			file.read((char*)lb.b2, labels::lbSz[m_data_source]);
-			file.read(val[i].data.data(), sizeCData);
-
-			val[i].toImage();
-
-			val[i].labels = labels::getLb(lb, m_data_source);
-		}
+		val[i].lb = labels::getLb(lb, m_data_source);
 	}
 
+
 	return sz;
+}
+
+uint cifar_reader::readCifar1(const QString &fn, TData &val, int offset)
+{
+	if(m_current_object.fileName() == fn){
+		if(!m_current_object.isOpen()){
+			m_current_object.open(QIODevice::ReadOnly);
+		}
+		if(m_current_object.isOpen()){
+			uint cnt = readCifar1(m_current_object, val, offset);
+			m_timer.start();
+			return cnt;
+		}
+	}else{
+		m_current_object.close();
+		m_current_object.setFileName(fn);
+		if(m_current_object.open(QIODevice::ReadOnly)){
+			uint cnt = readCifar1(m_current_object, val, offset);
+			m_timer.start();
+			return cnt;
+		}
+	}
+	return 0;
+}
+
+uint cifar_reader::readCifar1(QFile &file, TData &val, int offset)
+{
+	if(!file.isOpen())
+		return 0;
+
+	if(offset >= 0){
+		file.seek(offset * rowLen[m_data_source]);
+
+		val.data.resize(sizeCData);
+
+		ULab lb;
+		file.read((char*)lb.b2, labels::lbSz[m_data_source]);
+		file.read(val.data.data(), sizeCData);
+
+		val.lb = labels::getLb(lb, m_data_source);
+	}
+	return !val.data.isEmpty();
 }
 
 ///******************************

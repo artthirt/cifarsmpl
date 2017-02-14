@@ -7,6 +7,6 @@ SOURCES += $$PWD/custom_types.cpp \
 HEADERS  += $$PWD/custom_types.h \
     $$PWD/shared_memory.h \
     $$PWD/nn.h \
-    $$PWD/convnn.h \
     $$PWD/common_types.h \
-    $$PWD/mlp.h
+    $$PWD/mlp.h \
+    $$PWD/convnn.h

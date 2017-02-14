@@ -5,13 +5,14 @@
 #include <QVector>
 #include <QByteArray>
 #include <QTimer>
+#include <vector>
 
 #include "custom_types.h"
 
 struct TData{
-	ushort labels;
-	QByteArray data;
-	QByteArray image;
+	ushort lb;			/// label
+	QByteArray data;	/// raw data
+	QByteArray image;	/// image data for output to QImage
 
 	void toImage();
 };
@@ -25,8 +26,13 @@ public:
 
 	cifar_reader();
 
-	QVector<TData> &train(int batch, double percent = -1);
+	QVector<TData> &train(int batch, double percent);
 	QVector<QByteArray> &test();
+
+	bool getData(double percent, TData& data);
+	void getTrain(int batch, std::vector< ct::Matf >& X, ct::Matf& y);
+	bool getDataIt(double percent, int batch, QVector<TData> &data);
+	void getTrainIt(double percent, int batch, std::vector< ct::Matf >& X, ct::Matf *y = nullptr);
 
 	uint count();
 	uint current_file();
@@ -56,25 +62,30 @@ private:
 	uint readCifar(const QString &fn, QVector< TData >& val, int batch = 100, int offset = -1);
 	uint readCifar(QFile &file, QVector<TData> &val, int batch = 100, int offset = -1);
 
+	uint readCifar1(const QString &fn, TData & val, int offset);
+	uint readCifar1(QFile &file, TData &val, int offset);
+
 };
 
 namespace ct{
 
 template< typename T >
-inline void image2mat(uchar* db, int w, int h, ct::Mat_<T>& mat)
+inline void image2mat(uchar* db, int w, int h, int row, ct::Mat_<T>& mat)
 {
-	mat.setSize(h, w);
+	if(mat.empty())
+		throw new std::invalid_argument("image2mat: empty mat");
 	T* dm = mat.ptr();
+	T* dmi = &dm[row * mat.cols];
 	for(int y = 0; y < h; ++y){
 		for(int x = 0; x < w; ++x){
-			dm[y * w + x] = db[y * w + x] / 255.;
+			dmi[y * w + x] = db[y * w + x] / 255.;
 		}
 	}
 
 }
 
 template< typename T >
-inline void image2mats(const QByteArray& image, int w, int h,
+inline void image2mats(const QByteArray& image, int w, int h, int row,
 					   ct::Mat_<T>& matR,
 					   ct::Mat_<T>& matG,
 					   ct::Mat_<T>& matB)
@@ -82,9 +93,9 @@ inline void image2mats(const QByteArray& image, int w, int h,
 	uchar* dbR = (uchar*)image.data() + 0 * w * h;
 	uchar* dbG = (uchar*)image.data() + 1 * w * h;
 	uchar* dbB = (uchar*)image.data() + 2 * w * h;
-	image2mat(dbR, w, h, matR);
-	image2mat(dbG, w, h, matG);
-	image2mat(dbB, w, h, matB);
+	image2mat(dbR, w, h, row, matR);
+	image2mat(dbG, w, h, row, matG);
+	image2mat(dbB, w, h, row, matB);
 }
 
 /**

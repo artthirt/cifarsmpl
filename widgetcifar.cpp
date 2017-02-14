@@ -69,24 +69,25 @@ void WidgetCifar::setCifar(cifar_reader *val)
 	update_source();
 }
 
-uint WidgetCifar::index() const
+double WidgetCifar::index() const
 {
 	return m_index;
 }
 
-void WidgetCifar::updatePredictfromIndex(uint index, const QVector<uchar> &predict)
+void WidgetCifar::updatePredictfromIndex(const QVector<int> &predict, int index)
 {
 	if(!m_cifar)
 		return;
 
-	QVector< uchar >& prediction = m_mode == TRAIN? m_prediction_train : m_prediction_test;
+	QVector< int >& prediction = m_mode == TRAIN? m_prediction_train : m_prediction_test;
 
-	if(!prediction.size()){
-		prediction.resize(predict.size());
+	if(predict.size() + index > prediction.size()){
+		prediction.resize(predict.size() + index);
+		prediction.fill(0);
 	}
 #pragma omp parallel for
 	for(int i = 0; i < predict.size(); i++){
-		prediction[index + i] = predict[i];
+		prediction[i + index] = predict[i];
 	}
 	update();
 }
@@ -227,6 +228,7 @@ void WidgetCifar::paintEvent(QPaintEvent *event)
 	int wim = cifar_reader::WidthIM;
 	int him = cifar_reader::HeightIM;
 
+	QVector< int >& prediction = m_mode == TRAIN? m_prediction_train : m_prediction_test;
 
 	for(int i = 0; i < m_ouput_data.size(); i++){
 		if(y * him + him >= height()){
@@ -242,27 +244,24 @@ void WidgetCifar::paintEvent(QPaintEvent *event)
 		painter.drawImage(x * wim, y * him, im);
 		painter.drawRect(x * wim, y * him, wim, him);
 
-//		if(!lb_data.empty() && lb_data.size() == data.size()){
-//			painter.setPen(Qt::green);
-//			QString text = QString::number((uint)lb_data[i]);
-//			painter.drawText(x * wim + 3, y * him + 12, text);
-//		}
-//		if(prediction.size()){
-//			painter.setPen(QColor(30, 255, 100));
-//			QString text = QString::number((uint)prediction[i]);
-//			painter.drawText(x * wim + 17, y * him + 12, text);
+		painter.setPen(Qt::green);
+		QString text = QString::number((uint)m_ouput_data[i].lb);
+		painter.drawText(x * wim + 3, y * him + 12, text);
 
-//			if(lb_data.size()){
-//				if(lb_data[i] != prediction[i]){
-//					QPen pen;
-//					pen.setColor(Qt::yellow);
-//					pen.setWidth(2);
-//					painter.setBrush(Qt::NoBrush);
-//					painter.setPen(pen);
-//					painter.drawRect(x * wim + 2, y * him + 2, wim - 4, him - 4);
-//				}
-//			}
-//		}
+		if(prediction.size()){
+			painter.setPen(QColor(30, 255, 100));
+			QString text = QString::number((uint)prediction[i]);
+			painter.drawText(x * wim + 17, y * him + 12, text);
+
+			if(m_ouput_data[i].lb != prediction[i]){
+				QPen pen;
+				pen.setColor(Qt::yellow);
+				pen.setWidth(2);
+				painter.setBrush(Qt::NoBrush);
+				painter.setPen(pen);
+				painter.drawRect(x * wim + 2, y * him + 2, wim - 4, him - 4);
+			}
+		}
 
 		x++;
 
