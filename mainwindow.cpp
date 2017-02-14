@@ -85,7 +85,7 @@ void MainWindow::pass()
 
 	ui->lb_it->setText(QString("Iteraion %1").arg(m_train.iteration()));
 
-	if((m_train.iteration() % 2) == 0){
+	if((m_train.iteration() % 40) == 0){
 		m_train.getEstimage(500, acc, l2);
 
 		qDebug("iteration %d: acc=%f, l2=%f", m_train.iteration(), acc, l2);
