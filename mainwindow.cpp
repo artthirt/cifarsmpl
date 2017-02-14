@@ -10,7 +10,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	m_doIter = false;
 
 	connect(&m_timer, SIGNAL(timeout()), this, SLOT(onTimeout()));
-	m_timer.start(100);
+	m_timer.start(5);
 
 	ui->wcifar->setCifar(&m_cifar);
 
@@ -18,17 +18,17 @@ MainWindow::MainWindow(QWidget *parent) :
 	std::vector< int > mlp;
 	std::vector< int > cnv_w;
 
-	cnv.push_back(10);
-	cnv.push_back(10);
-	cnv.push_back(10);
+	cnv.push_back(15);
+	cnv.push_back(8);
+//	cnv.push_back(10);
 
 	cnv_w.push_back(5);
-	cnv_w.push_back(5);
-	cnv_w.push_back(3);
+	cnv_w.push_back(7);
+//	cnv_w.push_back(3);
 
+	mlp.push_back(700);
+	mlp.push_back(600);
 	mlp.push_back(500);
-	mlp.push_back(500);
-	mlp.push_back(400);
 	mlp.push_back(400);
 	mlp.push_back(10);
 
@@ -37,6 +37,8 @@ MainWindow::MainWindow(QWidget *parent) :
 	m_train.setMlpLayers(mlp);
 
 	m_train.init();
+
+	ui->tb_main->setCurrentIndex(0);
 }
 
 MainWindow::~MainWindow()
@@ -79,12 +81,12 @@ void MainWindow::on_pb_pass_clicked()
 void MainWindow::pass()
 {
 	double l2, acc;
-	m_train.pass(50);
+	m_train.pass(100);
 
 	ui->lb_it->setText(QString("Iteraion %1").arg(m_train.iteration()));
 
-	if((m_train.iteration() % 10) == 0){
-		m_train.getEstimage(300, acc, l2);
+	if((m_train.iteration() % 2) == 0){
+		m_train.getEstimage(500, acc, l2);
 
 		qDebug("iteration %d: acc=%f, l2=%f", m_train.iteration(), acc, l2);
 
@@ -99,6 +101,11 @@ void MainWindow::update_prediction()
 	QVector<int> pr = m_train.predict(ui->wcifar->index(), 500);
 
 	ui->wcifar->updatePredictfromIndex(pr);
+
+	ui->wdgW->set_weightR(m_train.cnvW(0));
+	ui->wdgW->set_weightG(m_train.cnvW(1));
+	ui->wdgW->set_weightB(m_train.cnvW(2));
+	ui->wdgW->update();
 }
 
 void MainWindow::on_pb_pass_clicked(bool checked)

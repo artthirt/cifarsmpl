@@ -16,13 +16,37 @@
   <widget class="QWidget" name="centralWidget">
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
-     <widget class="WidgetCifar" name="wcifar" native="true">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
+     <widget class="QTabWidget" name="tb_main">
+      <property name="currentIndex">
+       <number>0</number>
       </property>
+      <widget class="QWidget" name="tab">
+       <attribute name="title">
+        <string>Numbers</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_2">
+        <item>
+         <widget class="WidgetCifar" name="wcifar" native="true">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tab_2">
+       <attribute name="title">
+        <string>Weights</string>
+       </attribute>
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <item>
+         <widget class="DrawCnvWeight" name="wdgW" native="true"/>
+        </item>
+       </layout>
+      </widget>
      </widget>
     </item>
     <item>
@@ -115,6 +139,12 @@
    <class>WidgetCifar</class>
    <extends>QWidget</extends>
    <header>widgetcifar.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>DrawCnvWeight</class>
+   <extends>QWidget</extends>
+   <header>drawcnvweight.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

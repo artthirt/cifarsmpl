@@ -18,16 +18,19 @@ SOURCES += main.cpp\
     widgetcifar.cpp \
     models/cifar_reader.cpp \
     models/cifar_train.cpp \
-    models/convnnf.cpp
+    models/convnnf.cpp \
+    drawcnvweight.cpp
 
 HEADERS  += mainwindow.h \
     widgetcifar.h \
     models/cifar_reader.h \
     models/cifar_train.h \
-    models/convnnf.h
+    models/convnnf.h \
+    drawcnvweight.h
 
 FORMS    += mainwindow.ui \
-    widgetcifar.ui
+    widgetcifar.ui \
+    drawcnvweight.ui
 
 win32{
 QMAKE_CXXFLAGS += /openmp

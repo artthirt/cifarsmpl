@@ -38,6 +38,8 @@ public:
 					   const ct::Size szA0 = ct::Size(32, 32));
 	void conv(const ct::Matf& X, ct::Matf& XOut);
 	void backward(const ct::Matf& X);
+
+	std::vector<tvconvnnf> &operator () ();
 };
 
 

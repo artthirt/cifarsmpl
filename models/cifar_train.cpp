@@ -209,6 +209,24 @@ QVector< int > cifar_train::predict(double percent, int batch)
 	return pred;
 }
 
+QVector<QVector<ct::Matf> > cifar_train::cnvW(int index)
+{
+	QVector< QVector < ct::Matf > > res;
+
+	std::vector<tvconvnnf> &cnv = m_conv[index]();
+
+	res.resize(cnv.size());
+
+	for(size_t i = 0; i < cnv.size(); ++i){
+		for(size_t j = 0; j < cnv[i].size(); ++j){
+			for(size_t k = 0; k < cnv[i][j].W.size(); ++k){
+				res[i].push_back(cnv[i][j].W[k]);
+			}
+		}
+	}
+	return res;
+}
+
 void cifar_train::setDropout(float p, int layers)
 {
 	for(int i = 0; i < std::min(layers, (int)m_mlp.size() - 1); ++i){

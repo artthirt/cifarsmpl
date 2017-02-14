@@ -121,3 +121,8 @@ void ConvNN::backward(const ct::Matf &X)
 //			qDebug("----");
 	}
 }
+
+std::vector<tvconvnnf> &ConvNN::operator ()()
+{
+	return m_conv;
+}

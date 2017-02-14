@@ -38,6 +38,8 @@ public:
 
 	QVector<int> predict(double percent, int batch);
 
+	QVector<QVector<ct::Matf> > cnvW(int index);
+
 private:
 	cifar_reader* m_cifar;
 	std::vector< int > m_layers;
