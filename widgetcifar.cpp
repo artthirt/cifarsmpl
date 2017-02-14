@@ -260,6 +260,13 @@ void WidgetCifar::paintEvent(QPaintEvent *event)
 				painter.setBrush(Qt::NoBrush);
 				painter.setPen(pen);
 				painter.drawRect(x * wim + 2, y * him + 2, wim - 4, him - 4);
+			}else{
+				QPen pen;
+				pen.setColor(Qt::green);
+				pen.setWidth(2);
+				painter.setBrush(Qt::NoBrush);
+				painter.setPen(pen);
+				painter.drawRect(x * wim + 2, y * him + 2, wim - 4, him - 4);
 			}
 		}
 

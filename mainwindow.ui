@@ -48,6 +48,13 @@
        </spacer>
       </item>
       <item>
+       <widget class="QLabel" name="lb_it">
+        <property name="text">
+         <string>It</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="pb_pass">
         <property name="text">
          <string>Pass</string>

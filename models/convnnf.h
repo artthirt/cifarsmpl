@@ -30,6 +30,7 @@ public:
 	void setAlpha(float alpha);
 
 	int outputFeatures() const;
+	int outputMatrices() const;
 
 	void init();
 	void setConvLayers(const std::vector< int >& layers,

@@ -21,6 +21,11 @@ int ConvNN::outputFeatures() const
 	return m_conv.back()[0].W.size() * m_conv.back()[0].szA2.area() * m_conv.back().size();
 }
 
+int ConvNN::outputMatrices() const
+{
+	return m_conv.back()[0].W.size() * m_conv.back().size();
+}
+
 void ConvNN::init()
 {
 	if(m_cnvlayers.empty() || m_cnvweights.empty())

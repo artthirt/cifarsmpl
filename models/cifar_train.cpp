@@ -50,6 +50,7 @@ void cifar_train::init()
 		for(size_t i = 0; i < m_conv.size(); ++i){
 			m_conv[i].init();
 		}
+		qDebug("CNV: ouput matrices = %d", m_conv[0].outputMatrices() * m_conv.size());
 	}
 
 	//// 2
@@ -59,6 +60,8 @@ void cifar_train::init()
 
 		int input = m_conv[0].outputFeatures();
 		input *= m_conv.size();
+
+		qDebug("MLP: input features = %d", input);
 
 		for(size_t i = 0; i < m_mlp.size(); ++i){
 			ct::mlpf& mlp = m_mlp[i];

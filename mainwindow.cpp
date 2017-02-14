@@ -79,6 +79,8 @@ void MainWindow::pass()
 	double l2, acc;
 	m_train.pass(50);
 
+	ui->lb_it->setText(QString("Iteraion %1").arg(m_train.iteration()));
+
 	if((m_train.iteration() % 10) == 0){
 		m_train.getEstimage(300, acc, l2);
 
