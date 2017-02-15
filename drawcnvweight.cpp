@@ -154,7 +154,7 @@ QSize DrawCnvWeight::draw_weight(QPainter &painter, int offset)
 	if(m_W_R.empty() || m_W_R.size() != m_W_G.size() || m_W_R.size() != m_W_B.size())
 		return QSize(0, 0);
 
-	int wd_blk = 20;
+	int wd_blk = 10;
 
 	int x = 0, y = offset, w = 0, h = 0;
 

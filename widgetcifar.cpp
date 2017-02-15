@@ -81,7 +81,7 @@ void WidgetCifar::updatePredictfromIndex(const QVector<int> &predict, int index)
 
 	QVector< int >& prediction = m_mode == TRAIN? m_prediction_train : m_prediction_test;
 
-	qDebug("prediact array size %d", predict.size());
+	qDebug("predicted array size %d", predict.size());
 
 	if(predict.size() + index > prediction.size()){
 		prediction.resize(predict.size() + index);
