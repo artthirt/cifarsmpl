@@ -1104,6 +1104,24 @@ __global__ void sum_rows_shared(Mtx C, Mtx cols, T val = (T)1.)
 	}
 }
 
+template< typename T >
+__global__ void subIndOne(Mtx A, Mtx Ind, Mtx B)
+{
+	int row = threadIdx.y + blockIdx.y * blockDim.y;
+	int col = threadIdx.x + blockIdx.x * blockDim.x;
+
+	if(row < A.rows && col < A.cols){
+		T *dA = (T*)A.data;
+		T *dI = (T*)Ind.data;
+		T *dB = (T*)B.data;
+
+		if((int)dI[row * Ind.cols] == col)
+			dB[row * A.cols + col] = dA[row * A.cols + col] - 1.;
+		else
+			dB[row * A.cols + col] = dA[row * A.cols + col];
+	}
+}
+
 }
 }
 
@@ -2052,6 +2070,30 @@ void cuda_adamgrad(GpuMat& A, const GpuMat& mA, const GpuMat& vA, double alpha, 
 		break;
 	case GPU_FLOAT:
 		internal::adamgrad<float> <<<dimGrid, dimBlock>>>(A, mA, vA, (float)alpha, (float)sb1, (float)sb2);
+		break;
+	}
+}
+
+/**
+ * @brief cuda_subIndOne
+ * @param A
+ * @param Ind
+ * @param B = A : A[row, col == Ind[row]] - 1
+ */
+extern "C"
+void cuda_subIndOne(const GpuMat& A, const GpuMat& Ind, GpuMat& B)
+{
+	int x1 = A.cols / BLOCKSIZE + 1;
+	int x2 = A.rows / BLOCKSIZE + 1;
+
+	dim3 dimGrid(x1, x2), dimBlock(BLOCKSIZE, BLOCKSIZE);
+
+	switch (A.type) {
+	case GPU_DOUBLE:
+		internal::subIndOne<double> <<<dimGrid, dimBlock>>>(A, Ind, B);
+		break;
+	case GPU_FLOAT:
+		internal::subIndOne<float> <<<dimGrid, dimBlock>>>(A, Ind, B);
 		break;
 	}
 }

@@ -19,14 +19,18 @@ SOURCES += main.cpp\
     models/cifar_reader.cpp \
     models/cifar_train.cpp \
     models/convnnf.cpp \
-    drawcnvweight.cpp
+    drawcnvweight.cpp \
+    qt_work_mat.cpp \
+    models/gpu_train.cpp
 
 HEADERS  += mainwindow.h \
     widgetcifar.h \
     models/cifar_reader.h \
     models/cifar_train.h \
     models/convnnf.h \
-    drawcnvweight.h
+    drawcnvweight.h \
+    qt_work_mat.h \
+    models/gpu_train.h
 
 FORMS    += mainwindow.ui \
     widgetcifar.ui \
@@ -42,3 +46,4 @@ LIBS += -lgomp
 }
 
 include(ct/ct.pri)
+include(gpu/gpu.pri)

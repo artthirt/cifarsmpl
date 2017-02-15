@@ -2,6 +2,7 @@
 #define NN_H
 
 #include "custom_types.h"
+#include "matops.h"
 
 #include <vector>
 #include <exception>

@@ -336,6 +336,14 @@ void softmax(const GpuMat& A, int axis, GpuMat& C, GpuMat& partZ);
  */
 void sub_adamGrad(GpuMat& A, const GpuMat& mA, const GpuMat& vA, double alpha, double sb1, double sb2);
 
+/**
+ * @brief subIndOne
+ * @param A
+ * @param Ind
+ * @param B
+ */
+void subIndOne(const GpuMat& A, const GpuMat& Ind, GpuMat& B);
+
 }
 
 #endif // GPU_H

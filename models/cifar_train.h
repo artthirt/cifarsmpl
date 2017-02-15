@@ -7,6 +7,8 @@
 #include "mlp.h"
 #include "convnnf.h"
 
+#include "gpu_train.h"
+
 namespace ct{
 	typedef mlp<float> mlpf;
 }
@@ -26,19 +28,23 @@ public:
 	void init();
 
 	void forward(const std::vector< ct::Matf >& X, ct::Matf& a_out,
-				 bool use_drop = false, float p = 0.92);
+				 bool use_drop = false, float p = 0.92, bool use_gpu = false);
 
-	void pass(int batch);
+	void pass(int batch, bool use_gpu = false);
 
-	void getEstimage(int batch, double& accuracy, double& l2);
+	void getEstimage(int batch, double& accuracy, double& l2, bool use_gpu = false);
 
 	void setAlpha(double alpha);
 
 	uint iteration() const;
 
-	QVector<int> predict(double percent, int batch);
+	uint iteration_gpu() const;
 
-	QVector<QVector<ct::Matf> > cnvW(int index);
+	QVector<int> predict(double percent, int batch, bool use_gpu = false);
+
+	QVector<QVector<ct::Matf> > cnvW(int index, bool use_gpu = false);
+
+	void init_gpu();
 
 private:
 	cifar_reader* m_cifar;
@@ -47,6 +53,8 @@ private:
 	std::vector< int > m_cnvweights;
 	ct::Size m_szA0;
 	bool m_init;
+
+	gpu_train m_gpu_train;
 
 	ct::Matf m_tX;
 	ct::Matf m_ty;

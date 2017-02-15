@@ -52,6 +52,13 @@
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout">
       <item>
+       <widget class="QCheckBox" name="chb_gpu">
+        <property name="text">
+         <string>gpu</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QLabel" name="lb_out">
         <property name="text">
          <string/>
@@ -119,7 +126,7 @@
      <x>0</x>
      <y>0</y>
      <width>807</width>
-     <height>22</height>
+     <height>19</height>
     </rect>
    </property>
   </widget>

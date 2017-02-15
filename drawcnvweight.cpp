@@ -4,6 +4,8 @@
 #include <QPaintEvent>
 #include <QPainter>
 
+#include "matops.h"
+
 DrawCnvWeight::DrawCnvWeight(QWidget *parent) :
 	QWidget(parent),
 	ui(new Ui::DrawCnvWeight)

@@ -32,6 +32,8 @@ private slots:
 
 	void on_pb_pass_clicked(bool checked);
 
+	void on_chb_gpu_clicked(bool checked);
+
 private:
 	Ui::MainWindow *ui;
 	QTimer m_timer;

@@ -71,6 +71,41 @@ private:
 	std::vector< gpumat::GpuMat  > slice;
 };
 
+///////////////////////////////////
+
+typedef std::vector< gpumat::convnn > tvconvnn;
+
+class ConvNN{
+public:
+	std::vector< int > m_cnvlayers;
+	std::vector< int > m_cnvweights;
+	std::vector< std::vector< gpumat::convnn > > m_conv;
+	ct::Size m_szA0;
+	gpumat::convnn m_adds;
+
+	std::vector< GpuMat > m_features;
+
+	ConvNN();
+
+	void setAlpha(float alpha);
+
+	int outputFeatures() const;
+	int outputMatrices() const;
+
+	void init();
+	void setConvLayers(const std::vector< int >& layers,
+					   std::vector< int > weight_sizes,
+					   const ct::Size szA0 = ct::Size(32, 32));
+	void conv(const GpuMat& X, GpuMat& XOut);
+	void backward(const GpuMat& X);
+
+	std::vector<tvconvnn> &cnv();
+
+	std::vector<tvconvnn> &operator () ();
+};
+
+///////////////////////////////////
+
 ct::Size conv2D(const GpuMat& A0,
 			const ct::Size& szI,
 			int stride,

@@ -183,6 +183,136 @@ void convnn::upsample(const std::vector<convnn> &A1, ct::Size &szA1, const ct::S
 ///////**********************////////////
 /////////////////////////////////////////
 
+ConvNN::ConvNN()
+{
+
+}
+
+void ConvNN::setAlpha(float alpha)
+{
+	for(size_t i = 0; i < m_conv.size(); ++i){
+		for(size_t j = 0; j < m_conv[i].size(); ++j){
+			convnn& cnv = m_conv[i][j];
+			cnv.setAlpha(alpha);
+		}
+	}
+}
+
+int ConvNN::outputFeatures() const
+{
+	return m_conv.back()[0].W.size() * m_conv.back()[0].szA2.area() * m_conv.back().size();
+}
+
+int ConvNN::outputMatrices() const
+{
+	return m_conv.back()[0].W.size() * m_conv.back().size();
+}
+
+void ConvNN::init()
+{
+	if(m_cnvlayers.empty() || m_cnvweights.empty())
+		throw new std::invalid_argument("empty arguments");
+
+	m_conv.resize(m_cnvlayers.size());
+
+	ct::Size szA0 =m_szA0;
+
+	int input = 1;
+	for(size_t i = 0; i < m_conv.size(); ++i){
+		m_conv[i].resize(input);
+
+		for(size_t j = 0; j < m_conv[i].size(); ++j){
+			convnn& cnv = m_conv[i][j];
+			cnv.setWeightSize(m_cnvweights[i]);
+			cnv.init(m_cnvlayers[i], szA0);
+		}
+		input = m_cnvlayers[i] * input;
+		szA0 = m_conv[i][0].szA2;
+	}
+}
+
+void ConvNN::setConvLayers(const std::vector<int> &layers, std::vector<int> weight_sizes,
+						   const ct::Size szA0)
+{
+	if(layers.empty() || weight_sizes.empty())
+		throw new std::invalid_argument("empty parameters");
+
+	m_cnvlayers = layers;
+	m_cnvweights = weight_sizes;
+	m_szA0 = szA0;
+}
+
+void ConvNN::conv(const GpuMat &X,GpuMat &XOut)
+{
+	if(X.empty())
+		return;
+
+	for(size_t i = 0; i < m_conv.size(); ++i){
+		std::vector< gpumat::convnn >& ls = m_conv[i];
+
+		if(i == 0){
+			gpumat::convnn& m0 = ls[0];
+			m0.forward(&X, gpumat::RELU);
+		}else{
+			for(size_t j = 0; j < m_conv[i - 1].size(); ++j){
+				size_t off1 = j * m_cnvlayers[i - 1];
+				gpumat::convnn& m0 = m_conv[i - 1][j];
+				for(size_t k = 0; k < m_cnvlayers[i - 1]; ++k){
+					size_t col = off1 + k;
+					gpumat::convnn& mi = ls[col];
+					mi.forward(&m0.A2[k], gpumat::RELU);
+				}
+			}
+		}
+	}
+
+	m_adds.hconcat(m_conv.back(), XOut);
+}
+
+void ConvNN::backward(const GpuMat &X)
+{
+	if(m_cnvlayers.empty() || m_cnvweights.empty())
+		throw new std::invalid_argument("empty arguments");
+
+	int cols = m_conv.back().size() * m_conv.back()[0].W.size();
+
+	hsplit(X, cols, m_features);
+
+	for(int i = m_conv.size() - 1; i > -1; i--){
+		std::vector< convnn >& lrs = m_conv[i];
+
+//			qDebug("LR[%d]-----", i);
+		size_t kidx = 0;
+
+		for(size_t j = 0; j < lrs.size(); ++j){
+			convnn &cnv = lrs[j];
+
+			size_t kfirst = kidx;
+			kidx += cnv.W.size();
+
+			if(i == m_conv.size() - 1)
+				cnv.backward(m_features, gpumat::RELU, kfirst, kidx, i == 0);
+			else
+				cnv.backward(m_conv[i + 1], gpumat::RELU, kfirst, kidx, i == 0);
+		}
+//			qDebug("----");
+	}
+}
+
+std::vector<tvconvnn> &ConvNN::cnv()
+{
+	return m_conv;
+}
+
+std::vector<tvconvnn> &ConvNN::operator ()()
+{
+	return m_conv;
+}
+
+/////////////////////////////////////////
+///////**********************////////////
+/////////////////////////////////////////
+
 extern "C"
 void cuda_conv2d(const GpuMat &A0,
 				 const ct::Size &szI,

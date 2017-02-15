@@ -1,5 +1,7 @@
 #include "gpu_mlp.h"
 
+#include "matops.h"
+
 using namespace gpumat;
 
 template< typename T >

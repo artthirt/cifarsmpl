@@ -9,12 +9,6 @@
 typedef ct::convnn<float> convnnf;
 typedef std::vector< convnnf > tvconvnnf;
 
-//namespace convnn{
-
-//	typedef convnn<float> convnnf;
-//	typedef std::vector< convnnf > tvconvnnf;
-
-//}
 
 class ConvNN{
 public:

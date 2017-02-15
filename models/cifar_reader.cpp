@@ -128,7 +128,7 @@ void cifar_reader::getTrain(int batch, std::vector<ct::Matf> &X, ct::Matf &y)
 
 	X.resize(3);
 
-	y.setSize(batch, outLen[m_data_source]);
+	y.setSize(batch, 1);
 	y.fill(0);
 
 	for(size_t i = 0; i < X.size(); ++i){
@@ -144,7 +144,7 @@ void cifar_reader::getTrain(int batch, std::vector<ct::Matf> &X, ct::Matf &y)
 
 		ct::image2mats(data.data, WidthIM, HeightIM, i, X[0], X[1], X[2]);
 
-		dy[i * y.cols + data.lb] = 1.f;
+		dy[i * y.cols + 0] = data.lb;
 	}
 }
 
@@ -183,11 +183,11 @@ void cifar_reader::getTrainIt(double percent, int batch, std::vector<ct::Matf> &
 	getDataIt(percent, batch, data);
 
 	if(y){
-		y->setSize(batch, outLen[m_data_source]);
+		y->setSize(batch, 1);
 		y->fill(0);
 		float *dy = y->ptr();
 		for(int i = 0; i < batch; ++i){
-			dy[i * y->cols + data[i].lb] = 1.f;
+			dy[i * y->cols + 0] = data[i].lb;
 		}
 	}
 
