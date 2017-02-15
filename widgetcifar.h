@@ -66,6 +66,8 @@ public:
 	 */
 	void toBegin();
 
+	size_t count() const;
+
 public slots:
 	void onTimeout();
 	void onTimeoutUpdate();

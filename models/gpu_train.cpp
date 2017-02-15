@@ -190,7 +190,7 @@ void gpu_train::forward(const std::vector<gpumat::GpuMat> &X,
 
 	*pAout = &(m_mlp.back().A1);
 
-	test_void(**pAout);
+//	test_void(**pAout);
 }
 
 void gpu_train::pass(const std::vector<ct::Matf> &X, const ct::Matf &y)

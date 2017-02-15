@@ -18,17 +18,18 @@ MainWindow::MainWindow(QWidget *parent) :
 	std::vector< int > mlp;
 	std::vector< int > cnv_w;
 
-	cnv.push_back(5);
-	cnv.push_back(5);
+	cnv.push_back(8);
+	cnv.push_back(6);
 //	cnv.push_back(10);
 
 	cnv_w.push_back(5);
 	cnv_w.push_back(5);
 //	cnv_w.push_back(3);
 
+	mlp.push_back(900);
 	mlp.push_back(700);
 	mlp.push_back(600);
-	mlp.push_back(500);
+	mlp.push_back(700);
 	mlp.push_back(400);
 	mlp.push_back(10);
 
@@ -87,7 +88,7 @@ void MainWindow::pass()
 
 	ui->lb_it->setText(QString("Iteraion %1").arg(it));
 
-	if((it % 10) == 0){
+	if((it % 20) == 0){
 		m_train.getEstimage(500, acc, l2, ui->chb_gpu->isChecked());
 
 		qDebug("iteration %d: acc=%f, l2=%f", it, acc, l2);
@@ -100,7 +101,7 @@ void MainWindow::pass()
 
 void MainWindow::update_prediction()
 {
-	QVector<int> pr = m_train.predict(ui->wcifar->index(), 500, ui->chb_gpu->isChecked());
+	QVector<int> pr = m_train.predict(ui->wcifar->index(), ui->wcifar->count(), ui->chb_gpu->isChecked());
 
 	ui->wcifar->updatePredictfromIndex(pr);
 
