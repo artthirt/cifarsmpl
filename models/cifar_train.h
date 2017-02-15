@@ -30,7 +30,7 @@ public:
 	void forward(const std::vector< ct::Matf >& X, ct::Matf& a_out,
 				 bool use_drop = false, float p = 0.92, bool use_gpu = false);
 
-	void pass(int batch, bool use_gpu = false);
+	void pass(int batch, bool use_gpu = false, std::vector<double> *percents = nullptr);
 
 	void getEstimage(int batch, double& accuracy, double& l2, bool use_gpu = false);
 
@@ -40,7 +40,7 @@ public:
 
 	uint iteration_gpu() const;
 
-	QVector<int> predict(double percent, int batch, bool use_gpu = false);
+	QVector<int> predict(const QVector<TData> &data, bool use_gpu = false);
 
 	QVector<QVector<ct::Matf> > cnvW(int index, bool use_gpu = false);
 

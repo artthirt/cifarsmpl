@@ -29,8 +29,10 @@ public:
 	QVector<TData> &train(int batch, double percent);
 	QVector<QByteArray> &test();
 
+	void convToXy(const QVector< TData > &data, std::vector< ct::Matf >& X, ct::Matf *y = nullptr);
+
 	bool getData(double percent, TData& data);
-	void getTrain(int batch, std::vector< ct::Matf >& X, ct::Matf &y);
+	void getTrain(int batch, std::vector< ct::Matf >& X, ct::Matf &y, std::vector<double> *percents = nullptr);
 	bool getDataIt(double percent, int batch, QVector<TData> &data);
 	void getTrainIt(double percent, int batch, std::vector< ct::Matf >& X, ct::Matf *y = nullptr);
 

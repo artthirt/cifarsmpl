@@ -18,8 +18,8 @@ MainWindow::MainWindow(QWidget *parent) :
 	std::vector< int > mlp;
 	std::vector< int > cnv_w;
 
-	cnv.push_back(10);
-	cnv.push_back(5);
+	cnv.push_back(8);
+	cnv.push_back(12);
 //	cnv.push_back(5);
 
 	cnv_w.push_back(5);
@@ -82,7 +82,19 @@ void MainWindow::on_pb_pass_clicked()
 void MainWindow::pass()
 {
 	double l2, acc;
-	m_train.pass(50, ui->chb_gpu->isChecked());
+
+	std::vector< double > percents;
+
+	m_train.pass(50, ui->chb_gpu->isChecked(), &percents);
+
+	{
+		std::stringstream ss;
+		ss << std::setprecision(2);
+		for(size_t i = 0; i < percents.size(); ++i){
+			ss << percents[i] << " ";
+		}
+		//ui->pte_logs->appendPlainText(QString(">> ") + ss.str().c_str());
+	}
 
 	uint it = ui->chb_gpu->isChecked()? m_train.iteration_gpu() : m_train.iteration();
 
@@ -94,6 +106,7 @@ void MainWindow::pass()
 		qDebug("iteration %d: acc=%f, l2=%f", it, acc, l2);
 
 		ui->lb_out->setText(QString("iteration %1: acc=%2, l2=%3").arg(it).arg(acc).arg(l2));
+		ui->pte_logs->appendPlainText(QString("iteration %1: acc=%2, l2=%3").arg(it).arg(acc).arg(l2));
 
 		update_prediction();
 	}
@@ -101,7 +114,7 @@ void MainWindow::pass()
 
 void MainWindow::update_prediction()
 {
-	QVector<int> pr = m_train.predict(ui->wcifar->index(), ui->wcifar->count(), ui->chb_gpu->isChecked());
+	QVector<int> pr = m_train.predict(ui->wcifar->output_data(), ui->chb_gpu->isChecked());
 
 	ui->wcifar->updatePredictfromIndex(pr);
 

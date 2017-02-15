@@ -121,7 +121,7 @@ void cifar_train::forward(const std::vector< ct::Matf > &X, ct::Matf &a_out,
 	}
 }
 
-void cifar_train::pass(int batch, bool use_gpu)
+void cifar_train::pass(int batch, bool use_gpu, std::vector< double > *percents)
 {
 	if(!m_init || batch <= 0)
 		throw new std::invalid_argument("not initialize");
@@ -130,7 +130,7 @@ void cifar_train::pass(int batch, bool use_gpu)
 	ct::Matf yp;
 	ct::Matf y;
 
-	m_cifar->getTrain(batch, Xs, y);
+	m_cifar->getTrain(batch, Xs, y, percents);
 
 	if(use_gpu && m_gpu_train.isInit()){
 		m_gpu_train.pass(Xs, y);
@@ -220,14 +220,14 @@ uint cifar_train::iteration_gpu() const
 	return m_gpu_train.iteration();
 }
 
-QVector< int > cifar_train::predict(double percent, int batch, bool use_gpu)
+QVector< int > cifar_train::predict(const QVector< TData >& data, bool use_gpu)
 {
 	QVector< int > pred;
 
 	std::vector< ct::Matf > X;
 	ct::Matf y;
 
-	m_cifar->getTrainIt(percent, batch, X);
+	m_cifar->convToXy(data, X);
 
 	forward(X, y, false, 0.92, use_gpu);
 

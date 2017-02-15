@@ -117,7 +117,12 @@ void WidgetCifar::toBegin()
 
 size_t WidgetCifar::count() const
 {
-	return m_ouput_data.size();
+	return m_output_data.size();
+}
+
+const QVector<TData> &WidgetCifar::output_data() const
+{
+	return m_output_data;
 }
 
 void WidgetCifar::onTimeout()
@@ -133,8 +138,8 @@ void WidgetCifar::onTimeoutUpdate()
 		int yid = m_point.y() / cifar_reader::HeightIM;
 		int off = yid * m_cols + xid;
 
-		if(off < m_ouput_data.size()){
-			QImage im((uchar*)m_ouput_data[off].image.data(), wim, him, QImage::Format_RGB888);
+		if(off < m_output_data.size()){
+			QImage im((uchar*)m_output_data[off].image.data(), wim, him, QImage::Format_RGB888);
 			m_sel_image = im;
 			update();
 		}
@@ -160,7 +165,7 @@ void WidgetCifar::update_source()
 	int wim = cifar_reader::WidthIM;
 	int him = cifar_reader::HeightIM;
 
-	m_ouput_data.clear();
+	m_output_data.clear();
 	while(floop){
 
 		double cp = m_index;
@@ -168,7 +173,7 @@ void WidgetCifar::update_source()
 		QVector< TData >& data = m_cifar->train(batch, cp);
 		cp = m_cifar->current_percent();
 
-		m_ouput_data.append(data);
+		m_output_data.append(data);
 		off += batch;
 
 		for(int i = 0; i < data.size(); i++){
@@ -237,13 +242,13 @@ void WidgetCifar::paintEvent(QPaintEvent *event)
 
 	QVector< int >& prediction = m_mode == TRAIN? m_prediction_train : m_prediction_test;
 
-	for(int i = 0; i < m_ouput_data.size(); i++){
+	for(int i = 0; i < m_output_data.size(); i++){
 		if(y * him + him >= height()){
 			continue;
 		}
 
 		QByteArray _out;
-		_out = m_ouput_data[i].image;
+		_out = m_output_data[i].image;
 
 		QImage im((uchar*)_out.data(), wim, him, QImage::Format_RGB888);
 
@@ -252,7 +257,7 @@ void WidgetCifar::paintEvent(QPaintEvent *event)
 		painter.drawRect(x * wim, y * him, wim, him);
 
 		painter.setPen(Qt::green);
-		QString text = QString::number((uint)m_ouput_data[i].lb);
+		QString text = QString::number((uint)m_output_data[i].lb);
 		painter.drawText(x * wim + 3, y * him + 12, text);
 
 		if(prediction.size()){
@@ -260,7 +265,7 @@ void WidgetCifar::paintEvent(QPaintEvent *event)
 			QString text = QString::number((uint)prediction[i]);
 			painter.drawText(x * wim + 17, y * him + 12, text);
 
-			if(m_ouput_data[i].lb != prediction[i]){
+			if(m_output_data[i].lb != prediction[i]){
 				QPen pen;
 				pen.setColor(Qt::yellow);
 				pen.setWidth(2);

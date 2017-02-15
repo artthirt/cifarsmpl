@@ -99,6 +99,31 @@ QVector<TData> &cifar_reader::train(int batch, double percent)
 	return m_current_data;
 }
 
+void cifar_reader::convToXy(const QVector<TData> &data, std::vector<ct::Matf> &X, ct::Matf *y)
+{
+	if(data.empty())
+		return;
+
+	if(y){
+		y->setSize(data.size(), 1);
+		y->fill(0);
+		float *dy = y->ptr();
+		for(int i = 0; i < data.size(); ++i){
+			dy[i * y->cols + 0] = data[i].lb;
+		}
+	}
+
+	X.resize(3);
+
+	for(size_t i = 0; i < X.size(); ++i){
+		X[i].setSize(data.size(), WidthIM * HeightIM);
+	}
+
+	for(int i = 0; i < data.size(); ++i){
+		ct::image2mats(data[i].data, WidthIM, HeightIM, i, X[0], X[1], X[2]);
+	}
+}
+
 bool cifar_reader::getData(double percent, TData &data)
 {
 	int num = countFiles * percent;
@@ -115,14 +140,14 @@ bool cifar_reader::getData(double percent, TData &data)
 	m_current_file = num;
 	m_current_offset = offset;
 
-	//qDebug("next num file %d", num);
+	//qDebug("next num file %d %f", num, offset);
 
 	readCifar1(fn, data, offset);
 
 	return true;
 }
 
-void cifar_reader::getTrain(int batch, std::vector<ct::Matf> &X, ct::Matf &y)
+void cifar_reader::getTrain(int batch, std::vector<ct::Matf> &X, ct::Matf &y, std::vector< double > *percents)
 {
 	std::uniform_real_distribution<double> urnd(0, 1);
 
@@ -135,12 +160,19 @@ void cifar_reader::getTrain(int batch, std::vector<ct::Matf> &X, ct::Matf &y)
 		X[i].setSize(batch, WidthIM * HeightIM);
 	}
 
-
 	float *dy = y.ptr();
+
+	if(percents){
+		percents->clear();
+	}
 
 	for(int i = 0; i < batch; ++i){
 		TData data;
-		while(!getData(urnd(generator), data)){};
+		double val;
+		while(!getData((val = urnd(generator)), data)){};
+		if(percents){
+			percents->push_back(val);
+		}
 
 		ct::image2mats(data.data, WidthIM, HeightIM, i, X[0], X[1], X[2]);
 

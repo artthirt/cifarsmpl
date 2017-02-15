@@ -68,6 +68,8 @@ public:
 
 	size_t count() const;
 
+	const QVector<TData> &output_data() const;
+
 public slots:
 	void onTimeout();
 	void onTimeoutUpdate();
@@ -81,7 +83,7 @@ private:
 	QVector< int > m_prediction_test;
 	QVector< int > m_prediction_train;
 
-	QVector<TData> m_ouput_data;
+	QVector<TData> m_output_data;
 
 	cifar_reader* m_cifar;
 
