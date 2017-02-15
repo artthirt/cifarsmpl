@@ -34,6 +34,8 @@ private slots:
 
 	void on_chb_gpu_clicked(bool checked);
 
+	void on_dsb_alpha_valueChanged(double arg1);
+
 private:
 	Ui::MainWindow *ui;
 	QTimer m_timer;

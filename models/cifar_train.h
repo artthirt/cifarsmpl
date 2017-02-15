@@ -67,8 +67,13 @@ private:
 	std::vector< ct::mlpf > m_mlp;
 	ct::MlpOptim< float > m_optim;
 
+	std::vector< ct::Vec3f > m_vals;
+
 	void setDropout(float p, int layers);
 	void clearDropout();
+	void randValues(size_t count, std::vector< ct::Vec3f >& vals);
+	void randX(ct::Matf &X, std::vector< ct::Vec3f >& vals);
+
 };
 
 #endif // CIFAR_TRAIN_H

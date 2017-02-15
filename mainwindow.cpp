@@ -19,8 +19,8 @@ MainWindow::MainWindow(QWidget *parent) :
 	std::vector< int > cnv_w;
 
 	cnv.push_back(5);
-	cnv.push_back(5);
-//	cnv.push_back(1);
+	cnv.push_back(7);
+//	cnv.push_back(4);
 
 	cnv_w.push_back(5);
 	cnv_w.push_back(5);
@@ -132,4 +132,9 @@ void MainWindow::on_chb_gpu_clicked(bool checked)
 {
 	if(checked)
 		m_train.init_gpu();
+}
+
+void MainWindow::on_dsb_alpha_valueChanged(double arg1)
+{
+	m_train.setAlpha(arg1);
 }

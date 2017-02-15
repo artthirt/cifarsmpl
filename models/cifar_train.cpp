@@ -2,6 +2,58 @@
 
 ////////////////////
 
+template< typename T >
+void translate(int x, int y, int w, int h, T *X)
+{
+	std::vector<T>d;
+	d.resize(w * h);
+
+#pragma omp parallel for
+	for(int i = 0; i < h; i++){
+		int newi = i + x;
+		if(newi >= 0 && newi < h){
+			for(int j = 0; j < w; j++){
+				int newj = j + y;
+				if(newj >= 0 && newj < w){
+					d[newi * w + newj] = X[i * w + j];
+				}
+			}
+		}
+	}
+	for(size_t i = 0; i < d.size(); i++){
+		X[i] = d[i];
+	}
+}
+
+template< typename T >
+void rotate_data(int w, int h, T angle, T *X)
+{
+	T cw = w / 2;
+	T ch = h / 2;
+
+	std::vector<T> d;
+	d.resize(w * h);
+
+	for(int y = 0; y < h; y++){
+		for(int x = 0; x < w; x++){
+			T x1 = x - cw;
+			T y1 = y - ch;
+
+			T nx = x1 * cos(angle) + y1 * sin(angle);
+			T ny = -x1 * sin(angle) + y1 * cos(angle);
+			nx += cw; ny += ch;
+			int ix = nx, iy = ny;
+			if(ix >= 0 && ix < w && iy >= 0 && iy < h){
+				T c = X[y * w + x];
+				d[iy * w + ix] = c;
+			}
+		}
+	}
+	for(size_t i = 0; i < d.size(); i++){
+		X[i] = d[i];
+	}
+}
+
 /////////////////////
 
 cifar_train::cifar_train()
@@ -121,6 +173,45 @@ void cifar_train::forward(const std::vector< ct::Matf > &X, ct::Matf &a_out,
 	}
 }
 
+
+void cifar_train::randValues(size_t count, std::vector<ct::Vec3f> &vals)
+{
+	std::uniform_int_distribution<int> udtr(-5, 5);
+	std::uniform_real_distribution<float> uar(-3, 3);
+
+	vals.resize(count);
+
+	for(size_t i = 0; i < vals.size(); ++i){
+		int x = udtr(ct::generator);
+		int y = udtr(ct::generator);
+		float ang = uar(ct::generator);
+		ang = ct::angle2rad(ang);
+		vals[i] = ct::Vec3f(x, y, ang);
+	}
+}
+
+void cifar_train::randX(ct::Matf &X, std::vector<ct::Vec3f> &vals)
+{
+	if(X.empty() || X.rows != vals.size())
+		return;
+#if 1
+	std::uniform_int_distribution<int> udtr(-5, 5);
+	std::uniform_real_distribution<float> uar(-3, 3);
+
+#pragma omp parallel for
+	for(int i = 0; i < X.rows; i++){
+		float *Xi = &X.at(i, 0);
+
+		float x = vals[i][0];
+		float y = vals[i][1];
+		float ang = vals[i][2];
+
+		rotate_data<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, ang, Xi);
+		translate<float>(x, y, cifar_reader::WidthIM, cifar_reader::HeightIM, Xi);
+	}
+#endif
+}
+
 void cifar_train::pass(int batch, bool use_gpu, std::vector< double > *percents)
 {
 	if(!m_init || batch <= 0)
@@ -131,6 +222,12 @@ void cifar_train::pass(int batch, bool use_gpu, std::vector< double > *percents)
 	ct::Matf y;
 
 	m_cifar->getTrain(batch, Xs, y, percents);
+
+	randValues(y.rows, m_vals);
+
+	for(size_t i = 0; i < Xs.size(); ++i){
+		randX(Xs[i], m_vals);
+	}
 
 	if(use_gpu && m_gpu_train.isInit()){
 		m_gpu_train.pass(Xs, y);
