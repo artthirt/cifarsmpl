@@ -18,11 +18,11 @@ MainWindow::MainWindow(QWidget *parent) :
 	std::vector< int > mlp;
 	std::vector< int > cnv_w;
 
-	cnv.push_back(15);
-	cnv.push_back(8);
+	cnv.push_back(20);
+	cnv.push_back(9);
 //	cnv.push_back(10);
 
-	cnv_w.push_back(5);
+	cnv_w.push_back(7);
 	cnv_w.push_back(7);
 //	cnv_w.push_back(3);
 
