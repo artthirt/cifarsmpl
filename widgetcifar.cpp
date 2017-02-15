@@ -166,9 +166,9 @@ void WidgetCifar::update_source()
 	int him = cifar_reader::HeightIM;
 
 	m_output_data.clear();
-	while(floop){
+	double cp = m_index;
 
-		double cp = m_index;
+	while(floop){
 
 		QVector< TData >& data = m_cifar->train(batch, cp);
 		cp = m_cifar->current_percent();
