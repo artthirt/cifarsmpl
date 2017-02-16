@@ -37,13 +37,25 @@ FORMS    += mainwindow.ui \
     drawcnvweight.ui
 
 win32{
-QMAKE_CXXFLAGS += /openmp
+    QMAKE_CXXFLAGS += /openmp
 }
 
 unix{
-QMAKE_CXXFLAGS += -fopenmp
-LIBS += -lgomp
+    QMAKE_CXXFLAGS += -fopenmp
+    LIBS += -lgomp
 }
+
+CONFIG(debug, debug|release){
+    DST = "debug"
+}else{
+    DST = "release"
+}
+
+UI_DIR = tmp/$$DST/ui
+OBJECTS_DIR = tmp/$$DST/obj
+RCC_DIR = tmp/$$DST/rcc
+MOC_DIR = tmp/$$DST/moc
+
 
 include(ct/ct.pri)
 include(gpu/gpu.pri)

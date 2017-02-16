@@ -758,7 +758,7 @@ void hsplit(const ct::Mat_<T>& res, size_t cols, std::vector< ct::Mat_<T> >& lis
 
 	T *dR = res.ptr();
 #pragma omp parallel for
-	for(size_t i = 0; i < cols; ++i){
+	for(int i = 0; i < cols; ++i){
 		T *dLi = list[i].ptr();
 #ifdef __GNUC__
 #pragma omp simd
