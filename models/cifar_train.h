@@ -76,7 +76,8 @@ private:
 	void randValues(size_t count, std::vector< ct::Vec3f >& vals);
 	void randX(ct::Matf &X, std::vector< ct::Vec3f >& vals);
 
-	void getEstimate(const std::vector< ct::Matf > &Xs, ct::Matf &y, int right, double &l2, bool use_gpu);
+	void getEstimate(const std::vector< ct::Matf > &Xs, ct::Matf &y,
+					 uint &right, double &l2, bool use_gpu);
 
 };
 

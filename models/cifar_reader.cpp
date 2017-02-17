@@ -389,7 +389,7 @@ uint cifar_reader::readCifar(QFile &file, QVector<TData> &val, int batch, int of
 	int sz = 0;
 
 	int max_off = file.size() / rowLen[m_data_source];
-	max_off -= 1;
+	//max_off -= 1;
 	m_count = max_off;
 
 	sz = std::min(max_off - offset, batch);

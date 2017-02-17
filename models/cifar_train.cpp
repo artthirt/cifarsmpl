@@ -264,7 +264,8 @@ void cifar_train::pass(int batch, bool use_gpu, std::vector< double > *percents)
 }
 
 
-void cifar_train::getEstimate(const std::vector<ct::Matf> &Xs, ct::Matf &y, int right, double &l2, bool use_gpu)
+void cifar_train::getEstimate(const std::vector<ct::Matf> &Xs, ct::Matf &y,
+							  uint &right, double &l2, bool use_gpu)
 {
 	ct::Matf yp;
 
@@ -307,7 +308,10 @@ void cifar_train::getEstimate(int batch, double &accuracy, double &l2, bool use_
 
 	m_cifar->getTrain(batch, Xs, y);
 
-	getEstimate(Xs, y, accuracy, l2, use_gpu);
+	uint right;
+	getEstimate(Xs, y, right, l2, use_gpu);
+
+	accuracy = (double)right / y.rows;
 }
 
 void cifar_train::getEstimateTest(double &accuracy, double &l2, bool use_gpu)
@@ -332,7 +336,7 @@ void cifar_train::getEstimateTest(double &accuracy, double &l2, bool use_gpu)
 		ind += batch;
 		qDebug("test pass: pos=%d, batch=%d, count=%d", ind, batch, size);
 	}
-	accuracy = right_all / m_cifar->count_test();
+	accuracy = (double)right_all / m_cifar->count_test();
 	l2 /= count_all;
 }
 
