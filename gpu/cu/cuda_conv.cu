@@ -506,25 +506,67 @@ void cuda_reduce_blocks(const GpuMat& Blocks, GpuMat& W, T val)
 }
 
 template< typename T >
+struct CudaMem{
+	T* data;
+	int size;
+	int allocate;
+
+	CudaMem(){
+		data = 0;
+		size = 0;
+		allocate = 0;
+	}
+	~CudaMem(){
+		release();
+	}
+	void release(){
+		if(data != 0){
+			cudaFree(data);
+		}
+		size = 0;
+		allocate = 0;
+	}
+
+	bool empty(){
+		return data == 0;
+	}
+	void create(int size){
+		if(size > allocate){
+			release();
+		}else{
+			this->size = size;
+			return;
+		}
+		this->size = size;
+		this->allocate = size;
+		assert(cudaMalloc(&data, allocate) == cudaSuccess);
+	}
+};
+
+/// ! Not thread safe
+template< typename T >
 void cuda_reduce(const GpuMat& mat, GpuMat& res)
 {
 #if 1
-	T *res1, *res2;
+	//T *res1, *res2;
+	static CudaMem<T> res1, res2;
 
 	int block = 32;
 
 	int size2 = (mat.total() / block + 1);
 	int size2_bytes = size2 * sizeof(T);
 
-	assert(cudaMalloc(&res1, size2_bytes) == cudaSuccess);
-	assert(cudaMalloc(&res2, size2_bytes) == cudaSuccess);
+	res1.create(size2_bytes);
+	res2.create(size2_bytes);
+//	assert(cudaMalloc(&res1, size2_bytes) == cudaSuccess);
+//	assert(cudaMalloc(&res2, size2_bytes) == cudaSuccess);
 //	assert(cudaMemcpy(res1, mat.data, mat.size(), cudaMemcpyDeviceToDevice) == cudaSuccess);
 
 //	std::vector< T > vec;
 //	vec.resize(size2);
 
 	int size1 = mat.total();
-	T *d1 = (T*)mat.data, *d2 = res2;
+	T *d1 = (T*)mat.data, *d2 = res2.data;
 	int cnt = mat.total();
 //	if((cnt % 2) == 1)cnt += 1;
 	for(int s = 1; s < cnt; s *= block){
@@ -535,7 +577,7 @@ void cuda_reduce(const GpuMat& mat, GpuMat& res)
 
 //		cudaMemcpy(&vec[0], d2, sizeof(T) * size2, cudaMemcpyDeviceToHost);
 		if(d1 == (T*)mat.data)
-			d1 = res1;
+			d1 = res1.data;
 
 		std::swap(d1, d2);
 		size1 = size2;
@@ -546,8 +588,8 @@ void cuda_reduce(const GpuMat& mat, GpuMat& res)
 	cudaMemcpy(res.data, d1, sizeof(T), cudaMemcpyDeviceToDevice);
 //	cudaMemcpy(&vec[0], d1, sizeof(T), cudaMemcpyDeviceToHost);
 
-	cudaFree(res1);
-	cudaFree(res2);
+//	cudaFree(res1);
+//	cudaFree(res2);
 #else
 	res = thrust::reduce(thrust::device, (T*)mat.data, (T*)mat.data + mat.total());
 #endif
