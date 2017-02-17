@@ -109,8 +109,8 @@ QVector<TData> &cifar_reader::train(int batch, double percent)
 QVector<TData> &cifar_reader::test(int beg, int count)
 {
 	open_test_file();
-	if(!!m_current_test_object.isOpen())
-		return m_current_test;
+	if(!m_current_test_object.isOpen())
+		throw new std::invalid_argument("cifar_reader::test: test file not opened");
 	readCifar(m_current_test_object, m_current_test, count, beg);
 	m_timer_test.start();
 	return m_current_test;
@@ -134,6 +134,7 @@ void cifar_reader::open_test_file()
 	if(!m_current_test_object.isOpen()){
 		m_current_test_object.setFileName(test_images_file);
 		m_current_test_object.open(QIODevice::ReadOnly);
+		qDebug("Test file open: %d, error: %s", m_current_test_object.isOpen(), m_current_test_object.errorString().toLatin1().data());
 	}
 }
 
@@ -340,6 +341,9 @@ void cifar_reader::onTimeoutTest()
 
 uint cifar_reader::readCifar(const QString& fn, QVector<TData> &val, int batch, int offset)
 {
+	if(!QFile::exists(fn))
+		throw new std::invalid_argument("cifar_reader::readCifar file not exists");
+
 	if(m_current_object.fileName() == fn){
 		if(!m_current_object.isOpen()){
 			m_current_object.open(QIODevice::ReadOnly);

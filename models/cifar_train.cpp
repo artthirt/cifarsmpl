@@ -270,9 +270,17 @@ void cifar_train::getEstimate(const std::vector<ct::Matf> &Xs, ct::Matf &y, int 
 
 	if(use_gpu && m_gpu_train.isInit()){
 		m_gpu_train.forward(Xs, yp);
+
+		if(Xs.empty() || Xs[0].empty() || y.empty())
+			return;
+
 		l2 = m_gpu_train.getL2(yp, y);
 	}else{
 		forward(Xs, yp);
+
+		if(Xs.empty() || Xs[0].empty() || y.empty())
+			return;
+
 		m_td = ct::subIndOne(yp, y);
 
 		ct::Matf d = ct::elemwiseSqr(m_td);
@@ -307,10 +315,12 @@ void cifar_train::getEstimateTest(double &accuracy, double &l2, bool use_gpu)
 	std::vector< ct::Matf > Xs;
 	ct::Matf y;
 
-	uint batch = 100, ind = 0, right = 0, right_all = 0, count_all = 0;
+	uint batch = 500, ind = 0, right = 0, right_all = 0, count_all = 0;
 	double l2i;
 
-	while(ind < m_cifar->count_test()){
+	uint size = m_cifar->count_test();
+
+	while(ind < size){
 		batch = m_cifar->getTest(ind, batch, Xs, y);
 
 		getEstimate(Xs, y, right, l2i, use_gpu);
@@ -320,6 +330,7 @@ void cifar_train::getEstimateTest(double &accuracy, double &l2, bool use_gpu)
 		count_all++;
 
 		ind += batch;
+		qDebug("test pass: pos=%d, batch=%d, count=%d", ind, batch, size);
 	}
 	accuracy = right_all / m_cifar->count_test();
 	l2 /= count_all;
