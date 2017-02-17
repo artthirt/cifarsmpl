@@ -21,7 +21,8 @@ SOURCES += main.cpp\
     models/convnnf.cpp \
     drawcnvweight.cpp \
     qt_work_mat.cpp \
-    models/gpu_train.cpp
+    models/gpu_train.cpp \
+    test_agg.cpp
 
 HEADERS  += mainwindow.h \
     widgetcifar.h \
@@ -30,7 +31,8 @@ HEADERS  += mainwindow.h \
     models/convnnf.h \
     drawcnvweight.h \
     qt_work_mat.h \
-    models/gpu_train.h
+    models/gpu_train.h \
+    test_agg.h
 
 FORMS    += mainwindow.ui \
     widgetcifar.ui \

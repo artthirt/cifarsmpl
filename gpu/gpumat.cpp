@@ -1,5 +1,6 @@
 #include "gpumat.h"
 
+#include <iomanip>
 #include <sstream>
 #include <fstream>
 
@@ -236,10 +237,10 @@ std::string getString(void* data, int rows, int cols)
 
 	std::stringstream stream;
 
-	stream << "[";
+	stream << std::setprecision(4) << "[";
 	for(int i = 0; i < rows; i++){
 		for(int j = 0; j < cols; j++){
-			stream << vec[i * cols + j] << " ";
+			stream << vec[i * cols + j] << "\t";
 		}
 		if(i != rows - 1)stream << ";\n ";
 	}

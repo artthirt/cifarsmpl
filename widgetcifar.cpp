@@ -260,7 +260,7 @@ void WidgetCifar::paintEvent(QPaintEvent *event)
 		QString text = QString::number((uint)m_output_data[i].lb);
 		painter.drawText(x * wim + 3, y * him + 12, text);
 
-		if(prediction.size()){
+		if(prediction.size() && prediction.size() == m_output_data.size()){
 			painter.setPen(QColor(30, 255, 100));
 			QString text = QString::number((uint)prediction[i]);
 			painter.drawText(x * wim + 17, y * him + 12, text);

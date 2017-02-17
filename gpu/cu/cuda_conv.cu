@@ -382,6 +382,23 @@ __global__ void hsplit(Mtx Res, SmallMtxArray List)
 }
 
 template< typename T >
+__global__ void hsplit(int beg, int count, Mtx Res, SmallMtxArrayStatic List)
+{
+	int row = threadIdx.y + blockIdx.y * blockDim.y;
+	int col = threadIdx.x + blockIdx.x * blockDim.x;
+
+	if(row < Res.rows && col < count && beg + col < Res.cols){
+		T *dR =(T*)Res.data;
+
+		int lid = col / List.mtx[0].cols;
+		Mtx& mtx = List.mtx[lid];
+		int lcol = col - lid * mtx.cols;
+		T* dM = (T*)mtx.data;
+		dM[row * mtx.cols + lcol] = dR[row * Res.cols + beg + col];
+	}
+}
+
+template< typename T >
 __global__ void hconcat(SmallMtxArray List, Mtx Res)
 {
 	int row = threadIdx.y + blockIdx.y * blockDim.y;
@@ -395,6 +412,23 @@ __global__ void hconcat(SmallMtxArray List, Mtx Res)
 		int lcol = col - lid * mtx.cols;
 		T* dM = (T*)mtx.data;
 		dR[row * Res.cols + col] = dM[row * mtx.cols + lcol];
+	}
+}
+
+template< typename T >
+__global__ void hconcat(int beg, int count, Mtx Res, SmallMtxArrayStatic List)
+{
+	int row = threadIdx.y + blockIdx.y * blockDim.y;
+	int col = threadIdx.x + blockIdx.x * blockDim.x;
+
+	if(row < Res.rows && col < count && beg + col < Res.cols){
+		T *dR =(T*)Res.data;
+
+		int lid = col / List.mtx[0].cols;
+		Mtx& mtx = List.mtx[lid];
+		int lcol = col - lid * mtx.cols;
+		T* dM = (T*)mtx.data;
+		dR[row * Res.cols + beg + col] = dM[row * mtx.cols + lcol];
 	}
 }
 
@@ -685,6 +719,7 @@ void cuda_deriv_prev_conv2d(const std::vector<GpuMat> &deriv,
 extern "C"
 void cuda_hsplit(const GpuMat &res, std::vector<GpuMat> &list)
 {
+#if 0
 	int x1 = res.cols / BLOCKSIZE + 1;
 	int x2 = res.rows / BLOCKSIZE + 1;
 
@@ -700,12 +735,45 @@ void cuda_hsplit(const GpuMat &res, std::vector<GpuMat> &list)
 		internal::hsplit<float> <<<dimGrid, dimBlock>>>(res, slist);
 		break;
 	}
+#else
+	int block = internal::SmallMtxArrayStatic::maxcount;
+	int xx1, offset;
 
+	//int x1 = res.cols / BLOCKSIZE + 1;
+	int x2 = res.rows / BLOCKSIZE + 1;
+
+	int lcols = list[0].cols;
+
+	dim3 dimBlock(BLOCKSIZE, BLOCKSIZE);
+
+	for(int i = 0; i < list.size(); i += block){
+		int beg = i;
+		int last = beg + min((int)list.size() - i, block);
+		internal::SmallMtxArrayStatic slist(list, beg, last);
+
+		offset = lcols * beg;
+
+		xx1 = min(block, res.cols - offset);
+		dim3 dimGrid((lcols * xx1) / BLOCKSIZE + 1, x2);
+
+//		std::cout << offset << " " << xx1 << std::endl;
+
+		switch (res.type) {
+		case GPU_DOUBLE:
+			internal::hsplit<double> <<<dimGrid, dimBlock>>>(offset, lcols * xx1, res, slist);
+			break;
+		case GPU_FLOAT:
+			internal::hsplit<float> <<<dimGrid, dimBlock>>>(offset, lcols * xx1, res, slist);
+			break;
+		}
+	}
+#endif
 }
 
 extern "C"
 void cuda_hconcat(const std::vector<GpuMat> &list, GpuMat &res)
 {
+#if 0
 	int x1 = res.cols / BLOCKSIZE + 1;
 	int x2 = res.rows / BLOCKSIZE + 1;
 
@@ -721,4 +789,37 @@ void cuda_hconcat(const std::vector<GpuMat> &list, GpuMat &res)
 		internal::hconcat<float> <<<dimGrid, dimBlock>>>(slist, res);
 		break;
 	}
+#else
+	int block = internal::SmallMtxArrayStatic::maxcount;
+	int xx1, offset;
+
+	//int x1 = res.cols / BLOCKSIZE + 1;
+	int x2 = res.rows / BLOCKSIZE + 1;
+
+	int lcols = list[0].cols;
+
+	dim3 dimBlock(BLOCKSIZE, BLOCKSIZE);
+
+	for(int i = 0; i < list.size(); i += block){
+		int beg = i;
+		int last = beg + min((int)list.size() - i, block);
+		internal::SmallMtxArrayStatic slist(list, beg, last);
+
+		offset = lcols * beg;
+
+		xx1 = min(block, res.cols - offset);
+		dim3 dimGrid((lcols * xx1) / BLOCKSIZE + 1, x2);
+
+//		std::cout << offset << " " << xx1 << std::endl;
+
+		switch (res.type) {
+		case GPU_DOUBLE:
+			internal::hconcat<double> <<<dimGrid, dimBlock>>>(offset, lcols * xx1, res, slist);
+			break;
+		case GPU_FLOAT:
+			internal::hconcat<float> <<<dimGrid, dimBlock>>>(offset, lcols * xx1, res, slist);
+			break;
+		}
+	}
+#endif
 }
