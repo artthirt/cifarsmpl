@@ -176,8 +176,8 @@ void cifar_train::forward(const std::vector< ct::Matf > &X, ct::Matf &a_out,
 
 void cifar_train::randValues(size_t count, std::vector<ct::Vec3f> &vals)
 {
-	std::uniform_int_distribution<int> udtr(-5, 5);
-	std::uniform_real_distribution<float> uar(-3, 3);
+	std::uniform_int_distribution<int> udtr(-15, 15);
+	std::uniform_real_distribution<float> uar(-7, 7);
 
 	vals.resize(count);
 

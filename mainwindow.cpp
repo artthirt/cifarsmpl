@@ -18,8 +18,8 @@ MainWindow::MainWindow(QWidget *parent) :
 	std::vector< int > mlp;
 	std::vector< int > cnv_w;
 
-	cnv.push_back(9);
-	cnv.push_back(9);
+	cnv.push_back(10);
+	cnv.push_back(10);
 //	cnv.push_back(4);
 
 	cnv_w.push_back(5);
@@ -84,7 +84,7 @@ void MainWindow::pass()
 
 	std::vector< double > percents;
 
-	m_train.pass(100, ui->chb_gpu->isChecked(), &percents);
+	m_train.pass(150, ui->chb_gpu->isChecked(), &percents);
 
 	{
 		std::stringstream ss;
