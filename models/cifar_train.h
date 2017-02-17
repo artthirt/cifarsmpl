@@ -32,7 +32,9 @@ public:
 
 	void pass(int batch, bool use_gpu = false, std::vector<double> *percents = nullptr);
 
-	void getEstimage(int batch, double& accuracy, double& l2, bool use_gpu = false);
+	void getEstimate(int batch, double& accuracy, double& l2, bool use_gpu = false);
+
+	void getEstimateTest(double& accuracy, double& l2, bool use_gpu = false);
 
 	void setAlpha(double alpha);
 
@@ -73,6 +75,8 @@ private:
 	void clearDropout();
 	void randValues(size_t count, std::vector< ct::Vec3f >& vals);
 	void randX(ct::Matf &X, std::vector< ct::Vec3f >& vals);
+
+	void getEstimate(const std::vector< ct::Matf > &Xs, ct::Matf &y, int right, double &l2, bool use_gpu);
 
 };
 

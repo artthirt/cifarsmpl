@@ -13,6 +13,8 @@ const QString train_images_file[] = {
 	("data/cifar-10-batches-bin/data_batch_5.bin")
 };
 
+const QString test_images_file = "data/cifar-10-batches-bin/test_batch.bin";
+
 const int rowLen[] = {
 	3073,
 	3074
@@ -55,10 +57,15 @@ cifar_reader::cifar_reader()
 	m_current_batch = 0;
 	m_current_offset = 0;
 	m_current_percent = 0;
+	m_count_test = 0;
 
 	m_timer.setSingleShot(true);
 	m_timer.setInterval(10000);
 	connect(&m_timer, SIGNAL(timeout()), this, SLOT(onTimeout()));
+
+	m_timer_test.setSingleShot(true);
+	m_timer_test.setInterval(10000);
+	connect(&m_timer_test, SIGNAL(timeout()), this, SLOT(onTimeoutTest()));
 }
 
 QVector<TData> &cifar_reader::train(int batch, double percent)
@@ -97,6 +104,37 @@ QVector<TData> &cifar_reader::train(int batch, double percent)
 	readCifar(fn, m_current_data, batch, offset);
 
 	return m_current_data;
+}
+
+QVector<TData> &cifar_reader::test(int beg, int count)
+{
+	open_test_file();
+	if(!!m_current_test_object.isOpen())
+		return m_current_test;
+	readCifar(m_current_test_object, m_current_test, count, beg);
+	m_timer_test.start();
+	return m_current_test;
+}
+
+uint cifar_reader::count_test()
+{
+	open_test_file();
+	if(!m_current_test_object.isOpen()){
+		return 0;
+	}
+	if(!m_count_test){
+		m_count_test = m_current_test_object.size() / rowLen[m_data_source];
+		m_timer_test.start();
+	}
+	return m_count_test;
+}
+
+void cifar_reader::open_test_file()
+{
+	if(!m_current_test_object.isOpen()){
+		m_current_test_object.setFileName(test_images_file);
+		m_current_test_object.open(QIODevice::ReadOnly);
+	}
 }
 
 void cifar_reader::convToXy(const QVector<TData> &data, std::vector<ct::Matf> &X, ct::Matf *y)
@@ -229,6 +267,34 @@ void cifar_reader::getTrainIt(double percent, int batch, std::vector<ct::Matf> &
 	}
 }
 
+uint cifar_reader::getTest(uint beg, uint batch, std::vector<ct::Matf> &Xs, ct::Matf &y)
+{
+	test(beg, batch);
+
+	if(m_current_test.empty())
+		return 0;
+
+	Xs.resize(3);
+
+	y.setSize(m_current_test.size(), 1);
+	y.fill(0);
+
+	for(size_t i = 0; i < Xs.size(); ++i){
+		Xs[i].setSize(m_current_test.size(), WidthIM * HeightIM);
+	}
+
+	float *dy = y.ptr();
+
+	for(uint i = 0; i < m_current_test.size(); ++i){
+		TData &data = m_current_test[i];
+
+		ct::image2mats(data.data, WidthIM, HeightIM, i, Xs[0], Xs[1], Xs[2]);
+
+		dy[i * y.cols + 0] = data.lb;
+	}
+	return m_current_test.size();
+}
+
 uint cifar_reader::count()
 {
 	return maxCount;
@@ -253,6 +319,13 @@ void cifar_reader::onTimeout()
 {
 	if(m_current_object.isOpen())
 		m_current_object.close();
+
+}
+
+void cifar_reader::onTimeoutTest()
+{
+	if(m_current_test_object.isOpen())
+		m_current_test_object.close();
 }
 
 //ct::Matf &cifar_reader::X()

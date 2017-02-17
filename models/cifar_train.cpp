@@ -263,23 +263,17 @@ void cifar_train::pass(int batch, bool use_gpu, std::vector< double > *percents)
 	m_optim.pass(m_mlp);
 }
 
-void cifar_train::getEstimage(int batch, double &accuracy, double &l2, bool use_gpu)
+
+void cifar_train::getEstimate(const std::vector<ct::Matf> &Xs, ct::Matf &y, int right, double &l2, bool use_gpu)
 {
-	if(!m_init || batch <= 0)
-		throw new std::invalid_argument("not initialize");
-
-	std::vector< ct::Matf > Xs;
 	ct::Matf yp;
-	ct::Matf y;
-
-	m_cifar->getTrain(batch, Xs, y);
 
 	if(use_gpu && m_gpu_train.isInit()){
 		m_gpu_train.forward(Xs, yp);
 		l2 = m_gpu_train.getL2(yp, y);
 	}else{
 		forward(Xs, yp);
-		m_td = ct::subIndOne(yp,y);
+		m_td = ct::subIndOne(yp, y);
 
 		ct::Matf d = ct::elemwiseSqr(m_td);
 		l2 = d.sum() / d.rows;
@@ -292,7 +286,43 @@ void cifar_train::getEstimage(int batch, double &accuracy, double &l2, bool use_
 			count++;
 		}
 	}
-	accuracy = (double)count / y.rows;
+	right = count;
+}
+
+void cifar_train::getEstimate(int batch, double &accuracy, double &l2, bool use_gpu)
+{
+	if(!m_init || batch <= 0)
+		throw new std::invalid_argument("not initialize");
+
+	std::vector< ct::Matf > Xs;
+	ct::Matf y;
+
+	m_cifar->getTrain(batch, Xs, y);
+
+	getEstimate(Xs, y, accuracy, l2, use_gpu);
+}
+
+void cifar_train::getEstimateTest(double &accuracy, double &l2, bool use_gpu)
+{
+	std::vector< ct::Matf > Xs;
+	ct::Matf y;
+
+	uint batch = 100, ind = 0, right = 0, right_all = 0, count_all = 0;
+	double l2i;
+
+	while(ind < m_cifar->count_test()){
+		batch = m_cifar->getTest(ind, batch, Xs, y);
+
+		getEstimate(Xs, y, right, l2i, use_gpu);
+		l2 += l2i;
+		right_all += right;
+
+		count_all++;
+
+		ind += batch;
+	}
+	accuracy = right_all / m_cifar->count_test();
+	l2 /= count_all;
 }
 
 void cifar_train::setAlpha(double alpha)

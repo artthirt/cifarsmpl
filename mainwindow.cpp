@@ -18,8 +18,8 @@ MainWindow::MainWindow(QWidget *parent) :
 	std::vector< int > mlp;
 	std::vector< int > cnv_w;
 
-	cnv.push_back(10);
-	cnv.push_back(10);
+	cnv.push_back(5);
+	cnv.push_back(5);
 //	cnv.push_back(4);
 
 	cnv_w.push_back(5);
@@ -58,12 +58,15 @@ void MainWindow::on_pb_next_clicked()
 
 void MainWindow::on_pb_test_clicked()
 {
-	ct::Matf y;
-	std::vector< ct::Matf > X;
+	if(ui->pb_pass->isChecked()){
+		ui->pte_logs->appendPlainText("<<<Not run test when pass work!>>>");
+		return;
+	}
+	double acc = -1, l2 = -1;
+	m_train.getEstimateTest(acc, l2, ui->chb_gpu->isChecked());
 
-	m_cifar.getTrain(100, X, y);
-
-	qDebug("X[0] size=(%d, %d)", X[0].rows, X[0].cols);
+	ui->lb_out->setText(QString("Test: acc=%1, l2=%2").arg(acc).arg(l2));
+	ui->pte_logs->appendPlainText(QString("Test: acc=%1, l2=%2").arg(acc).arg(l2));
 }
 
 void MainWindow::onTimeout()
@@ -84,7 +87,7 @@ void MainWindow::pass()
 
 	std::vector< double > percents;
 
-	m_train.pass(150, ui->chb_gpu->isChecked(), &percents);
+	m_train.pass(50, ui->chb_gpu->isChecked(), &percents);
 
 	{
 		std::stringstream ss;
@@ -100,7 +103,7 @@ void MainWindow::pass()
 	ui->lb_it->setText(QString("Iteraion %1").arg(it));
 
 	if((it % 20) == 0){
-		m_train.getEstimage(500, acc, l2, ui->chb_gpu->isChecked());
+		m_train.getEstimate(500, acc, l2, ui->chb_gpu->isChecked());
 
 		qDebug("iteration %d: acc=%f, l2=%f", it, acc, l2);
 

@@ -27,7 +27,8 @@ public:
 	cifar_reader();
 
 	QVector<TData> &train(int batch, double percent);
-	QVector<QByteArray> &test();
+	QVector<TData> &test(int beg, int count);
+	uint count_test();
 
 	void convToXy(const QVector< TData > &data, std::vector< ct::Matf >& X, ct::Matf *y = nullptr);
 
@@ -35,6 +36,8 @@ public:
 	void getTrain(int batch, std::vector< ct::Matf >& X, ct::Matf &y, std::vector<double> *percents = nullptr);
 	bool getDataIt(double percent, int batch, QVector<TData> &data);
 	void getTrainIt(double percent, int batch, std::vector< ct::Matf >& X, ct::Matf *y = nullptr);
+
+	uint getTest(uint beg, uint batch, std::vector< ct::Matf >& X, ct::Matf &y);
 
 	uint count();
 	uint current_file();
@@ -45,6 +48,7 @@ public:
 
 public slots:
 	void onTimeout();
+	void onTimeoutTest();
 
 private:
 	uint m_data_source;
@@ -55,8 +59,15 @@ private:
 	double m_current_percent;
 
 	QVector<TData> m_current_data;
+	QVector<TData> m_current_test;
 	QFile m_current_object;
 	QTimer m_timer;
+	QTimer m_timer_test;
+
+	uint m_count_test;
+	QFile m_current_test_object;
+
+	void open_test_file();
 
 //	ct::Matf m_X;
 //	ct::Matf m_y;
