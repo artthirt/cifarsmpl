@@ -142,7 +142,7 @@ void convnn::backward(const std::vector<convnn> &Delta, etypefunction func, int 
 
 	ct::Size szW(weight_size, weight_size);
 
-	gpumat::deriv_conv2D(*pA0, dA1, szA0, szA1, szW, stride, gradW, gradB);
+	gpumat::deriv_conv2D(*pA0, dA1, szA0, szA1, szW, stride, gradW, gradB, &m_tmp1);
 
 	if(!last_layer)
 		gpumat::deriv_prev_cnv(dA1, W, szA1, szA0, stride, DltA0);
@@ -542,6 +542,10 @@ void deriv_conv2D(const GpuMat &A0,
 
 	gradW.resize(gradA1.size());
 	gradB.resize(gradA1.size());
+
+	if(pblocks){
+		pblocks->resize(gradA1.size());
+	}
 
 	for(size_t i = 0; i < gradA1.size(); ++i){
 		deriv_conv2D(A0, gradA1[i], szA0, szA1, szW, stride, gradW[i], gradB[i], pblocks? &(*pblocks)[i] : nullptr);

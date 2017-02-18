@@ -67,7 +67,7 @@ public:
 private:
 	bool m_init;
 
-	GpuMat m_tmp1;
+	tvmat m_tmp1;
 	tvmat gradW;
 	tvmat gradB;
 
