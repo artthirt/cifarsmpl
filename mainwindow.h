@@ -38,6 +38,10 @@ private slots:
 
 	void on_actOpenDir_triggered();
 
+	void on_action_save_model_triggered();
+
+	void on_actionLoad_model_triggered();
+
 private:
 	Ui::MainWindow *ui;
 	QTimer m_timer;

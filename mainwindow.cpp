@@ -3,6 +3,8 @@
 
 #include <QFileDialog>
 
+const QString model_file("model.bin");
+
 MainWindow::MainWindow(QWidget *parent) :
 	QMainWindow(parent),
 	ui(new Ui::MainWindow)
@@ -167,4 +169,17 @@ void MainWindow::on_actOpenDir_triggered()
 			ui->wcifar->update_source();
 		}
 	}
+}
+
+void MainWindow::on_action_save_model_triggered()
+{
+	m_train.saveToFile(model_file, ui->chb_gpu->isChecked());
+}
+
+void MainWindow::on_actionLoad_model_triggered()
+{
+	if(!m_train.loadFromFile(model_file, ui->chb_gpu->isChecked())){
+		ui->pte_logs->appendPlainText("Model not loaded");
+	}
+	ui->pte_logs->appendPlainText("Model loaded");
 }

@@ -60,6 +60,10 @@ public:
 				  std::vector< GpuMat >& pA0,
 				  int first = -1, int last = -1);
 
+
+	void write(std::fstream& fs);
+	void read(std::fstream& fs);
+
 private:
 	bool m_init;
 
@@ -100,6 +104,9 @@ public:
 	void backward(const GpuMat& X);
 
 	std::vector<tvconvnn> &cnv();
+
+	void write(std::fstream& fs);
+	void read(std::fstream& fs);
 
 	std::vector<tvconvnn> &operator () ();
 };

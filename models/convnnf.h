@@ -9,6 +9,7 @@
 typedef ct::convnn<float> convnnf;
 typedef std::vector< convnnf > tvconvnnf;
 
+namespace convnn{
 
 class ConvNN{
 public:
@@ -33,8 +34,12 @@ public:
 	void conv(const ct::Matf& X, ct::Matf& XOut);
 	void backward(const ct::Matf& X);
 
+	void write(std::fstream& fs);
+	void read(std::fstream& fs);
+
 	std::vector<tvconvnnf> &operator () ();
 };
 
+}
 
 #endif // CONVNN_H

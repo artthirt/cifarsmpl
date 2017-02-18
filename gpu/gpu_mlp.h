@@ -38,6 +38,9 @@ public:
 
 	void backward(const GpuMat &Delta, bool last_layer = false);
 
+	void write(std::fstream& fs);
+	void read(std::fstream& fs);
+
 private:
 	bool m_init;
 	bool m_is_dropout;

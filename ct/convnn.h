@@ -175,6 +175,20 @@ public:
 		ct::hconcat(slice, _out);
 	}
 
+	void write(std::fstream& fs){
+		for(size_t i = 0; i < W.size(); ++i){
+			write_fs(fs, W[i]);
+			fs.write((char*)&B[i], sizeof(T));
+		}
+	}
+
+	void read(std::fstream& fs){
+		for(size_t i = 0; i < W.size(); ++i){
+			read_fs(fs, W[i]);
+			fs.read((char*)&B[i], sizeof(T));
+		}
+	}
+
 private:
 	bool m_init;
 	ct::etypefunction m_func;

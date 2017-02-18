@@ -1,6 +1,8 @@
 #include "convnnf.h"
 #include "nn.h"
 
+using namespace convnn;
+
 ConvNN::ConvNN()
 {
 
@@ -119,6 +121,32 @@ void ConvNN::backward(const ct::Matf &X)
 				cnv.backward(m_conv[i + 1], kfirst, kidx, i == 0);
 		}
 //			qDebug("----");
+	}
+}
+
+void ConvNN::write(std::fstream& fs)
+{
+	if(!fs.is_open() || !m_conv.size())
+		return;
+
+	for(size_t i = 0; i < m_conv.size(); ++i){
+		for(size_t j = 0; j < m_conv[i].size(); ++j){
+			convnnf& cnv = m_conv[i][j];
+			cnv.write(fs);
+		}
+	}
+}
+
+void ConvNN::read(std::fstream& fs)
+{
+	if(!fs.is_open() || !m_conv.size())
+		return;
+
+	for(size_t i = 0; i < m_conv.size(); ++i){
+		for(size_t j = 0; j < m_conv[i].size(); ++j){
+			convnnf& cnv = m_conv[i][j];
+			cnv.read(fs);
+		}
 	}
 }
 

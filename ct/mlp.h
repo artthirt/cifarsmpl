@@ -201,6 +201,16 @@ public:
 		}
 	}
 
+	void write(std::fstream& fs){
+		write_fs(fs, W);
+		write_fs(fs, B);
+	}
+
+	void read(std::fstream& fs){
+		read_fs(fs, W);
+		read_fs(fs, B);
+	}
+
 private:
 	bool m_init;
 	bool m_is_dropout;

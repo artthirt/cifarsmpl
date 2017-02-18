@@ -963,6 +963,28 @@ void deriv_prev_cnv(const std::vector< ct::Mat_<T> >& deriv,
 	}
 }
 
+/**
+ * @brief write_fs
+ * @param fs
+ * @param mat
+ */
+template< typename T >
+void write_fs(std::fstream& fs, const ct::Mat_<T>& mat)
+{
+	fs.write((char*)mat.ptr(), sizeof(T) * mat.total());
+}
+
+/**
+ * @brief read_fs
+ * @param fs
+ * @param mat
+ */
+template< typename T >
+void read_fs(std::fstream& fs, ct::Mat_<T>& mat)
+{
+	fs.read((char*)mat.ptr(), sizeof(T) * mat.total());
+}
+
 }
 
 #endif // NN_H

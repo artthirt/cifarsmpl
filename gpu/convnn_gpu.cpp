@@ -179,6 +179,32 @@ void convnn::upsample(const std::vector<convnn> &A1, ct::Size &szA1, const ct::S
 	}
 }
 
+void convnn::write(std::fstream &fs)
+{
+	if(!fs.is_open() || W.empty() || B.empty())
+		return;
+
+	for(size_t i = 0; i < W.size(); ++i){
+		gpumat::GpuMat &Wi = W[i];
+		gpumat::GpuMat &Bi = B[i];
+		gpumat::write_fs(fs, Wi);
+		gpumat::write_fs(fs, Bi);
+	}
+}
+
+void convnn::read(std::fstream &fs)
+{
+	if(!fs.is_open() || W.empty() || B.empty())
+		return;
+
+	for(size_t i = 0; i < W.size(); ++i){
+		gpumat::GpuMat &Wi = W[i];
+		gpumat::GpuMat &Bi = B[i];
+		gpumat::read_fs(fs, Wi);
+		gpumat::read_fs(fs, Bi);
+	}
+}
+
 /////////////////////////////////////////
 ///////**********************////////////
 /////////////////////////////////////////
@@ -302,6 +328,32 @@ void ConvNN::backward(const GpuMat &X)
 std::vector<tvconvnn> &ConvNN::cnv()
 {
 	return m_conv;
+}
+
+void ConvNN::write(std::fstream &fs)
+{
+	if(!fs.is_open() || !m_conv.size())
+		return;
+
+	for(size_t i = 0; i < m_conv.size(); ++i){
+		for(size_t j = 0; j < m_conv[i].size(); ++j){
+			gpumat::convnn& cnv = m_conv[i][j];
+			cnv.write(fs);
+		}
+	}
+}
+
+void ConvNN::read(std::fstream &fs)
+{
+	if(!fs.is_open() || !m_conv.size())
+		return;
+
+	for(size_t i = 0; i < m_conv.size(); ++i){
+		for(size_t j = 0; j < m_conv[i].size(); ++j){
+			gpumat::convnn& cnv = m_conv[i][j];
+			cnv.read(fs);
+		}
+	}
 }
 
 std::vector<tvconvnn> &ConvNN::operator ()()

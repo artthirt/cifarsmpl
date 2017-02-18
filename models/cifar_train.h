@@ -48,6 +48,9 @@ public:
 
 	void init_gpu();
 
+	bool loadFromFile(const QString& fn, bool gpu);
+	void saveToFile(const QString& fn, bool gpu);
+
 private:
 	cifar_reader* m_cifar;
 	std::vector< int > m_layers;
@@ -65,7 +68,7 @@ private:
 
 	std::vector< ct::Matf > m_splitD;
 
-	std::vector< ConvNN > m_conv;
+	std::vector< convnn::ConvNN > m_conv;
 	std::vector< ct::mlpf > m_mlp;
 	ct::MlpOptim< float > m_optim;
 

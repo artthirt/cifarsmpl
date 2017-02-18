@@ -425,6 +425,93 @@ void cifar_train::init_gpu()
 	m_gpu_train.init();
 }
 
+bool cifar_train::loadFromFile(const QString &fn, bool gpu)
+{
+	if(gpu){
+		return m_gpu_train.loadFromFile(fn.toStdString());
+	}
+
+	std::fstream fs;
+	fs.open(fn.toStdString(), std::ios_base::in | std::ios_base::binary);
+
+	if(!fs.is_open()){
+		qDebug("File %s not open", fn.toLatin1().data());
+		return false;
+	}
+
+	int tmp;
+
+	fs.read((char*)&tmp, sizeof(tmp));
+	m_cnvlayers.resize(tmp);
+	fs.read((char*)&m_cnvlayers[0], m_cnvlayers.size() * sizeof(decltype(m_cnvlayers)::value_type));
+
+	fs.read((char*)&tmp, sizeof(tmp));
+	m_cnvweights.resize(tmp);
+	fs.read((char*)&m_cnvweights[0], m_cnvweights.size() * sizeof(decltype(m_cnvweights)::size_type));
+
+	fs.read((char*)&tmp, sizeof(tmp));
+	m_layers.resize(tmp);
+	fs.read((char*)&m_layers[0], m_layers.size() * sizeof(decltype(m_layers)::size_type));
+
+	fs.read((char*)&m_szA0, sizeof(m_szA0));
+
+	setConvLayers(m_cnvlayers, m_cnvweights, m_szA0);
+
+	init();
+
+	for(size_t i = 0; i < m_conv.size(); ++i){
+		convnn::ConvNN &cnv = m_conv[i];
+		cnv.read(fs);
+	}
+
+	for(size_t i = 0; i < m_mlp.size(); ++i){
+		m_mlp[i].read(fs);
+	}
+	return true;
+}
+
+void cifar_train::saveToFile(const QString &fn, bool gpu)
+{
+	if(gpu){
+		m_gpu_train.saveToFile(fn.toStdString());
+		return;
+	}
+
+	std::fstream fs;
+	fs.open(fn.toStdString(), std::ios_base::out | std::ios_base::binary);
+
+	if(!fs.is_open()){
+		qDebug("File %s not open", fn.toLatin1().data());
+		return;
+	}
+
+	int tmp;
+
+	tmp = m_cnvlayers.size();
+	fs.write((char*)&tmp, sizeof(tmp));
+	fs.write((char*)&m_cnvlayers[0], m_cnvlayers.size() * sizeof(decltype(m_cnvlayers)::value_type));
+
+	tmp = m_cnvweights.size();
+	fs.write((char*)&tmp, sizeof(tmp));
+	fs.write((char*)&m_cnvweights[0], m_cnvweights.size() * sizeof(decltype(m_cnvweights)::size_type));
+
+	tmp = m_layers.size();
+	fs.write((char*)&tmp, sizeof(tmp));
+	fs.write((char*)&m_layers[0], m_layers.size() * sizeof(decltype(m_layers)::size_type));
+
+	fs.write((char*)&m_szA0, sizeof(m_szA0));
+
+	for(size_t i = 0; i < m_conv.size(); ++i){
+		convnn::ConvNN &cnv = m_conv[i];
+		cnv.write(fs);
+	}
+
+	for(size_t i = 0; i < m_mlp.size(); ++i){
+		m_mlp[i].write(fs);
+	}
+
+}
+
 void cifar_train::setDropout(float p, int layers)
 {
 	for(int i = 0; i < std::min(layers, (int)m_mlp.size() - 1); ++i){

@@ -34,6 +34,9 @@ public:
 
 	std::vector<gpumat::tvconvnn> &cnv(int index);
 
+	bool loadFromFile(const std::string& fn);
+	void saveToFile(const std::string& fn);
+
 private:
 	std::vector< int > m_layers;
 	std::vector< int > m_cnvlayers;

@@ -2,6 +2,8 @@
 
 #include <QDebug>
 
+#include "qt_work_mat.h"
+
 //////////////////////
 
 void test_void(const gpumat::GpuMat& mat)
@@ -242,6 +244,86 @@ void gpu_train::pass()
 std::vector<gpumat::tvconvnn> &gpu_train::cnv(int index)
 {
 	return m_conv[index].cnv();
+}
+
+bool gpu_train::loadFromFile(const std::string &fn)
+{
+	std::fstream fs;
+	fs.open(fn, std::ios_base::in | std::ios_base::binary);
+
+	if(!fs.is_open()){
+		qDebug("File %s not open", fn.c_str());
+		return false;
+	}
+
+	int tmp;
+
+	fs.read((char*)&tmp, sizeof(tmp));
+	m_cnvlayers.resize(tmp);
+	fs.read((char*)&m_cnvlayers[0], m_cnvlayers.size() * sizeof(decltype(m_cnvlayers)::value_type));
+
+	fs.read((char*)&tmp, sizeof(tmp));
+	m_cnvweights.resize(tmp);
+	fs.read((char*)&m_cnvweights[0], m_cnvweights.size() * sizeof(decltype(m_cnvweights)::size_type));
+
+	fs.read((char*)&tmp, sizeof(tmp));
+	m_layers.resize(tmp);
+	fs.read((char*)&m_layers[0], m_layers.size() * sizeof(decltype(m_layers)::size_type));
+
+	fs.read((char*)&m_szA0, sizeof(m_szA0));
+
+	setConvLayers(m_cnvlayers, m_cnvweights, m_szA0);
+
+	init();
+
+	for(size_t i = 0; i < m_conv.size(); ++i){
+		gpumat::ConvNN &cnv = m_conv[i];
+		cnv.read(fs);
+	}
+
+	for(size_t i = 0; i < m_mlp.size(); ++i){
+		m_mlp[i].read(fs);
+	}
+
+	return true;
+}
+
+void gpu_train::saveToFile(const std::string &fn)
+{
+	std::fstream fs;
+	fs.open(fn, std::ios_base::out | std::ios_base::binary);
+
+	if(!fs.is_open()){
+		qDebug("File %s not open", fn.c_str());
+		return;
+	}
+
+	int tmp;
+
+	tmp = m_cnvlayers.size();
+	fs.write((char*)&tmp, sizeof(tmp));
+	fs.write((char*)&m_cnvlayers[0], m_cnvlayers.size() * sizeof(decltype(m_cnvlayers)::value_type));
+
+	tmp = m_cnvweights.size();
+	fs.write((char*)&tmp, sizeof(tmp));
+	fs.write((char*)&m_cnvweights[0], m_cnvweights.size() * sizeof(decltype(m_cnvweights)::size_type));
+
+	tmp = m_layers.size();
+	fs.write((char*)&tmp, sizeof(tmp));
+	fs.write((char*)&m_layers[0], m_layers.size() * sizeof(decltype(m_layers)::size_type));
+
+	fs.write((char*)&m_szA0, sizeof(m_szA0));
+
+	for(size_t i = 0; i < m_conv.size(); ++i){
+		gpumat::ConvNN &cnv = m_conv[i];
+		cnv.write(fs);
+	}
+
+	for(size_t i = 0; i < m_mlp.size(); ++i){
+		m_mlp[i].write(fs);
+	}
+
+//	qt_work_mat::q_save_mat(m_mlp.back().W, "W0back.txt");
 }
 
 void gpu_train::setDropout(float p, int layers)

@@ -155,6 +155,18 @@ void mlp::backward(const GpuMat &Delta, bool last_layer)
 	}
 }
 
+void mlp::write(std::fstream &fs)
+{
+	gpumat::write_fs(fs, W);
+	gpumat::write_fs(fs, B);
+}
+
+void mlp::read(std::fstream &fs)
+{
+	gpumat::read_fs(fs, W);
+	gpumat::read_fs(fs, B);
+}
+
 ///**************************
 
 void MlpOptim::init(const std::vector<mlp> &_mlp)
