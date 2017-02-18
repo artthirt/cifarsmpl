@@ -70,6 +70,8 @@ public:
 
 	const QVector<TData> &output_data() const;
 
+	void update_source();
+
 public slots:
 	void onTimeout();
 	void onTimeoutUpdate();
@@ -94,8 +96,6 @@ private:
 	int m_start_show;
 
 	QImage m_sel_image;
-
-	void update_source();
 
 	// QWidget interface
 protected:

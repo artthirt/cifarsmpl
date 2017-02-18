@@ -36,6 +36,8 @@ private slots:
 
 	void on_dsb_alpha_valueChanged(double arg1);
 
+	void on_actOpenDir_triggered();
+
 private:
 	Ui::MainWindow *ui;
 	QTimer m_timer;

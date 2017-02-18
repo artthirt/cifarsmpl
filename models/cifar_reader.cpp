@@ -2,18 +2,19 @@
 
 #include <QFile>
 #include <QDir>
+#include <QSettings>
 
 #include <random>
 
 const QString train_images_file[] = {
-	("data/cifar-10-batches-bin/data_batch_1.bin"),
-	("data/cifar-10-batches-bin/data_batch_2.bin"),
-	("data/cifar-10-batches-bin/data_batch_3.bin"),
-	("data/cifar-10-batches-bin/data_batch_4.bin"),
-	("data/cifar-10-batches-bin/data_batch_5.bin")
+	("data_batch_1.bin"),
+	("data_batch_2.bin"),
+	("data_batch_3.bin"),
+	("data_batch_4.bin"),
+	("data_batch_5.bin")
 };
 
-const QString test_images_file = "data/cifar-10-batches-bin/test_batch.bin";
+const QString test_images_file = "test_batch.bin";
 
 const int rowLen[] = {
 	3073,
@@ -58,6 +59,9 @@ cifar_reader::cifar_reader()
 	m_current_offset = 0;
 	m_current_percent = 0;
 	m_count_test = 0;
+	m_directory = "data/cifar-10-batches-bin";
+
+	loadSettings();
 
 	m_timer.setSingleShot(true);
 	m_timer.setInterval(10000);
@@ -66,6 +70,11 @@ cifar_reader::cifar_reader()
 	m_timer_test.setSingleShot(true);
 	m_timer_test.setInterval(10000);
 	connect(&m_timer_test, SIGNAL(timeout()), this, SLOT(onTimeoutTest()));
+}
+
+cifar_reader::~cifar_reader()
+{
+	saveSettings();
 }
 
 QVector<TData> &cifar_reader::train(int batch, double percent)
@@ -81,7 +90,7 @@ QVector<TData> &cifar_reader::train(int batch, double percent)
 		batch = countBin - offset;
 	}
 
-	QString fn = train_images_file[(int)num];
+	QString fn = m_directory + "/" + train_images_file[(int)num];
 
 	if(m_current_file != num){
 		qDebug("next num file %d", num);
@@ -132,7 +141,7 @@ uint cifar_reader::count_test()
 void cifar_reader::open_test_file()
 {
 	if(!m_current_test_object.isOpen()){
-		m_current_test_object.setFileName(test_images_file);
+		m_current_test_object.setFileName(m_directory + "/" + test_images_file);
 		m_current_test_object.open(QIODevice::ReadOnly);
 		qDebug("Test file open: %d, error: %s", m_current_test_object.isOpen(), m_current_test_object.errorString().toLatin1().data());
 	}
@@ -169,7 +178,7 @@ bool cifar_reader::getData(double percent, TData &data)
 	double offset = percent - (num * 1./countFiles);
 	offset *= maxCount;
 
-	QString fn = train_images_file[(int)num];
+	QString fn = m_directory + "/" + train_images_file[(int)num];
 
 	if(m_current_file == num
 			&& m_current_offset == offset){
@@ -225,7 +234,7 @@ bool cifar_reader::getDataIt(double percent, int batch, QVector< TData > &data)
 	double offset = percent - (num * 1./countFiles);
 	offset *= maxCount;
 
-	QString fn = train_images_file[(int)num];
+	QString fn = m_directory + "/" + train_images_file[(int)num];
 
 	if(m_current_file == num
 			&& m_current_offset == offset){
@@ -314,6 +323,35 @@ uint cifar_reader::max_files() const
 double cifar_reader::current_percent() const
 {
 	return m_current_percent;
+}
+
+bool cifar_reader::openDir(const QString &dir)
+{
+	m_directory = dir;
+
+	if(isBinDataExists()){
+		qDebug("binary data exists");
+	}else{
+		qDebug("binary data not exists");
+	}
+	return isBinDataExists();
+}
+
+QString cifar_reader::currentDirectory() const
+{
+	return m_directory;
+}
+
+bool cifar_reader::isBinDataExists() const
+{
+	bool ret = true;
+
+	for(int i = 0; i < countFiles; ++i){
+		ret &= QFile::exists(m_directory + "/" + train_images_file[i]);
+	}
+	ret &= QFile::exists(m_directory + "/" + test_images_file);
+
+	return ret;
 }
 
 void cifar_reader::onTimeout()
@@ -455,6 +493,28 @@ uint cifar_reader::readCifar1(QFile &file, TData &val, int offset)
 		val.lb = labels::getLb(lb, m_data_source);
 	}
 	return !val.data.isEmpty();
+}
+
+void cifar_reader::loadSettings()
+{
+	QSettings settings("config.ini", QSettings::IniFormat);
+	settings.beginGroup("main");
+	QString tmp = settings.value("directory").toString();
+	settings.endGroup();
+
+	if(!tmp.isEmpty())
+		m_directory = tmp;
+}
+
+void cifar_reader::saveSettings()
+{
+	if(!isBinDataExists()){
+		return;
+	}
+	QSettings settings("config.ini", QSettings::IniFormat);
+	settings.beginGroup("main");
+	settings.setValue("directory", m_directory);
+	settings.endGroup();
 }
 
 ///******************************

@@ -1,6 +1,8 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+#include <QFileDialog>
+
 MainWindow::MainWindow(QWidget *parent) :
 	QMainWindow(parent),
 	ui(new Ui::MainWindow)
@@ -39,6 +41,9 @@ MainWindow::MainWindow(QWidget *parent) :
 	m_train.init();
 
 	ui->tb_main->setCurrentIndex(0);
+
+	ui->pte_logs->appendPlainText("Current directory: " + m_cifar.currentDirectory());
+	ui->pte_logs->appendPlainText("Binary data exists: " + QString(m_cifar.isBinDataExists()? "True" : "False"));
 }
 
 MainWindow::~MainWindow()
@@ -58,6 +63,11 @@ void MainWindow::on_pb_next_clicked()
 
 void MainWindow::on_pb_test_clicked()
 {
+	if(!m_cifar.isBinDataExists()){
+		ui->pte_logs->appendPlainText("<<<Not exists binary data!>>>");
+		return;
+	}
+
 	if(ui->pb_pass->isChecked()){
 		ui->pte_logs->appendPlainText("<<<Not run test when pass work!>>>");
 		return;
@@ -128,16 +138,33 @@ void MainWindow::update_prediction()
 
 void MainWindow::on_pb_pass_clicked(bool checked)
 {
+	if(!m_cifar.isBinDataExists()){
+		checked = false;
+		ui->pb_pass->setChecked(false);
+	}
 	m_doIter = checked;
 }
 
 void MainWindow::on_chb_gpu_clicked(bool checked)
 {
-	if(checked)
+	if(checked && m_cifar.isBinDataExists())
 		m_train.init_gpu();
 }
 
 void MainWindow::on_dsb_alpha_valueChanged(double arg1)
 {
 	m_train.setAlpha(arg1);
+}
+
+void MainWindow::on_actOpenDir_triggered()
+{
+	QFileDialog dlg;
+	dlg.setAcceptMode(QFileDialog::AcceptOpen);
+	dlg.setFileMode(QFileDialog::Directory);
+
+	if(dlg.exec()){
+		if(m_cifar.openDir(dlg.directory().absolutePath())){
+			ui->wcifar->update_source();
+		}
+	}
 }

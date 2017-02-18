@@ -76,7 +76,7 @@ double WidgetCifar::index() const
 
 void WidgetCifar::updatePredictfromIndex(const QVector<int> &predict, int index)
 {
-	if(!m_cifar)
+	if(!m_cifar || !m_cifar->isBinDataExists())
 		return;
 
 	QVector< int >& prediction = m_mode == TRAIN? m_prediction_train : m_prediction_test;
@@ -96,7 +96,7 @@ void WidgetCifar::updatePredictfromIndex(const QVector<int> &predict, int index)
 
 void WidgetCifar::next()
 {
-	if(!m_cifar)
+	if(!m_cifar || !m_cifar->isBinDataExists())
 		return;
 	if(m_index < 1){
 		m_index = m_cifar->current_percent();
@@ -106,13 +106,16 @@ void WidgetCifar::next()
 
 void WidgetCifar::prev()
 {
-	toBegin();
+	if(m_cifar->isBinDataExists())
+		toBegin();
 }
 
 void WidgetCifar::toBegin()
 {
-	m_index = 0;
-	update_source();
+	if(m_cifar->isBinDataExists()){
+		m_index = 0;
+		update_source();
+	}
 }
 
 size_t WidgetCifar::count() const
@@ -154,7 +157,7 @@ void WidgetCifar::onTimeoutUpdate()
 
 void WidgetCifar::update_source()
 {
-	if(!m_cifar)
+	if(!m_cifar || !m_cifar->isBinDataExists())
 		return;
 
 	bool floop = true;

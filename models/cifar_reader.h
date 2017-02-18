@@ -25,6 +25,7 @@ public:
 	enum {CIFAR10 = 0, CIFAR100 = 1};
 
 	cifar_reader();
+	~cifar_reader();
 
 	QVector<TData> &train(int batch, double percent);
 	QVector<TData> &test(int beg, int count);
@@ -46,6 +47,11 @@ public:
 //	ct::Matf& X();
 //	ct::Matf& y();
 
+	bool openDir(const QString& dir);
+	QString currentDirectory() const;
+
+	bool isBinDataExists()const ;
+
 public slots:
 	void onTimeout();
 	void onTimeoutTest();
@@ -64,6 +70,8 @@ private:
 	QTimer m_timer;
 	QTimer m_timer_test;
 
+	QString m_directory;
+
 	uint m_count_test;
 	QFile m_current_test_object;
 
@@ -78,6 +86,8 @@ private:
 	uint readCifar1(const QString &fn, TData & val, int offset);
 	uint readCifar1(QFile &file, TData &val, int offset);
 
+	void loadSettings();
+	void saveSettings();
 };
 
 namespace ct{
