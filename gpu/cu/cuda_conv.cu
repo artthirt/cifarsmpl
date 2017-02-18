@@ -663,7 +663,7 @@ void cuda_deriv_conv2d(const GpuMat &A0, const GpuMat &gradA1,
 	assert(internal::Singleton::instance().shared_memory() > size_shared);
 
 	gpumat::GpuMat inner_mat;
-	gpumat::GpuMat &blocks = pblocks? *pblocks : inner_mat;
+	gpumat::GpuMat &blocks = pblocks != 0? *pblocks : inner_mat;
 
 	blocks.resize(x2 * gradW.rows, x1 * gradW.cols, gradW.type);
 	gpumat::memset(blocks, 0);
