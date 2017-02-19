@@ -176,8 +176,8 @@ void cifar_train::forward(const std::vector< ct::Matf > &X, ct::Matf &a_out,
 
 void cifar_train::randValues(size_t count, std::vector<ct::Vec3f> &vals)
 {
-	std::uniform_int_distribution<int> udtr(-2, 2);
-	std::uniform_real_distribution<float> uar(-7, 7);
+	std::uniform_int_distribution<int> udtr(-5, 5);
+	std::uniform_real_distribution<float> uar(-17, 17);
 
 	vals.resize(count);
 
@@ -195,7 +195,7 @@ void cifar_train::randX(ct::Matf &X, std::vector<ct::Vec3f> &vals)
 	if(X.empty() || X.rows != vals.size())
 		return;
 #if 1
-	std::uniform_int_distribution<int> udtr(-5, 5);
+	std::uniform_int_distribution<int> udtr(-2, 2);
 	std::uniform_real_distribution<float> uar(-3, 3);
 
 #pragma omp parallel for
@@ -428,7 +428,7 @@ void cifar_train::init_gpu()
 bool cifar_train::loadFromFile(const QString &fn, bool gpu)
 {
 	if(gpu){
-		return m_gpu_train.loadFromFile(fn.toStdString());
+		return m_gpu_train.loadFromFile((fn + ".gpu").toStdString());
 	}
 
 	std::fstream fs;
@@ -473,7 +473,7 @@ bool cifar_train::loadFromFile(const QString &fn, bool gpu)
 void cifar_train::saveToFile(const QString &fn, bool gpu)
 {
 	if(gpu){
-		m_gpu_train.saveToFile(fn.toStdString());
+		m_gpu_train.saveToFile((fn + ".gpu").toStdString());
 		return;
 	}
 

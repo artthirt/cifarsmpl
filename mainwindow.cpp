@@ -22,14 +22,15 @@ MainWindow::MainWindow(QWidget *parent) :
 	std::vector< int > mlp;
 	std::vector< int > cnv_w;
 
-	cnv.push_back(5);
-	cnv.push_back(5);
-//	cnv.push_back(4);
+	cnv.push_back(30);
+	cnv.push_back(3);
+//	cnv.push_back(12);
 
 	cnv_w.push_back(5);
 	cnv_w.push_back(5);
 //	cnv_w.push_back(3);
 
+	mlp.push_back(1200);
 	mlp.push_back(900);
 	mlp.push_back(800);
 	mlp.push_back(700);
@@ -99,7 +100,7 @@ void MainWindow::pass()
 
 	std::vector< double > percents;
 
-	m_train.pass(50, ui->chb_gpu->isChecked(), &percents);
+	m_train.pass(200, ui->chb_gpu->isChecked(), &percents);
 
 	{
 		std::stringstream ss;
