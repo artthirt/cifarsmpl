@@ -42,10 +42,19 @@ private slots:
 
 	void on_actionLoad_model_triggered();
 
+	void on_sb_delay_valueChanged(int arg1);
+
+	void on_sb_batch_valueChanged(int arg1);
+
+	void on_sb_iter_numb_valueChanged(int arg1);
+
 private:
 	Ui::MainWindow *ui;
 	QTimer m_timer;
 	bool m_doIter;
+	uint m_batch;
+	uint m_delimiter;
+	int m_delay;
 
 	cifar_train m_train;
 	cifar_reader m_cifar;

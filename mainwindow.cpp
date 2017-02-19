@@ -12,9 +12,12 @@ MainWindow::MainWindow(QWidget *parent) :
 	ui->setupUi(this);
 
 	m_doIter = false;
+	m_batch = 50;
+	m_delimiter = 50;
+	m_delay = 5;
 
 	connect(&m_timer, SIGNAL(timeout()), this, SLOT(onTimeout()));
-	m_timer.start(5);
+	m_timer.start(m_delay);
 
 	ui->wcifar->setCifar(&m_cifar);
 
@@ -22,19 +25,20 @@ MainWindow::MainWindow(QWidget *parent) :
 	std::vector< int > mlp;
 	std::vector< int > cnv_w;
 
-	cnv.push_back(30);
-	cnv.push_back(3);
+	cnv.push_back(68);
+	cnv.push_back(1);
 //	cnv.push_back(12);
 
 	cnv_w.push_back(5);
 	cnv_w.push_back(5);
 //	cnv_w.push_back(3);
 
-	mlp.push_back(1200);
+	mlp.push_back(1400);
+	mlp.push_back(1000);
 	mlp.push_back(900);
-	mlp.push_back(800);
+	mlp.push_back(1000);
 	mlp.push_back(700);
-	mlp.push_back(400);
+	mlp.push_back(500);
 	mlp.push_back(10);
 
 	m_train.setCifar(&m_cifar);
@@ -47,6 +51,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	ui->pte_logs->appendPlainText("Current directory: " + m_cifar.currentDirectory());
 	ui->pte_logs->appendPlainText("Binary data exists: " + QString(m_cifar.isBinDataExists()? "True" : "False"));
+
+	ui->sb_batch->setValue(m_batch);
+	ui->sb_delay->setValue(m_delay);
+	ui->sb_iter_numb->setValue(m_delimiter);
 }
 
 MainWindow::~MainWindow()
@@ -100,7 +108,7 @@ void MainWindow::pass()
 
 	std::vector< double > percents;
 
-	m_train.pass(200, ui->chb_gpu->isChecked(), &percents);
+	m_train.pass(m_batch, ui->chb_gpu->isChecked(), &percents);
 
 	{
 		std::stringstream ss;
@@ -115,7 +123,7 @@ void MainWindow::pass()
 
 	ui->lb_it->setText(QString("Iteraion %1").arg(it));
 
-	if((it % 20) == 0){
+	if((it % m_delimiter) == 0){
 		m_train.getEstimate(500, acc, l2, ui->chb_gpu->isChecked());
 
 		qDebug("iteration %d: acc=%f, l2=%f", it, acc, l2);
@@ -183,4 +191,20 @@ void MainWindow::on_actionLoad_model_triggered()
 		ui->pte_logs->appendPlainText("Model not loaded");
 	}
 	ui->pte_logs->appendPlainText("Model loaded");
+}
+
+void MainWindow::on_sb_delay_valueChanged(int arg1)
+{
+	m_delay = arg1;
+	m_timer.setInterval(arg1);
+}
+
+void MainWindow::on_sb_batch_valueChanged(int arg1)
+{
+	m_batch = arg1;
+}
+
+void MainWindow::on_sb_iter_numb_valueChanged(int arg1)
+{
+	m_delimiter = arg1;
 }
