@@ -79,7 +79,8 @@ void ConvNN::conv(const ct::Matf &X, ct::Matf &XOut)
 //				int k = j - jm1 * m_cnvlayers[i];
 //				convnnf& pcnv = m_conv[i - 1][jm1];
 //				cnv.forward(&pcnv.A2[k], ct::RELU);
-				for(size_t j = 0; j < m_conv[i - 1].size(); ++j){
+#pragma omp parallel for
+				for(int j = 0; j < m_conv[i - 1].size(); ++j){
 					size_t off1 = j * m_cnvlayers[i - 1];
 					convnnf& m0 = m_conv[i - 1][j];
 					for(int k = 0; k < m_cnvlayers[i - 1]; ++k){

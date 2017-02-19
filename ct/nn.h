@@ -871,7 +871,8 @@ void deriv_conv2D(const ct::Mat_<T> & A0,
 	gradW.resize(gradA1.size());
 	gradB.resize(gradA1.size());
 
-	for(size_t i = 0; i < gradA1.size(); ++i){
+#pragma omp parallel for
+	for(int i = 0; i < gradA1.size(); ++i){
 		deriv_conv2D(A0, gradA1[i], szA0, szA1, szW, stride, gradW[i], gradB[i]);
 	}
 }

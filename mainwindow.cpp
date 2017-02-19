@@ -25,8 +25,8 @@ MainWindow::MainWindow(QWidget *parent) :
 	std::vector< int > mlp;
 	std::vector< int > cnv_w;
 
-	cnv.push_back(68);
-	cnv.push_back(1);
+	cnv.push_back(10);
+	cnv.push_back(10);
 //	cnv.push_back(12);
 
 	cnv_w.push_back(5);
@@ -35,9 +35,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	mlp.push_back(1400);
 	mlp.push_back(1000);
-	mlp.push_back(900);
-	mlp.push_back(1000);
-	mlp.push_back(700);
 	mlp.push_back(500);
 	mlp.push_back(10);
 

@@ -6,7 +6,7 @@ template< typename T >
 void translate(int x, int y, int w, int h, T *X)
 {
 	std::vector<T>d;
-	d.resize(w * h);
+	d.resize(w * h, 0);
 
 #pragma omp parallel for
 	for(int i = 0; i < h; i++){
@@ -32,7 +32,7 @@ void rotate_data(int w, int h, T angle, T *X)
 	T ch = h / 2;
 
 	std::vector<T> d;
-	d.resize(w * h);
+	d.resize(w * h, 0);
 
 	for(int y = 0; y < h; y++){
 		for(int x = 0; x < w; x++){
@@ -176,8 +176,8 @@ void cifar_train::forward(const std::vector< ct::Matf > &X, ct::Matf &a_out,
 
 void cifar_train::randValues(size_t count, std::vector<ct::Vec3f> &vals)
 {
-	std::uniform_int_distribution<int> udtr(-1, 1);
-	std::uniform_real_distribution<float> uar(-17, 17);
+	std::uniform_int_distribution<int> udtr(-3, 3);
+	std::uniform_real_distribution<float> uar(-3, 3);
 
 	vals.resize(count);
 
@@ -195,8 +195,6 @@ void cifar_train::randX(ct::Matf &X, std::vector<ct::Vec3f> &vals)
 	if(X.empty() || X.rows != vals.size())
 		return;
 #if 1
-	std::uniform_int_distribution<int> udtr(-2, 2);
-	std::uniform_real_distribution<float> uar(-3, 3);
 
 #pragma omp parallel for
 	for(int i = 0; i < X.rows; i++){
