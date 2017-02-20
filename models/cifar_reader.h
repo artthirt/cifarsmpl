@@ -33,8 +33,9 @@ public:
 
 	void convToXy(const QVector<TData> &data, int first, int last, std::vector< ct::Matf >& X, ct::Matf *y = nullptr);
 
+	bool getData(int file, int offset, TData& data);
 	bool getData(double percent, TData& data);
-	void getTrain(int batch, std::vector< ct::Matf >& X, ct::Matf &y, std::vector<double> *percents = nullptr);
+	void getTrain(int batch, std::vector< ct::Matf >& X, ct::Matf &y);
 	bool getDataIt(double percent, int batch, QVector<TData> &data);
 	void getTrainIt(double percent, int batch, std::vector< ct::Matf >& X, ct::Matf *y = nullptr);
 
@@ -64,6 +65,9 @@ private:
 	uint m_current_offset;
 	double m_current_percent;
 
+//	QMap<int, QMap< int, std::vector< ct::Matf > > > m_cacheX;
+//	QMap<int, QMap< int, ct::Matf > > m_cacheY;
+
 	QVector<TData> m_current_data;
 	QVector<TData> m_current_test;
 	QFile m_current_object;
@@ -74,6 +78,8 @@ private:
 
 	uint m_count_test;
 	QFile m_current_test_object;
+
+	void get_file_offset(double percent, int& file, int&offset);
 
 	void open_test_file();
 

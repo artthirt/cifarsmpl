@@ -466,6 +466,7 @@ inline T values2range(T value, double min_range, double max_range)
 }
 
 
+typedef Vec_<int, 2> Vec2i;
 typedef Vec_<float, 2> Vec2f;
 typedef Vec_<double, 2> Vec2d;
 

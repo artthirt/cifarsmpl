@@ -175,6 +175,25 @@ void cifar_reader::convToXy(const QVector<TData> &data, int first, int last, std
 	}
 }
 
+bool cifar_reader::getData(int file, int offset, TData &data)
+{
+	QString fn = m_directory + "/" + train_images_file[(int)file];
+
+	if(m_current_file == file
+			&& m_current_offset == offset){
+		return false;
+	}
+
+	m_current_file = file;
+	m_current_offset = offset;
+
+	//qDebug("next num file %d %f", num, offset);
+
+	readCifar1(fn, data, offset);
+
+	return true;
+}
+
 bool cifar_reader::getData(double percent, TData &data)
 {
 	int num = countFiles * percent;
@@ -198,7 +217,7 @@ bool cifar_reader::getData(double percent, TData &data)
 	return true;
 }
 
-void cifar_reader::getTrain(int batch, std::vector<ct::Matf> &X, ct::Matf &y, std::vector< double > *percents)
+void cifar_reader::getTrain(int batch, std::vector<ct::Matf> &X, ct::Matf &y)
 {
 	std::uniform_real_distribution<double> urnd(0, 1);
 
@@ -213,17 +232,32 @@ void cifar_reader::getTrain(int batch, std::vector<ct::Matf> &X, ct::Matf &y, st
 
 	float *dy = y.ptr();
 
-	if(percents){
-		percents->clear();
+	std::map< int, std::map<int, bool> > values_exists;
+	std::vector< ct::Vec2i > vals;
+
+	for(int i = 0; i < batch; ++i){
+		bool next = true;
+		do{
+			double val = urnd(generator);
+			int file, offset;
+			get_file_offset(val, file, offset);
+			if(values_exists.find(file) == values_exists.end()){
+				values_exists[file][offset] = true;
+			}else{
+				std::map< int, bool >& vb = values_exists[file];
+				if(vb.find(offset) == vb.end()){
+					values_exists[file][offset] = true;
+					vals.push_back(ct::Vec2i(file, offset));
+					next = false;
+				}
+			}
+		}while(next);
 	}
 
 	for(int i = 0; i < batch; ++i){
 		TData data;
-		double val;
-		while(!getData((val = urnd(generator)), data)){};
-		if(percents){
-			percents->push_back(val);
-		}
+		ct::Vec2i& v = vals[i];
+		getData(v[0], v[1], data);
 
 		ct::image2mats(data.data, WidthIM, HeightIM, i, X[0], X[1], X[2]);
 
@@ -368,6 +402,16 @@ void cifar_reader::onTimeoutTest()
 {
 	if(m_current_test_object.isOpen())
 		m_current_test_object.close();
+}
+
+void cifar_reader::get_file_offset(double percent, int &file, int &offset)
+{
+	int num = countFiles * percent;
+	double _offset = percent - (num * 1./countFiles);
+	_offset *= maxCount;
+
+	file = num;
+	offset = _offset;
 }
 
 //ct::Matf &cifar_reader::X()

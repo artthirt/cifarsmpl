@@ -35,7 +35,7 @@ public:
 
 	void setUseRandData(bool val);
 
-	void pass(int batch, bool use_gpu = false, std::vector<double> *percents = nullptr);
+	void pass(int batch, bool use_gpu = false);
 
 	void getEstimate(int batch, double& accuracy, double& l2, bool use_gpu = false);
 

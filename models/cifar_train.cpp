@@ -226,7 +226,7 @@ void cifar_train::randX(ct::Matf &X, std::vector<ct::Vec3f> &vals)
 #endif
 }
 
-void cifar_train::pass(int batch, bool use_gpu, std::vector< double > *percents)
+void cifar_train::pass(int batch, bool use_gpu)
 {
 	if(!m_init || batch <= 0)
 		throw new std::invalid_argument("not initialize");
@@ -235,7 +235,7 @@ void cifar_train::pass(int batch, bool use_gpu, std::vector< double > *percents)
 	ct::Matf yp;
 	ct::Matf y;
 
-	m_cifar->getTrain(batch, Xs, y, percents);
+	m_cifar->getTrain(batch, Xs, y);
 
 	if(m_use_rand_data){
 		randValues(y.rows, m_vals, m_rand_data[0], m_rand_data[1]);

@@ -27,15 +27,15 @@ MainWindow::MainWindow(QWidget *parent) :
 	std::vector< bool > cnv_p;
 
 	cnv.push_back(10);
-	cnv.push_back(5);
-	cnv.push_back(3);
+	cnv.push_back(1);
+//	cnv.push_back(3);
 
 	cnv_w.push_back(5);
 	cnv_w.push_back(5);
-	cnv_w.push_back(5);
+//	cnv_w.push_back(5);
 	cnv_p.push_back(false);
 	cnv_p.push_back(true);
-	cnv_p.push_back(true);
+//	cnv_p.push_back(true);
 
 //	mlp.push_back(1000);
 //	mlp.push_back(900);
@@ -111,18 +111,7 @@ void MainWindow::pass()
 {
 	double l2, acc;
 
-	std::vector< double > percents;
-
-	m_train.pass(m_batch, ui->chb_gpu->isChecked(), &percents);
-
-	{
-		std::stringstream ss;
-		ss << std::setprecision(2);
-		for(size_t i = 0; i < percents.size(); ++i){
-			ss << percents[i] << " ";
-		}
-		//ui->pte_logs->appendPlainText(QString(">> ") + ss.str().c_str());
-	}
+	m_train.pass(m_batch, ui->chb_gpu->isChecked());
 
 	uint it = ui->chb_gpu->isChecked()? m_train.iteration_gpu() : m_train.iteration();
 
