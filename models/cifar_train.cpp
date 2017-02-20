@@ -454,7 +454,7 @@ QVector< int > cifar_train::predict(const QVector< TData >& data, bool use_gpu)
 
 		int cnt = std::min(data.size() - i, batch);
 
-		m_cifar->convToXy(data, i, cnt, X);
+		m_cifar->convToXy(data, i, i + cnt, X);
 
 		forward(X, y, false, 0.92, use_gpu);
 
