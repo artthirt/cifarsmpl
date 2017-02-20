@@ -308,7 +308,7 @@ void ConvNN::init()
 }
 
 void ConvNN::setConvLayers(const std::vector<int> &layers, std::vector<int> weight_sizes,
-						   const ct::Size szA0, std::vector<bool> *pooling)
+						   const ct::Size szA0, std::vector<char> *pooling)
 {
 	if(layers.empty() || weight_sizes.empty())
 		throw new std::invalid_argument("empty parameters");

@@ -24,7 +24,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	std::vector< int > cnv;
 	std::vector< int > mlp;
 	std::vector< int > cnv_w;
-	std::vector< bool > cnv_p;
+	std::vector< char > cnv_p;
 
 	cnv.push_back(15);
 	cnv.push_back(7);

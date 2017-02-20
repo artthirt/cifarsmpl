@@ -72,7 +72,7 @@ void cifar_train::setCifar(cifar_reader *val)
 void cifar_train::setConvLayers(const std::vector<int> &layers,
 								std::vector<int> weight_sizes,
 								const ct::Size szA0,
-								std::vector< bool > *pooling)
+								std::vector< char > *pooling)
 {
 	if(layers.empty() || weight_sizes.empty())
 		throw new std::invalid_argument("empty parameters");

@@ -89,7 +89,7 @@ class ConvNN{
 public:
 	std::vector< int > m_cnvlayers;
 	std::vector< int > m_cnvweights;
-	std::vector< bool > m_cnvpooling;
+	std::vector< char > m_cnvpooling;
 	std::vector< std::vector< gpumat::convnn > > m_conv;
 	ct::Size m_szA0;
 	gpumat::convnn m_adds;
@@ -107,7 +107,7 @@ public:
 	void setConvLayers(const std::vector< int >& layers,
 					   std::vector< int > weight_sizes,
 					   const ct::Size szA0 = ct::Size(32, 32),
-					   std::vector< bool >* pooling = nullptr);
+					   std::vector< char >* pooling = nullptr);
 	void conv(const GpuMat& X, GpuMat& XOut);
 	void backward(const GpuMat& X);
 

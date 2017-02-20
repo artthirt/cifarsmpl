@@ -24,7 +24,7 @@ gpu_train::gpu_train()
 
 void gpu_train::setConvLayers(const std::vector<int> &layers,
 							  std::vector<int> weight_sizes,
-							  const ct::Size szA0, std::vector<bool> *pooling)
+							  const ct::Size szA0, std::vector<char> *pooling)
 {
 	if(layers.empty() || weight_sizes.empty())
 		throw new std::invalid_argument("empty parameters");
@@ -249,24 +249,25 @@ std::vector<gpumat::tvconvnn> &gpu_train::cnv(int index)
 }
 
 template< typename T >
-void write_vector(std::fstream& fs, std::vector<T>& vec)
+inline void write_vector(std::fstream& fs, const std::vector<T> &vec)
 {
 	int tmp = vec.size();
 	fs.write((char*)&tmp, sizeof(tmp));
 	if(tmp){
-		vec.resize(tmp);
-		fs.write((char*)&vec[0], vec.size() * sizeof(T));
+		const char* d = reinterpret_cast<const char*>(vec.data());
+		fs.write(d, vec.size() * sizeof(T));
 	}
 }
 
 template< typename T >
-void read_vector(std::fstream& fs, std::vector<T>& vec)
+inline void read_vector(std::fstream& fs, std::vector<T>  &vec)
 {
 	int tmp;
 	fs.read((char*)&tmp, sizeof(tmp));
 	if(tmp){
 		vec.resize(tmp);
-		fs.read((char*)&vec[0], vec.size() * sizeof(T));
+		char* d = reinterpret_cast<char*>(vec.data());
+		fs.read(d, vec.size() * sizeof(T));
 	}
 }
 
