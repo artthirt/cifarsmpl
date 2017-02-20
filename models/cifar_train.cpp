@@ -60,6 +60,8 @@ cifar_train::cifar_train()
 {
 	m_cifar = nullptr;
 	m_init = false;
+	m_rand_data = ct::Vec3f(3, 3);
+	m_use_rand_data = false;
 }
 
 void cifar_train::setCifar(cifar_reader *val)
@@ -173,11 +175,22 @@ void cifar_train::forward(const std::vector< ct::Matf > &X, ct::Matf &a_out,
 	}
 }
 
-
-void cifar_train::randValues(size_t count, std::vector<ct::Vec3f> &vals)
+void cifar_train::setRandData(float offset, float angle)
 {
-	std::uniform_int_distribution<int> udtr(-3, 3);
-	std::uniform_real_distribution<float> uar(-3, 3);
+	m_rand_data[0] = offset;
+	m_rand_data[1] = angle;
+}
+
+void cifar_train::setUseRandData(bool val)
+{
+	m_use_rand_data = val;
+}
+
+
+void cifar_train::randValues(size_t count, std::vector<ct::Vec3f> &vals, float offset, float angle)
+{
+	std::uniform_int_distribution<int> udtr(-offset, offset);
+	std::uniform_real_distribution<float> uar(-angle, angle);
 
 	vals.resize(count);
 
@@ -221,10 +234,12 @@ void cifar_train::pass(int batch, bool use_gpu, std::vector< double > *percents)
 
 	m_cifar->getTrain(batch, Xs, y, percents);
 
-	randValues(y.rows, m_vals);
+	if(m_use_rand_data){
+		randValues(y.rows, m_vals, m_rand_data[0], m_rand_data[1]);
 
-	for(size_t i = 0; i < Xs.size(); ++i){
-		randX(Xs[i], m_vals);
+		for(size_t i = 0; i < Xs.size(); ++i){
+			randX(Xs[i], m_vals);
+		}
 	}
 
 	if(use_gpu && m_gpu_train.isInit()){
@@ -267,25 +282,86 @@ void cifar_train::getEstimate(const std::vector<ct::Matf> &Xs, ct::Matf &y,
 {
 	ct::Matf yp;
 
+	if(Xs.empty() || Xs[0].empty() || y.empty())
+		return;
+
 	if(use_gpu && m_gpu_train.isInit()){
-		m_gpu_train.forward(Xs, yp);
-
-		if(Xs.empty() || Xs[0].empty() || y.empty())
-			return;
-
-		l2 = m_gpu_train.getL2(yp, y);
+		sliceEstimage(Xs, y, right, l2);
 	}else{
 		forward(Xs, yp);
-
-		if(Xs.empty() || Xs[0].empty() || y.empty())
-			return;
 
 		m_td = ct::subIndOne(yp, y);
 
 		ct::Matf d = ct::elemwiseSqr(m_td);
 		l2 = d.sum() / d.rows;
+
+		right = getRight(y, yp);
 	}
 
+}
+
+void getSlice(const std::vector<ct::Matf> &Xs, int first, int last, std::vector<ct::Matf> &Xsi)
+{
+	Xsi.resize(Xs.size());
+
+	for(size_t i = 0; i < Xs.size(); ++i){
+		const ct::Matf& mat = Xs[i];
+		ct::Matf &mati = Xsi[i];
+		mati.setSize(last - first, mat.cols);
+		float *dM = mat.ptr();
+		float *dMi = mati.ptr();
+#pragma omp parallel for
+		for(int l = 0; l < mati.rows; ++l){
+			int j = first + l;
+			for(int k = 0; k < mati.cols; ++k){
+				dMi[l * mati.cols + k] = dM[j * mat.cols + k];
+			}
+		}
+	}
+}
+
+void getSlice(const ct::Matf &Xs, int first, int last, ct::Matf &Xsi)
+{
+	Xsi.setSize(last - first, Xs.cols);
+	float *dM = Xs.ptr();
+	float *dMi = Xsi.ptr();
+#pragma omp parallel for
+	for(int l = 0; l < Xsi.rows; ++l){
+		int j = first + l;
+		for(int k = 0; k < Xsi.cols; ++k){
+			dMi[l * Xsi.cols + k] = dM[j * Xs.cols + k];
+		}
+	}
+}
+
+
+void cifar_train::sliceEstimage(const std::vector<ct::Matf> &Xs, ct::Matf &y, uint &right, double &l2)
+{
+	int batch = 100;
+
+	int cnt = y.rows / batch;
+	if(!cnt)cnt = 1;
+
+	l2 = 0;
+	right = 0;
+
+	for (int i = 0; i < cnt; ++i){
+		int size = std::min(y.rows - batch * i, batch);
+		std::vector< ct::Matf > Xsi;
+		ct::Matf ysi, ypi;
+		getSlice(Xs, i * batch, i * batch + size, Xsi);
+		getSlice(y, i * batch, i * batch + size, ysi);
+
+		m_gpu_train.forward(Xsi, ypi);
+
+		l2 += m_gpu_train.getL2(ypi, ysi);
+		right += getRight(ysi, ypi);
+	}
+	l2 /= cnt;
+}
+
+int cifar_train::getRight(const ct::Matf &y, const ct::Matf &yp)
+{
 	int count = 0;
 	for(int i = 0; i < yp.rows; ++i){
 		int id = yp.argmax(i, 1);
@@ -293,7 +369,7 @@ void cifar_train::getEstimate(const std::vector<ct::Matf> &Xs, ct::Matf &y,
 			count++;
 		}
 	}
-	right = count;
+	return count;
 }
 
 void cifar_train::getEstimate(int batch, double &accuracy, double &l2, bool use_gpu)
@@ -367,15 +443,24 @@ QVector< int > cifar_train::predict(const QVector< TData >& data, bool use_gpu)
 	std::vector< ct::Matf > X;
 	ct::Matf y;
 
-	m_cifar->convToXy(data, X);
+	int batch = 100;
 
-	forward(X, y, false, 0.92, use_gpu);
+	pred.resize(data.size());
 
-	pred.resize(y.rows);
+	for(int i = 0; i < data.size(); i += batch){
 
-	for(int i = 0; i < y.rows; ++i){
-		pred[i] = y.argmax(i, 1);
+		int cnt = std::min(data.size() - i, batch);
+
+		m_cifar->convToXy(data, i, cnt, X);
+
+		forward(X, y, false, 0.92, use_gpu);
+
+		for(int j = 0; j < y.rows; ++j){
+			pred[i + j] = y.argmax(j, 1);
+		}
+
 	}
+
 	return pred;
 }
 

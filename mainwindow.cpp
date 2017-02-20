@@ -25,22 +25,26 @@ MainWindow::MainWindow(QWidget *parent) :
 	std::vector< int > mlp;
 	std::vector< int > cnv_w;
 
-	cnv.push_back(10);
-	cnv.push_back(10);
+	cnv.push_back(40);
+	cnv.push_back(1);
 //	cnv.push_back(12);
 
 	cnv_w.push_back(5);
 	cnv_w.push_back(5);
 //	cnv_w.push_back(3);
 
-	mlp.push_back(1400);
 	mlp.push_back(1000);
+	mlp.push_back(900);
+	mlp.push_back(800);
 	mlp.push_back(500);
 	mlp.push_back(10);
 
 	m_train.setCifar(&m_cifar);
 	m_train.setConvLayers(cnv, cnv_w, ct::Size(32, 32));
 	m_train.setMlpLayers(mlp);
+
+	m_train.setUseRandData(true);
+	m_train.setRandData(2, 2);
 
 	m_train.init();
 
@@ -121,7 +125,7 @@ void MainWindow::pass()
 	ui->lb_it->setText(QString("Iteraion %1").arg(it));
 
 	if((it % m_delimiter) == 0){
-		m_train.getEstimate(500, acc, l2, ui->chb_gpu->isChecked());
+		m_train.getEstimate(800, acc, l2, ui->chb_gpu->isChecked());
 
 		qDebug("iteration %d: acc=%f, l2=%f", it, acc, l2);
 

@@ -147,28 +147,31 @@ void cifar_reader::open_test_file()
 	}
 }
 
-void cifar_reader::convToXy(const QVector<TData> &data, std::vector<ct::Matf> &X, ct::Matf *y)
+void cifar_reader::convToXy(const QVector<TData> &data, int first, int last, std::vector<ct::Matf> &X, ct::Matf *y)
 {
-	if(data.empty())
+	if(data.empty() || first >= last)
 		return;
 
+	int size = last - first;
+
 	if(y){
-		y->setSize(data.size(), 1);
+		y->setSize(size, 1);
 		y->fill(0);
 		float *dy = y->ptr();
-		for(int i = 0; i < data.size(); ++i){
-			dy[i * y->cols + 0] = data[i].lb;
+		int i = 0;
+		for(int i = first, j = 0; i < last; ++i, ++j){
+			dy[j * y->cols + 0] = data[i].lb;
 		}
 	}
 
 	X.resize(3);
 
 	for(size_t i = 0; i < X.size(); ++i){
-		X[i].setSize(data.size(), WidthIM * HeightIM);
+		X[i].setSize(size, WidthIM * HeightIM);
 	}
 
-	for(int i = 0; i < data.size(); ++i){
-		ct::image2mats(data[i].data, WidthIM, HeightIM, i, X[0], X[1], X[2]);
+	for(int i = first, j = 0; i < last; ++i, ++j){
+		ct::image2mats(data[i].data, WidthIM, HeightIM, j, X[0], X[1], X[2]);
 	}
 }
 

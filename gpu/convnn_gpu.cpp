@@ -86,7 +86,7 @@ void convnn::apply_func(const GpuMat &A, GpuMat &B, etypefunction func)
 void convnn::back2conv(const convnn::tvmat &A1, const convnn::tvmat &dA2, convnn::tvmat &dA1, etypefunction func)
 {
 	dA1.resize(A1.size());
-#pragma omp parallel for
+//#pragma omp parallel for
 	for(int i = 0; i < A1.size(); i++){
 		apply_func(A1[i], dA1[i], func);
 		gpumat::elemwiseMult(dA1[i], dA2[i]);
@@ -281,7 +281,7 @@ void ConvNN::conv(const GpuMat &X,GpuMat &XOut)
 			gpumat::convnn& m0 = ls[0];
 			m0.forward(&X, gpumat::RELU);
 		}else{
-#pragma omp parallel for
+//#pragma omp parallel for
 			for(int j = 0; j < m_conv[i - 1].size(); ++j){
 				size_t off1 = j * m_cnvlayers[i - 1];
 				gpumat::convnn& m0 = m_conv[i - 1][j];
@@ -474,7 +474,7 @@ void subsample(const std::vector<GpuMat> &A0, const ct::Size &szA0,
 	A1.resize(A0.size());
 	Masks.resize(A0.size());
 
-#pragma omp parallel for
+//#pragma omp parallel for
 	for(int i = 0; i < A0.size(); i++){
 		subsample(A0[i], szA0, A1[i], Masks[i], szA1);
 	}
@@ -506,7 +506,7 @@ void upsample(const std::vector<GpuMat> &A1, ct::Size &szA1, const ct::Size &szA
 		last = A1.size();
 	}
 
-#pragma omp parallel for
+//#pragma omp parallel for
 	for(int j = 0; j < A0.size(); ++j){
 		int i = first + j;
 		upsample(A1[i], szA1, szA0, Masks[j], A0[j]);
@@ -553,7 +553,7 @@ void deriv_conv2D(const GpuMat &A0,
 		pblocks->resize(gradA1.size());
 	}
 
-#pragma omp parallel for
+//#pragma omp parallel for
 	for(int i = 0; i < gradA1.size(); ++i){
 		deriv_conv2D(A0, gradA1[i], szA0, szA1, szW, stride, gradW[i], gradB[i], pblocks? &(*pblocks)[i] : nullptr);
 	}

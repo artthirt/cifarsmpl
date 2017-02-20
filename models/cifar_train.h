@@ -30,6 +30,10 @@ public:
 	void forward(const std::vector< ct::Matf >& X, ct::Matf& a_out,
 				 bool use_drop = false, float p = 0.92, bool use_gpu = false);
 
+	void setRandData(float offset, float angle);
+
+	void setUseRandData(bool val);
+
 	void pass(int batch, bool use_gpu = false, std::vector<double> *percents = nullptr);
 
 	void getEstimate(int batch, double& accuracy, double& l2, bool use_gpu = false);
@@ -74,13 +78,21 @@ private:
 
 	std::vector< ct::Vec3f > m_vals;
 
+	bool m_use_rand_data;
+	ct::Vec2f m_rand_data;
+
 	void setDropout(float p, int layers);
 	void clearDropout();
-	void randValues(size_t count, std::vector< ct::Vec3f >& vals);
+	void randValues(size_t count, std::vector< ct::Vec3f >& vals, float offset, float angle);
 	void randX(ct::Matf &X, std::vector< ct::Vec3f >& vals);
 
 	void getEstimate(const std::vector< ct::Matf > &Xs, ct::Matf &y,
 					 uint &right, double &l2, bool use_gpu);
+
+	void sliceEstimage(const std::vector< ct::Matf > &Xs, ct::Matf &y,
+					   uint &right, double &l2);
+
+	int getRight(const ct::Matf& y, const ct::Matf& yp);
 
 };
 

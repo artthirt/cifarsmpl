@@ -583,7 +583,7 @@ void cuda_reduce(const GpuMat& mat, GpuMat& res)
 {
 #if 1
 	//T *res1, *res2;
-	CudaMem<T> res1, res2;
+	static CudaMem<T> res1, res2;
 
 	int block = 32;
 
@@ -746,7 +746,7 @@ void cuda_hsplit(const GpuMat &res, std::vector<GpuMat> &list)
 
 	dim3 dimBlock(BLOCKSIZE, BLOCKSIZE);
 
-#pragma omp parallel for
+//#pragma omp parallel for
 	for(int i = 0; i < list.size(); i += block){
 		int beg = i;
 		int last = beg + min((int)list.size() - i, block);
@@ -801,7 +801,7 @@ void cuda_hconcat(const std::vector<GpuMat> &list, GpuMat &res)
 
 	dim3 dimBlock(BLOCKSIZE, BLOCKSIZE);
 
-#pragma omp parallel for
+//#pragma omp parallel for
 	for(int i = 0; i < list.size(); i += block){
 		int beg = i;
 		int last = beg + min((int)list.size() - i, block);

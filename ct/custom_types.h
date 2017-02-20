@@ -903,7 +903,7 @@ public:
 	 * @param axes - =0 - in row; =1 - in column
 	 * @return index of maximum element in row or column
 	 */
-	int argmax(int index, int axes){
+	int argmax(int index, int axes) const{
 		T* val = &(*this->val)[0];
 		int res = 0;
 		if(axes == 0){

@@ -31,7 +31,7 @@ public:
 	QVector<TData> &test(int beg, int count);
 	uint count_test();
 
-	void convToXy(const QVector< TData > &data, std::vector< ct::Matf >& X, ct::Matf *y = nullptr);
+	void convToXy(const QVector<TData> &data, int first, int last, std::vector< ct::Matf >& X, ct::Matf *y = nullptr);
 
 	bool getData(double percent, TData& data);
 	void getTrain(int batch, std::vector< ct::Matf >& X, ct::Matf &y, std::vector<double> *percents = nullptr);
