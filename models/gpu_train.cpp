@@ -24,18 +24,20 @@ gpu_train::gpu_train()
 
 void gpu_train::setConvLayers(const std::vector<int> &layers,
 							  std::vector<int> weight_sizes,
-							  const ct::Size szA0)
+							  const ct::Size szA0, std::vector<bool> *pooling)
 {
 	if(layers.empty() || weight_sizes.empty())
 		throw new std::invalid_argument("empty parameters");
 
+	if(pooling)
+		m_cnvpooling = *pooling;
 	m_cnvlayers = layers;
 	m_cnvweights = weight_sizes;
 	m_szA0 = szA0;
 
 	m_conv.resize(3);
 	for(size_t i = 0; i < m_conv.size(); ++i){
-		m_conv[i].setConvLayers(layers, weight_sizes, szA0);
+		m_conv[i].setConvLayers(layers, weight_sizes, szA0, pooling);
 	}
 
 	m_init = false;
@@ -246,6 +248,28 @@ std::vector<gpumat::tvconvnn> &gpu_train::cnv(int index)
 	return m_conv[index].cnv();
 }
 
+template< typename T >
+void write_vector(std::fstream& fs, std::vector<T>& vec)
+{
+	int tmp = vec.size();
+	fs.write((char*)&tmp, sizeof(tmp));
+	if(tmp){
+		vec.resize(tmp);
+		fs.write((char*)&vec[0], vec.size() * sizeof(T));
+	}
+}
+
+template< typename T >
+void read_vector(std::fstream& fs, std::vector<T>& vec)
+{
+	int tmp;
+	fs.read((char*)&tmp, sizeof(tmp));
+	if(tmp){
+		vec.resize(tmp);
+		fs.read((char*)&vec[0], vec.size() * sizeof(T));
+	}
+}
+
 bool gpu_train::loadFromFile(const std::string &fn)
 {
 	std::fstream fs;
@@ -256,19 +280,10 @@ bool gpu_train::loadFromFile(const std::string &fn)
 		return false;
 	}
 
-	int tmp;
-
-	fs.read((char*)&tmp, sizeof(tmp));
-	m_cnvlayers.resize(tmp);
-	fs.read((char*)&m_cnvlayers[0], m_cnvlayers.size() * sizeof(decltype(m_cnvlayers)::value_type));
-
-	fs.read((char*)&tmp, sizeof(tmp));
-	m_cnvweights.resize(tmp);
-	fs.read((char*)&m_cnvweights[0], m_cnvweights.size() * sizeof(decltype(m_cnvweights)::size_type));
-
-	fs.read((char*)&tmp, sizeof(tmp));
-	m_layers.resize(tmp);
-	fs.read((char*)&m_layers[0], m_layers.size() * sizeof(decltype(m_layers)::size_type));
+	read_vector(fs, m_cnvlayers);
+	read_vector(fs, m_cnvweights);
+	read_vector(fs, m_cnvpooling);
+	read_vector(fs, m_layers);
 
 	fs.read((char*)&m_szA0, sizeof(m_szA0));
 
@@ -298,19 +313,10 @@ void gpu_train::saveToFile(const std::string &fn)
 		return;
 	}
 
-	int tmp;
-
-	tmp = m_cnvlayers.size();
-	fs.write((char*)&tmp, sizeof(tmp));
-	fs.write((char*)&m_cnvlayers[0], m_cnvlayers.size() * sizeof(decltype(m_cnvlayers)::value_type));
-
-	tmp = m_cnvweights.size();
-	fs.write((char*)&tmp, sizeof(tmp));
-	fs.write((char*)&m_cnvweights[0], m_cnvweights.size() * sizeof(decltype(m_cnvweights)::size_type));
-
-	tmp = m_layers.size();
-	fs.write((char*)&tmp, sizeof(tmp));
-	fs.write((char*)&m_layers[0], m_layers.size() * sizeof(decltype(m_layers)::size_type));
+	write_vector(fs, m_cnvlayers);
+	write_vector(fs, m_cnvweights);
+	write_vector(fs, m_cnvpooling);
+	write_vector(fs, m_layers);
 
 	fs.write((char*)&m_szA0, sizeof(m_szA0));
 

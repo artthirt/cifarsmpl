@@ -15,6 +15,7 @@ class ConvNN{
 public:
 	std::vector< int > m_cnvlayers;
 	std::vector< int > m_cnvweights;
+	std::vector< bool > m_cnvpooling;
 	std::vector< tvconvnnf > m_conv;
 	ct::Size m_szA0;
 
@@ -30,7 +31,8 @@ public:
 	void init();
 	void setConvLayers(const std::vector< int >& layers,
 					   std::vector< int > weight_sizes,
-					   const ct::Size szA0 = ct::Size(32, 32));
+					   const ct::Size szA0 = ct::Size(32, 32),
+					   std::vector<bool> *pooling = nullptr);
 	void conv(const ct::Matf& X, ct::Matf& XOut);
 	void backward(const ct::Matf& X);
 

@@ -30,9 +30,9 @@ public:
 	int weight_size;
 	gpumat::AdamOptimizer m_optim;
 
-	void setWeightSize(int ws);
+	void setWeightSize(int ws, bool use_pool);
 
-	void init(int count_weight, const ct::Size& _szA0);
+	void init(int count_weight, const ct::Size& _szA0, int use_pool);
 
 	void update_random();
 
@@ -40,11 +40,16 @@ public:
 
 	void clear();
 
+	bool use_pool() const;
+
+	ct::Size szOut() const;
 	void forward(const GpuMat *mat, gpumat::etypefunction func);
 
 	void apply_func(const GpuMat& A, GpuMat& B, etypefunction func);
 
 	void back2conv(const tvmat& A1, const tvmat& dA2, tvmat& dA1, etypefunction func);
+	void back2conv(const tvmat& A1, const tvmat& dA2, int first, int last, tvmat& dA1, etypefunction func);
+	void back2conv(const tvmat &A1, const std::vector<convnn> &dA2, int first, int last, tvmat &dA1, etypefunction func);
 
 	void backward(const std::vector< gpumat::GpuMat >& Delta, gpumat::etypefunction func,
 				  int first = -1, int last = -1, bool last_layer = false);
@@ -66,6 +71,7 @@ public:
 
 private:
 	bool m_init;
+	bool m_use_pool;
 
 	tvmat m_tmp1;
 	tvmat gradW;
@@ -83,6 +89,7 @@ class ConvNN{
 public:
 	std::vector< int > m_cnvlayers;
 	std::vector< int > m_cnvweights;
+	std::vector< bool > m_cnvpooling;
 	std::vector< std::vector< gpumat::convnn > > m_conv;
 	ct::Size m_szA0;
 	gpumat::convnn m_adds;
@@ -99,7 +106,8 @@ public:
 	void init();
 	void setConvLayers(const std::vector< int >& layers,
 					   std::vector< int > weight_sizes,
-					   const ct::Size szA0 = ct::Size(32, 32));
+					   const ct::Size szA0 = ct::Size(32, 32),
+					   std::vector< bool >* pooling = nullptr);
 	void conv(const GpuMat& X, GpuMat& XOut);
 	void backward(const GpuMat& X);
 

@@ -13,23 +13,28 @@ convnn::convnn()
 	weight_size = 3;
 	m_init = false;
 	pA0 = nullptr;
+	m_use_pool = true;
 }
 
-void convnn::setWeightSize(int ws)
+void convnn::setWeightSize(int ws, bool use_pool)
 {
 	weight_size = ws;
 	if(W.size())
-		init(W.size(), szA0);
+		init(W.size(), szA0, use_pool);
 }
 
-void convnn::init(int count_weight, const ct::Size &_szA0)
+void convnn::init(int count_weight, const ct::Size &_szA0, int use_pool)
 {
 	W.resize(count_weight);
 	B.resize(count_weight);
 
 	szA0 = _szA0;
 
+	m_use_pool = use_pool;
+
 	ct::get_cnv_sizes(szA0, ct::Size(weight_size, weight_size), stride, szA1, szA2);
+//	if(!m_use_pool)
+//		szA2 = szA1;
 
 	update_random();
 
@@ -63,14 +68,29 @@ void convnn::clear()
 	Masks.clear();
 }
 
+bool convnn::use_pool() const
+{
+	return m_use_pool;
+}
+
+ct::Size convnn::szOut() const{
+	if(m_use_pool)
+		return szA2;
+	else
+		return szA1;
+}
+
 void convnn::forward(const GpuMat *mat, etypefunction func)
 {
 	if(!m_init || !mat)
 		throw new std::invalid_argument("convnn::forward: not initialized. wrong parameters");
 	pA0 = (GpuMat*)mat;//mat.copyTo(A0);
 	gpumat::conv2D(*pA0, szA0, stride, W, B, A1, func);
-	ct::Size sztmp;
-	gpumat::subsample(A1, szA1, A2, Masks, sztmp);
+
+	if(m_use_pool){
+		ct::Size sztmp;
+		gpumat::subsample(A1, szA1, A2, Masks, sztmp);
+	}
 }
 
 void convnn::apply_func(const GpuMat &A, GpuMat &B, etypefunction func)
@@ -93,17 +113,37 @@ void convnn::back2conv(const convnn::tvmat &A1, const convnn::tvmat &dA2, convnn
 	}
 }
 
+void convnn::back2conv(const convnn::tvmat &A1, const convnn::tvmat &dA2, int first, int last, convnn::tvmat &dA1, etypefunction func)
+{
+	dA1.resize(last - first);
+//#pragma omp parallel for
+	for(int i = 0; i < dA1.size(); i++){
+		apply_func(A1[i], dA1[i], func);
+		gpumat::elemwiseMult(dA1[i], dA2[i +first]);
+	}
+}
+
+void convnn::back2conv(const convnn::tvmat &A1, const std::vector<convnn> &dA2, int first, int last, convnn::tvmat &dA1, etypefunction func)
+{
+	dA1.resize(last - first);
+//#pragma omp parallel for
+	for(int i = 0; i < dA1.size(); i++){
+		apply_func(A1[i], dA1[i], func);
+		gpumat::elemwiseMult(dA1[i], dA2[i + first].DltA0);
+	}
+}
+
 void convnn::backward(const std::vector<GpuMat> &Delta, etypefunction func, int first, int last, bool last_layer)
 {
 	if(!m_init || !pA0)
 		throw new std::invalid_argument("convnn::backward: not initialized");
-	gpumat::upsample(Delta, szA2, szA1, Masks, dA2, first, last);
 
-//	for(int i = first; i < last; ++i){
-//		qt_work_mat::q_save_mat(Delta[i], QString("_Delta_%1.txt").arg(i));
-//	}
-
-	back2conv(A1, dA2, dA1, func);
+	if(m_use_pool){
+		gpumat::upsample(Delta, szA2, szA1, Masks, dA2, first, last);
+		back2conv(A1, dA2, dA1, func);
+	}else{
+		back2conv(A1, Delta, first, last, dA1, func);
+	}
 
 //	for(int i = 0; i < dA2.size(); ++i){
 //		qt_work_mat::q_save_mat(Masks[i], QString("_Masks_%1.txt").arg(i));
@@ -138,8 +178,13 @@ void convnn::backward(const std::vector<convnn> &Delta, etypefunction func, int 
 {
 	if(!m_init || !pA0)
 		throw new std::invalid_argument("convnn::backward: not initialized");
-	convnn::upsample(Delta, szA2, szA1, Masks, dA2, first, last);
-	back2conv(A1, dA2, dA1, func);
+
+	if(m_use_pool){
+		convnn::upsample(Delta, szA2, szA1, Masks, dA2, first, last);
+		back2conv(A1, dA2, dA1, func);
+	}else{
+		back2conv(A1, Delta, first, last, dA1, func);
+	}
 
 	ct::Size szW(weight_size, weight_size);
 
@@ -227,7 +272,7 @@ void ConvNN::setAlpha(float alpha)
 
 int ConvNN::outputFeatures() const
 {
-	return m_conv.back()[0].W.size() * m_conv.back()[0].szA2.area() * m_conv.back().size();
+	return m_conv.back()[0].W.size() * m_conv.back()[0].szOut().area() * m_conv.back().size();
 }
 
 int ConvNN::outputMatrices() const
@@ -248,22 +293,28 @@ void ConvNN::init()
 	for(size_t i = 0; i < m_conv.size(); ++i){
 		m_conv[i].resize(input);
 
+		bool pool = true;
+		if(m_cnvpooling.size())
+			pool = m_cnvpooling[i];
+
 		for(size_t j = 0; j < m_conv[i].size(); ++j){
 			convnn& cnv = m_conv[i][j];
-			cnv.setWeightSize(m_cnvweights[i]);
-			cnv.init(m_cnvlayers[i], szA0);
+			cnv.setWeightSize(m_cnvweights[i], pool);
+			cnv.init(m_cnvlayers[i], szA0, pool);
 		}
 		input = m_cnvlayers[i] * input;
-		szA0 = m_conv[i][0].szA2;
+		szA0 = m_conv[i][0].szOut();
 	}
 }
 
 void ConvNN::setConvLayers(const std::vector<int> &layers, std::vector<int> weight_sizes,
-						   const ct::Size szA0)
+						   const ct::Size szA0, std::vector<bool> *pooling)
 {
 	if(layers.empty() || weight_sizes.empty())
 		throw new std::invalid_argument("empty parameters");
 
+	if(pooling)
+		m_cnvpooling = *pooling;
 	m_cnvlayers = layers;
 	m_cnvweights = weight_sizes;
 	m_szA0 = szA0;
@@ -288,7 +339,10 @@ void ConvNN::conv(const GpuMat &X,GpuMat &XOut)
 				for(size_t k = 0; k < m_cnvlayers[i - 1]; ++k){
 					size_t col = off1 + k;
 					gpumat::convnn& mi = ls[col];
-					mi.forward(&m0.A2[k], gpumat::RELU);
+					if(m0.use_pool())
+						mi.forward(&m0.A2[k], gpumat::RELU);
+					else
+						mi.forward(&m0.A1[k], gpumat::RELU);
 				}
 			}
 		}

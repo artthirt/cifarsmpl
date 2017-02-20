@@ -12,7 +12,8 @@ public:
 
 	void setConvLayers(const std::vector< int >& layers,
 					   std::vector< int > weight_sizes,
-					   const ct::Size szA0 = ct::Size(32, 32));
+					   const ct::Size szA0 = ct::Size(32, 32),
+					   std::vector<bool> *pooling = nullptr);
 	void setMlpLayers(const std::vector< int >& layers);
 
 	void setAlpha(double alpha);
@@ -40,6 +41,7 @@ public:
 private:
 	std::vector< int > m_layers;
 	std::vector< int > m_cnvlayers;
+	std::vector< bool > m_cnvpooling;
 	std::vector< int > m_cnvweights;
 	ct::Size m_szA0;
 	bool m_init;

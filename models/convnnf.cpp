@@ -20,7 +20,7 @@ void ConvNN::setAlpha(float alpha)
 
 int ConvNN::outputFeatures() const
 {
-	return m_conv.back()[0].W.size() * m_conv.back()[0].szA2.area() * m_conv.back().size();
+	return m_conv.back()[0].W.size() * m_conv.back()[0].szOut().area() * m_conv.back().size();
 }
 
 int ConvNN::outputMatrices() const
@@ -41,21 +41,27 @@ void ConvNN::init()
 	for(size_t i = 0; i < m_conv.size(); ++i){
 		m_conv[i].resize(input);
 
+		bool pool = true;
+		if(m_cnvpooling.size())
+			pool = m_cnvpooling[i];
+
 		for(size_t j = 0; j < m_conv[i].size(); ++j){
 			convnnf& cnv = m_conv[i][j];
-			cnv.setWeightSize(m_cnvweights[i]);
-			cnv.init(m_cnvlayers[i], szA0);
+			cnv.setWeightSize(m_cnvweights[i], pool);
+			cnv.init(m_cnvlayers[i], szA0, pool);
 		}
 		input = m_cnvlayers[i] * input;
-		szA0 = m_conv[i][0].szA2;
+		szA0 = m_conv[i][0].szOut();
 	}
 }
 
-void ConvNN::setConvLayers(const std::vector<int> &layers, std::vector<int> weight_sizes, const ct::Size szA0)
+void ConvNN::setConvLayers(const std::vector<int> &layers, std::vector<int> weight_sizes, const ct::Size szA0, std::vector<bool> *pooling)
 {
 	if(layers.empty() || weight_sizes.empty())
 		throw new std::invalid_argument("empty parameters");
 
+	if(pooling)
+		m_cnvpooling = *pooling;
 	m_cnvlayers = layers;
 	m_cnvweights = weight_sizes;
 	m_szA0 = szA0;
@@ -86,7 +92,10 @@ void ConvNN::conv(const ct::Matf &X, ct::Matf &XOut)
 					for(int k = 0; k < m_cnvlayers[i - 1]; ++k){
 						size_t col = off1 + k;
 						convnnf& mi = ls[col];
-						mi.forward(&m0.A2[k], ct::RELU);
+						if(m0.use_pool())
+							mi.forward(&m0.A2[k], ct::RELU);
+						else
+							mi.forward(&m0.A1[k], ct::RELU);
 					}
 				}
 			}

@@ -16,6 +16,7 @@ public:
 		weight_size = 3;
 		m_init = false;
 		A0 = nullptr;
+		m_use_pool = true;
 	}
 
 	ct::Mat_<T> *A0;
@@ -38,19 +39,23 @@ public:
 	std::vector< T > gradB;
 	std::vector< ct::Mat_<T> > dA2, dA1;
 
-	void setWeightSize(int ws){
+	void setWeightSize(int ws, bool use_pool){
 		weight_size = ws;
 		if(W.size())
-			init(W.size(), szA0);
+			init(W.size(), szA0, use_pool);
 	}
 
-	void init(size_t count_weight, const ct::Size& _szA0){
+	void init(size_t count_weight, const ct::Size& _szA0, int use_pool){
 		W.resize(count_weight);
 		B.resize(count_weight);
 
 		szA0 = _szA0;
 
+		m_use_pool = use_pool;
+
 		ct::get_cnv_sizes(szA0, ct::Size(weight_size, weight_size), stride, szA1, szA2);
+//		if(!m_use_pool)
+//			szA2 = szA1;
 
 		update_random();
 
@@ -93,47 +98,83 @@ public:
 		Masks.clear();
 	}
 
+	bool use_pool() const{
+		return m_use_pool;
+	}
+
+	ct::Size szOut() const{
+		if(m_use_pool)
+			return szA2;
+		else
+			return szA1;
+	}
+
 	bool forward(const ct::Mat_<T>* mat, ct::etypefunction func){
 		if(!m_init || !mat)
 			throw new std::invalid_argument("convnn::forward: not initialized");
 		A0 = (ct::Mat_<T>*)mat;
 		m_func = func;
 		ct::conv2D(*A0, szA0, stride, W, B, A1, func);
-		ct::Size sztmp;
-		bool res = ct::subsample(A1, szA1, A2, Masks, sztmp);
-		return res;
+
+		if(m_use_pool){
+			ct::Size sztmp;
+			bool res = ct::subsample(A1, szA1, A2, Masks, sztmp);
+			return res;
+		}else{
+			return true;
+		}
+	}
+
+	inline void apply_back(const ct::Mat_<T>& A1, const ct::Mat_<T>& dA2, ct::Mat_<T>& dA1, ct::etypefunction func)
+	{
+		switch (func) {
+			case ct::LINEAR:
+				ct::elemwiseMult(dA2, ct::derivRelu(A1), dA1);
+				break;
+			default:
+			case ct::RELU:
+				ct::elemwiseMult(dA2, ct::derivRelu(A1), dA1);
+				break;
+			case ct::SIGMOID:
+				ct::elemwiseMult(dA2, ct::derivSigmoid(A1), dA1);
+				break;
+			case ct::TANH:
+				ct::elemwiseMult(dA2, ct::derivTanh(A1), dA1);
+				break;
+		}
 	}
 
 	void back2conv(const tvmat& A1, const tvmat& dA2, tvmat& dA1, ct::etypefunction func){
 		dA1.resize(A1.size());
 		for(size_t i = 0; i < A1.size(); i++){
+			apply_back(A1[i], dA2[i], dA1[i], func);
+		}
+	}
 
-			switch (func) {
-				case ct::LINEAR:
-					ct::elemwiseMult(dA2[i], ct::derivRelu(A1[i]), dA1[i]);
-					break;
-				default:
-				case ct::RELU:
-					ct::elemwiseMult(dA2[i], ct::derivRelu(A1[i]), dA1[i]);
-					break;
-				case ct::SIGMOID:
-					ct::elemwiseMult(dA2[i], ct::derivSigmoid(A1[i]), dA1[i]);
-					break;
-				case ct::TANH:
-					ct::elemwiseMult(dA2[i], ct::derivTanh(A1[i]), dA1[i]);
-					break;
-					break;
-			}
+	void back2conv(const tvmat& A1, const tvmat& dA2, int first, int last, tvmat& dA1, ct::etypefunction func){
+		dA1.resize(A1.size());
+		for(size_t i = 0; i < A1.size(); i++){
+			apply_back(A1[i], dA2[i + first], dA1[i], func);
+		}
+	}
 
+	void back2conv(const tvmat& A1, const std::vector< convnn >& dA2, int first, int last, tvmat& dA1, ct::etypefunction func){
+		dA1.resize(A1.size());
+		for(size_t i = 0; i < A1.size(); i++){
+			apply_back(A1[i], dA2[i + first].DltA0, dA1[i], func);
 		}
 	}
 
 	void backward(const std::vector< ct::Mat_<T> >& Delta, int first = -1, int last = -1, bool last_layer = false){
 		if(!m_init || !A0)
 			throw new std::invalid_argument("convnn::backward: not initialized");
-		ct::upsample(Delta, szA2, szA1, Masks, dA2, first, last);
 
-		back2conv(A1, dA2, dA1, m_func);
+		if(m_use_pool){
+			ct::upsample(Delta, szA2, szA1, Masks, dA2, first, last);
+			back2conv(A1, dA2, dA1, m_func);
+		}else{
+			back2conv(A1, Delta, first, last, dA1, m_func);
+		}
 
 		ct::Size szW(weight_size, weight_size);
 
@@ -148,9 +189,12 @@ public:
 	void backward(const std::vector< convnn >& Delta, int first = -1, int last = -1, bool last_layer = false){
 		if(!m_init || !A0)
 			throw new std::invalid_argument("convnn::backward: not initialized");
-		convnn::upsample(Delta, szA2, szA1, Masks, dA2, first, last);
-
-		back2conv(A1, dA2, dA1, m_func);
+		if(m_use_pool){
+			convnn::upsample(Delta, szA2, szA1, Masks, dA2, first, last);
+			back2conv(A1, dA2, dA1, m_func);
+		}else{
+			back2conv(A1, Delta, first, last, dA1, m_func);
+		}
 
 		ct::Size szW(weight_size, weight_size);
 
@@ -191,6 +235,7 @@ public:
 
 private:
 	bool m_init;
+	bool m_use_pool;
 	ct::etypefunction m_func;
 
 	bool upsample(const std::vector< convnn > &A1,

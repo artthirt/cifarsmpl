@@ -71,18 +71,21 @@ void cifar_train::setCifar(cifar_reader *val)
 
 void cifar_train::setConvLayers(const std::vector<int> &layers,
 								std::vector<int> weight_sizes,
-								const ct::Size szA0)
+								const ct::Size szA0,
+								std::vector< bool > *pooling)
 {
 	if(layers.empty() || weight_sizes.empty())
 		throw new std::invalid_argument("empty parameters");
 
+	if(pooling)
+		m_cnvpooling = *pooling;
 	m_cnvlayers = layers;
 	m_cnvweights = weight_sizes;
 	m_szA0 = szA0;
 
 	m_conv.resize(3);
 	for(size_t i = 0; i < m_conv.size(); ++i){
-		m_conv[i].setConvLayers(layers, weight_sizes, szA0);
+		m_conv[i].setConvLayers(layers, weight_sizes, szA0, pooling);
 	}
 }
 
@@ -502,7 +505,7 @@ void cifar_train::init_gpu()
 	if(m_gpu_train.isInit())
 		return;
 
-	m_gpu_train.setConvLayers(m_cnvlayers, m_cnvweights, m_szA0);
+	m_gpu_train.setConvLayers(m_cnvlayers, m_cnvweights, m_szA0, &m_cnvpooling);
 	m_gpu_train.setMlpLayers(m_layers);
 
 	m_gpu_train.init();
