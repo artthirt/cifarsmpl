@@ -150,8 +150,8 @@ void MainWindow::update_statistics()
 	QString stat ="Statistics:";
 	for(int i = 0; i < 10; ++i){
 		ct::Vec2i vec = m_train.statistics(i);
-		double p = vec[1]? (double)vec[0] / vec[1] : 0;
-		stat += QString("\nP(class[%1])=%2;").arg(i).arg(p);
+		double p = vec[1]? (double)1.0 * vec[0] / vec[1] : -1;
+		stat += QString("\nAcc(class[%1])=%2;").arg(i).arg(p);
 	}
 	ui->lb_stat->setText(stat);
 }
