@@ -48,6 +48,8 @@ private slots:
 
 	void on_sb_iter_numb_valueChanged(int arg1);
 
+	void on_pb_mode_clicked(bool checked);
+
 private:
 	Ui::MainWindow *ui;
 	QTimer m_timer;

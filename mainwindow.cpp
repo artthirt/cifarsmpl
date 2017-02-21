@@ -217,3 +217,11 @@ void MainWindow::on_sb_iter_numb_valueChanged(int arg1)
 {
 	m_delimiter = arg1;
 }
+
+void MainWindow::on_pb_mode_clicked(bool checked)
+{
+	if(checked)
+		ui->wcifar->setTestMode();
+	else
+		ui->wcifar->setTrainMode();
+}

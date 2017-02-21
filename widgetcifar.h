@@ -70,7 +70,10 @@ public:
 
 	const QVector<TData> &output_data() const;
 
+	int test_pos() const;
+
 	void update_source();
+	void update_test();
 
 public slots:
 	void onTimeout();
@@ -94,6 +97,8 @@ private:
 	bool m_update;
 	int m_cols;
 	int m_start_show;
+	int m_last_test_pos;
+	int m_last_test_pos_saved;
 
 	QImage m_sel_image;
 

@@ -110,6 +110,16 @@
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="pb_mode">
+        <property name="text">
+         <string>Train/Test</string>
+        </property>
+        <property name="checkable">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
        <spacer name="horizontalSpacer">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
@@ -265,6 +275,9 @@
         </property>
         <property name="horizontalScrollBarPolicy">
          <enum>Qt::ScrollBarAlwaysOff</enum>
+        </property>
+        <property name="maximumBlockCount">
+         <number>500</number>
         </property>
        </widget>
       </item>

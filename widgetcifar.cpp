@@ -34,6 +34,9 @@ WidgetCifar::WidgetCifar(QWidget *parent) :
 
 	m_cols = 0;
 
+	m_last_test_pos = 0;
+	m_last_test_pos_saved = 0;
+
 	m_update = false;
 	m_timer_update.start(30);
 	connect(&m_timer_update, SIGNAL(timeout()), this, SLOT(onTimeoutUpdate()));
@@ -49,13 +52,13 @@ WidgetCifar::~WidgetCifar()
 void WidgetCifar::setTestMode()
 {
 	m_mode = TEST;
-	update();
+	m_timer.start();
 }
 
 void WidgetCifar::setTrainMode()
 {
 	m_mode = TRAIN;
-	update();
+	m_timer.start();
 }
 
 int WidgetCifar::mode() const
@@ -98,10 +101,15 @@ void WidgetCifar::next()
 {
 	if(!m_cifar || !m_cifar->isBinDataExists())
 		return;
-	if(m_index < 1){
-		m_index = m_cifar->current_percent();
+	if(m_mode == TRAIN){
+		if(m_index < 1){
+			m_index = m_cifar->current_percent();
+		}
+		update_source();
+	}else{
+		m_last_test_pos += m_last_test_pos_saved;
+		update_test();
 	}
-	update_source();
 }
 
 void WidgetCifar::prev()
@@ -112,9 +120,15 @@ void WidgetCifar::prev()
 
 void WidgetCifar::toBegin()
 {
-	if(m_cifar->isBinDataExists()){
-		m_index = 0;
-		update_source();
+	if(m_mode == TRAIN){
+		if(m_cifar->isBinDataExists()){
+			m_index = 0;
+			update_source();
+		}
+	}else{
+		m_last_test_pos = 0;
+		m_last_test_pos_saved = 0;
+		update_test();
 	}
 }
 
@@ -128,9 +142,18 @@ const QVector<TData> &WidgetCifar::output_data() const
 	return m_output_data;
 }
 
+int WidgetCifar::test_pos() const
+{
+	return m_last_test_pos;
+}
+
 void WidgetCifar::onTimeout()
 {
-	update_source();
+	if(m_mode == TRAIN){
+		update_source();
+	}else{
+		update_test();
+	}
 }
 
 void WidgetCifar::onTimeoutUpdate()
@@ -194,6 +217,50 @@ void WidgetCifar::update_source()
 			}
 		}
 	}
+	update();
+}
+
+void WidgetCifar::update_test()
+{
+	if(!m_cifar || !m_cifar->isBinDataExists())
+		return;
+
+	bool floop = true;
+
+	int x = 0, y = 0;
+	int cnt = 100;
+
+	int wim = cifar_reader::WidthIM;
+	int him = cifar_reader::HeightIM;
+
+	m_output_data.clear();
+	int beg = m_last_test_pos;
+
+	while(floop){
+
+		QVector< TData >& data = m_cifar->test(beg, cnt);
+		cnt = data.size();
+
+		m_output_data.append(data);
+		beg += cnt;
+
+		for(int i = 0; i < data.size(); i++){
+			if(y * him + him >= height()){
+				floop = false;
+				continue;
+			}
+
+			x++;
+
+			if((x + 1) * wim > width()){
+				m_cols = x;
+				x = 0;
+				y++;
+			}
+		}
+	}
+	m_last_test_pos_saved = beg;
+
 	update();
 }
 
