@@ -153,7 +153,7 @@ void MainWindow::update_statistics()
 		double p = vec[1]? (double)vec[0] / vec[1] : 0;
 		stat += QString("\nP(class[%1])=%2;").arg(i).arg(p);
 	}
-	ui->pte_statistics->appendPlainText(stat);
+	ui->lb_stat->setText(stat);
 }
 
 void MainWindow::on_pb_pass_clicked(bool checked)
