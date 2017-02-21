@@ -33,6 +33,10 @@ const int countBin = 10000;
 const int maxCount = countFiles * countBin;
 
 union ULab{
+	ULab(){
+		sh = 0;
+	}
+
 	uchar b1;
 	uchar b2[2];
 	ushort sh;
@@ -79,6 +83,7 @@ cifar_reader::~cifar_reader()
 
 QVector<TData> &cifar_reader::train(int batch, double percent)
 {
+	m_current_data.clear();
 	if(batch == 0 || percent > 1)
 		return m_current_data;
 
@@ -117,6 +122,8 @@ QVector<TData> &cifar_reader::train(int batch, double percent)
 
 QVector<TData> &cifar_reader::test(int beg, int count)
 {
+	m_current_test.clear();
+
 	open_test_file();
 	if(!m_current_test_object.isOpen())
 		throw new std::invalid_argument("cifar_reader::test: test file not opened");
@@ -257,6 +264,7 @@ void cifar_reader::getTrain(int batch, std::vector<ct::Matf> &X, ct::Matf &y)
 	for(int i = 0; i < batch; ++i){
 		TData data;
 		ct::Vec2i& v = vals[i];
+
 		getData(v[0], v[1], data);
 
 		if((data.lb == 3 || data.lb == 5) && i < batch - 1){
@@ -499,7 +507,6 @@ uint cifar_reader::readCifar(QFile &file, QVector<TData> &val, int batch, int of
 
 		val[i].lb = labels::getLb(lb, m_data_source);
 	}
-
 
 	return sz;
 }

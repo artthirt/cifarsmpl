@@ -37,6 +37,8 @@ WidgetCifar::WidgetCifar(QWidget *parent) :
 	m_last_test_pos = 0;
 	m_last_test_pos_saved = 0;
 
+	m_offset_sel_image = 0;
+
 	m_update = false;
 	m_timer_update.start(30);
 	connect(&m_timer_update, SIGNAL(timeout()), this, SLOT(onTimeoutUpdate()));
@@ -82,7 +84,7 @@ void WidgetCifar::updatePredictfromIndex(const QVector<int> &predict, int index)
 	if(!m_cifar || !m_cifar->isBinDataExists())
 		return;
 
-	QVector< int >& prediction = m_mode == TRAIN? m_prediction_train : m_prediction_test;
+	QVector< int >& prediction = m_prediction;
 
 	qDebug("predicted array size %d", predict.size());
 
@@ -165,6 +167,7 @@ void WidgetCifar::onTimeoutUpdate()
 		int off = yid * m_cols + xid;
 
 		if(off < m_output_data.size()){
+			m_offset_sel_image = off;
 			QImage im((uchar*)m_output_data[off].image.data(), wim, him, QImage::Format_RGB888);
 			m_sel_image = im;
 			update();
@@ -310,7 +313,7 @@ void WidgetCifar::paintEvent(QPaintEvent *event)
 	int wim = cifar_reader::WidthIM;
 	int him = cifar_reader::HeightIM;
 
-	QVector< int >& prediction = m_mode == TRAIN? m_prediction_train : m_prediction_test;
+	QVector< int >& prediction = m_prediction;
 
 	for(int i = 0; i < m_output_data.size(); i++){
 		if(y * him + him >= height()){
@@ -362,7 +365,18 @@ void WidgetCifar::paintEvent(QPaintEvent *event)
 
 	if(!m_sel_image.isNull()){
 		QImage tmp = m_sel_image.scaled(QSize(100, 100));
-		painter.drawImage(m_point, tmp);
+
+		QPainter painter1(&tmp);
+
+		painter1.setPen(Qt::green);
+		QString text = QString::number((uint)m_output_data[m_offset_sel_image].lb);
+		painter1.drawText(20, 20, text);
+		if(prediction.size() > m_offset_sel_image){
+			painter1.setPen(QColor(30, 255, 100));
+			QString text = QString::number((uint)prediction[m_offset_sel_image]);
+			painter1.drawText(tmp.width() - 20, 20, text);
+		}
+		painter.drawImage(m_point + QPoint(10, 30), tmp);
 	}
 }
 

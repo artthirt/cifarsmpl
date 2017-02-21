@@ -85,8 +85,7 @@ private:
 	QTimer m_timer_update;
 	int m_mode;
 
-	QVector< int > m_prediction_test;
-	QVector< int > m_prediction_train;
+	QVector< int > m_prediction;
 
 	QVector<TData> m_output_data;
 
@@ -99,6 +98,7 @@ private:
 	int m_start_show;
 	int m_last_test_pos;
 	int m_last_test_pos_saved;
+	int m_offset_sel_image;
 
 	QImage m_sel_image;
 
