@@ -404,7 +404,7 @@ void cifar_train::getEstimateTest(double &accuracy, double &l2, bool use_gpu)
 	std::vector< ct::Matf > Xs;
 	ct::Matf y;
 
-	uint batch = 500, ind = 0, right = 0, right_all = 0, count_all = 0;
+	uint batch = 300, ind = 0, right = 0, right_all = 0, count_all = 0;
 	double l2i;
 
 	uint size = m_cifar->count_test();
