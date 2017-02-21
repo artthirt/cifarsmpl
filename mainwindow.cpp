@@ -192,6 +192,7 @@ void MainWindow::on_actOpenDir_triggered()
 void MainWindow::on_action_save_model_triggered()
 {
 	m_train.saveToFile(model_file, ui->chb_gpu->isChecked());
+	ui->pte_logs->appendPlainText("Model saved");
 }
 
 void MainWindow::on_actionLoad_model_triggered()
