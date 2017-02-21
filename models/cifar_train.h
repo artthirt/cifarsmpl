@@ -40,6 +40,7 @@ public:
 	void pass(int batch, bool use_gpu = false);
 
 	void getEstimate(int batch, double& accuracy, double& l2, bool use_gpu = false);
+	void getEstimateTest(int batch, double& accuracy, double& l2, bool use_gpu = false);
 
 	void getEstimateTest(double& accuracy, double& l2, bool use_gpu = false);
 

@@ -354,6 +354,42 @@ uint cifar_reader::getTest(uint beg, uint batch, std::vector<ct::Matf> &Xs, ct::
 	return m_current_test.size();
 }
 
+uint cifar_reader::getTest(uint batch, std::vector<ct::Matf> &Xs, ct::Matf &y)
+{
+	if(m_current_test.empty() || batch <= 0)
+		return 0;
+
+	open_test_file();
+
+	std::uniform_int_distribution<int> urnd(0, countBin);
+
+	m_current_test.resize(batch);
+	for(int i = 0; i < batch; ++i){
+		int off = urnd(ct::generator);
+		readCifar1(m_current_test_object, m_current_test[i], off);
+	}
+
+	Xs.resize(3);
+
+	y.setSize(m_current_test.size(), 1);
+	y.fill(0);
+
+	for(size_t i = 0; i < Xs.size(); ++i){
+		Xs[i].setSize(m_current_test.size(), WidthIM * HeightIM);
+	}
+
+	float *dy = y.ptr();
+
+	for(uint i = 0; i < m_current_test.size(); ++i){
+		TData &data = m_current_test[i];
+
+		ct::image2mats(data.data, WidthIM, HeightIM, i, Xs[0], Xs[1], Xs[2]);
+
+		dy[i * y.cols + 0] = data.lb;
+	}
+	return m_current_test.size();
+}
+
 uint cifar_reader::count()
 {
 	return maxCount;

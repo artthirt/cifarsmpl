@@ -40,6 +40,7 @@ public:
 	void getTrainIt(double percent, int batch, std::vector< ct::Matf >& X, ct::Matf *y = nullptr);
 
 	uint getTest(uint beg, uint batch, std::vector< ct::Matf >& X, ct::Matf &y);
+	uint getTest(uint batch, std::vector< ct::Matf >& Xs, ct::Matf &y);
 
 	uint count();
 	uint current_file();

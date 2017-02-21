@@ -121,7 +121,11 @@ void MainWindow::pass()
 	ui->lb_it->setText(QString("Iteraion %1").arg(it));
 
 	if((it % m_delimiter) == 0){
-		m_train.getEstimate(800, acc, l2, ui->chb_gpu->isChecked());
+		if(ui->wcifar->mode() == WidgetCifar::TRAIN)
+			m_train.getEstimate(800, acc, l2, ui->chb_gpu->isChecked());
+		else{
+			m_train.getEstimateTest(800, acc, l2, ui->chb_gpu->isChecked());
+		}
 
 		qDebug("iteration %d: acc=%f, l2=%f", it, acc, l2);
 

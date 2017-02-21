@@ -399,6 +399,24 @@ void cifar_train::getEstimate(int batch, double &accuracy, double &l2, bool use_
 	accuracy = (double)right / y.rows;
 }
 
+void cifar_train::getEstimateTest(int batch, double &accuracy, double &l2, bool use_gpu)
+{
+	if(!m_init || batch <= 0)
+		throw new std::invalid_argument("not initialize");
+
+	std::vector< ct::Matf > Xs;
+	ct::Matf y;
+
+	m_cifar->getTest(batch, Xs, y);
+
+	m_statistics.clear();
+
+	uint right;
+	getEstimate(Xs, y, right, l2, use_gpu);
+
+	accuracy = (double)right / y.rows;
+}
+
 void cifar_train::getEstimateTest(double &accuracy, double &l2, bool use_gpu)
 {
 	std::vector< ct::Matf > Xs;
