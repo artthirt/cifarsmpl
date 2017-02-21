@@ -94,6 +94,8 @@ void MainWindow::on_pb_test_clicked()
 
 	ui->lb_out->setText(QString("Test: acc=%1, l2=%2").arg(acc).arg(l2));
 	ui->pte_logs->appendPlainText(QString("Test: acc=%1, l2=%2").arg(acc).arg(l2));
+
+	update_statistics();
 }
 
 void MainWindow::onTimeout()
@@ -127,6 +129,7 @@ void MainWindow::pass()
 		ui->pte_logs->appendPlainText(QString("iteration %1: acc=%2, l2=%3").arg(it).arg(acc).arg(l2));
 
 		update_prediction();
+		update_statistics();
 	}
 }
 
@@ -140,6 +143,17 @@ void MainWindow::update_prediction()
 	ui->wdgW->set_weightG(m_train.cnvW(1, ui->chb_gpu->isChecked()));
 	ui->wdgW->set_weightB(m_train.cnvW(2, ui->chb_gpu->isChecked()));
 	ui->wdgW->update();
+}
+
+void MainWindow::update_statistics()
+{
+	QString stat ="Statistics:\n";
+	for(int i = 0; i < 10; ++i){
+		ct::Vec2i vec = m_train.statistics(i);
+		double p = vec[1]? (double)vec[0] / vec[1] : 0;
+		stat += QString("P(class[%1])=%2;\n").arg(i).arg(p);
+	}
+	ui->pte_logs->appendPlainText(stat);
 }
 
 void MainWindow::on_pb_pass_clicked(bool checked)

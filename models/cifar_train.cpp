@@ -1,5 +1,6 @@
 #include "cifar_train.h"
 
+#include <QMap>
 ////////////////////
 
 template< typename T >
@@ -367,10 +368,15 @@ int cifar_train::getRight(const ct::Matf &y, const ct::Matf &yp)
 {
 	int count = 0;
 	for(int i = 0; i < yp.rows; ++i){
-		int id = yp.argmax(i, 1);
-		if(y.at(i, 0) == id){
+		int idp = yp.argmax(i, 1);
+		int idy = y.at(i, 0);
+		ct::Vec2i vec = m_statistics[idy];
+		if(idy == idp){
 			count++;
+			vec[0]++;
 		}
+		vec[1]++;
+		m_statistics[idy] = vec;
 	}
 	return count;
 }
@@ -384,6 +390,8 @@ void cifar_train::getEstimate(int batch, double &accuracy, double &l2, bool use_
 	ct::Matf y;
 
 	m_cifar->getTrain(batch, Xs, y);
+
+	m_statistics.clear();
 
 	uint right;
 	getEstimate(Xs, y, right, l2, use_gpu);
@@ -400,6 +408,8 @@ void cifar_train::getEstimateTest(double &accuracy, double &l2, bool use_gpu)
 	double l2i;
 
 	uint size = m_cifar->count_test();
+
+	m_statistics.clear();
 
 	while(ind < size){
 		batch = m_cifar->getTest(ind, batch, Xs, y);
@@ -596,6 +606,11 @@ void cifar_train::saveToFile(const QString &fn, bool gpu)
 		m_mlp[i].write(fs);
 	}
 
+}
+
+ct::Vec2i cifar_train::statistics(int val) const
+{
+	return m_statistics[val];
 }
 
 void cifar_train::setDropout(float p, int layers)

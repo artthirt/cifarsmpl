@@ -61,6 +61,7 @@ private:
 
 	void pass();
 	void update_prediction();
+	void update_statistics();
 };
 
 #endif // MAINWINDOW_H

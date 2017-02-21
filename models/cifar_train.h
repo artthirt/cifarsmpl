@@ -9,6 +9,8 @@
 
 #include "gpu_train.h"
 
+#include <QMap>
+
 namespace ct{
 	typedef mlp<float> mlpf;
 }
@@ -56,6 +58,8 @@ public:
 	bool loadFromFile(const QString& fn, bool gpu);
 	void saveToFile(const QString& fn, bool gpu);
 
+	ct::Vec2i statistics(int val) const;
+
 private:
 	cifar_reader* m_cifar;
 	std::vector< int > m_layers;
@@ -64,6 +68,8 @@ private:
 	std::vector< char > m_cnvpooling;
 	ct::Size m_szA0;
 	bool m_init;
+
+	QMap< int, ct::Vec2i > m_statistics;
 
 	gpu_train m_gpu_train;
 
