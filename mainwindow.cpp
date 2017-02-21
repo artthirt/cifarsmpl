@@ -225,3 +225,13 @@ void MainWindow::on_pb_mode_clicked(bool checked)
 	else
 		ui->wcifar->setTrainMode();
 }
+
+void MainWindow::on_pb_update_clicked()
+{
+	if(!m_cifar.isBinDataExists()){
+		return;
+	}
+
+	update_prediction();
+	update_statistics();
+}
