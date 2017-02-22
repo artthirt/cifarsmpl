@@ -6,6 +6,8 @@
 
 #include "matops.h"
 
+const int wd_blk = 10;
+
 DrawCnvWeight::DrawCnvWeight(QWidget *parent) :
 	QWidget(parent),
 	ui(new Ui::DrawCnvWeight)
@@ -68,6 +70,19 @@ void DrawCnvWeight::set_weightB(const QVector< QVector<ct::Matf> > &W)
 	update();
 }
 
+void DrawCnvWeight::set_weightGray(const QVector<QVector<ct::Matf> > &W)
+{
+	if(W.empty())
+		return;
+
+	copy_weights(W, m_W_Gray);
+
+	if(m_prevW_gray.empty())
+		copy_weights(m_W_Gray, m_prevW_gray);
+
+	update();
+}
+
 void normalizeMat(const ct::Matf& iW, ct::Matf& oW, float _min, float _max)
 {
 	float m1 = _max;
@@ -91,9 +106,6 @@ void draw_W(QPainter& painter, const ct::Matf& W_R,
 //	float *dW1 = W.ptr();
 //	float *dW2 = prevW.ptr();
 
-	QPen pen;
-	pen.setWidth(2);
-
 	float *dWR = Wr.ptr();
 	float *dWG = Wg.ptr();
 	float *dWB = Wb.ptr();
@@ -106,19 +118,25 @@ void draw_W(QPainter& painter, const ct::Matf& W_R,
 			uchar b = dWB[y * Wb.cols + x];
 			painter.setBrush(QColor(r, g, b));
 			painter.drawRect(rt);
+		}
+	}
+}
 
-//			float v1 = dW1[y * W.cols + x];
-//			float v2 = dW2[y * W.cols + x];
+void draw_W(QPainter& painter, const ct::Matf& W, int _x, int _y, int w, float _max, float _min)
+{
+	ct::Matf _W;
+	normalizeMat(W, _W, _min, _max);
 
-//			if(is_prev && std::abs(v2 - v1) > 1e-9){
-//				float val = 100 + 2000 * std::abs((v2 - v1)/(m1 - m2));
-//				val = std::min(255.f, val);
-//				pen.setColor(QColor(val, 0, 0));
-//				painter.setPen(pen);
-//				painter.setBrush(Qt::NoBrush);
-//				rt.marginsRemoved(QMargins(1, 1, 1, 1));
-//				painter.drawRect(rt);
-//			}
+//	float *dW1 = W.ptr();
+//	float *dW2 = prevW.ptr();
+
+	float *dW = _W.ptr();
+	for(int y = 0; y < _W.rows; ++y){
+		for(int x = 0; x < _W.cols; ++x){
+			QRect rt(QPoint(_x + x * w, _y + y * w), QSize(w, w));
+			uchar c = dW[y * _W.cols + x];
+			painter.setBrush(QColor(c, c, c));
+			painter.drawRect(rt);
 		}
 	}
 }
@@ -131,9 +149,9 @@ void DrawCnvWeight::paintEvent(QPaintEvent *event)
 
 	painter.fillRect(rect(), Qt::black);
 
-	/*QSize s =*/
-	draw_weight(painter, 0);
-//	draw_weight(painter, s.height() + 20, m_firstW, false);
+	QSize s;
+	s = draw_weight(painter, 0);
+	draw_weightGray(painter, s.height() + 20);
 }
 
 void search_minmax(const QVector< ct::Matf > &Ws, float& vmin, float &vmax)
@@ -153,8 +171,6 @@ QSize DrawCnvWeight::draw_weight(QPainter &painter, int offset)
 {
 	if(m_W_R.empty() || m_W_R.size() != m_W_G.size() || m_W_R.size() != m_W_B.size())
 		return QSize(0, 0);
-
-	int wd_blk = 10;
 
 	int x = 0, y = offset, w = 0, h = 0;
 
@@ -188,6 +204,44 @@ QSize DrawCnvWeight::draw_weight(QPainter &painter, int offset)
 
 			painter.setPen(Qt::NoPen);
 			draw_W(painter, WR, WG, WB, x, y, wd_blk, max0, min0);
+			painter.setPen(Qt::blue);
+			painter.setBrush(Qt::NoBrush);
+			painter.drawRect(QRect(QPoint(x, y), QSize(w, h)));
+
+			x += w + 2;
+		}
+		y += h + 2;
+	}
+	return QSize(x, y - offset);
+}
+
+QSize DrawCnvWeight::draw_weightGray(QPainter &painter, int offset)
+{
+	if(m_W_Gray.empty())
+		return QSize(0, 0);
+
+	int x = 0, y = offset, w = 0, h = 0;
+
+	for(size_t i = 0; i < m_W_Gray.size(); ++i){
+		const QVector< ct::Matf > &Ws = m_W_Gray[i];
+		x = 0;
+
+		float _max = -99999999.f, _min = 999999999.f;
+		search_minmax(Ws, _min, _max);
+
+		for(size_t j = 0; j < Ws.size(); ++j){
+			ct::Matf W = Ws[j];
+
+			w = wd_blk * W.cols;
+			h = wd_blk * W.rows;
+
+			if(x >= rect().width() - (w + 2)){
+				x = 0;
+				y += h + 2;
+			}
+
+			painter.setPen(Qt::NoPen);
+			draw_W(painter, W, x, y, wd_blk, _max, _min);
 			painter.setPen(Qt::blue);
 			painter.setBrush(Qt::NoBrush);
 			painter.drawRect(QRect(QPoint(x, y), QSize(w, h)));
