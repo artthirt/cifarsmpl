@@ -467,6 +467,22 @@ uint cifar_train::iteration_gpu() const
 	return m_gpu_train.iteration();
 }
 
+uint cifar_train::matricesAfterConv(bool use_gpu) const
+{
+	if(use_gpu)
+		return m_gpu_train.matricesAfterConv();
+	else
+		return m_conv[0].outputMatrices() * m_conv.size();
+}
+
+uint cifar_train::inputToMlp(bool use_gpu) const
+{
+	if(use_gpu)
+		return m_gpu_train.inputToMlp();
+	else
+		return m_conv[0].outputFeatures() * m_conv.size();
+}
+
 QVector< int > cifar_train::predict(const QVector< TData >& data, bool use_gpu)
 {
 	QVector< int > pred;

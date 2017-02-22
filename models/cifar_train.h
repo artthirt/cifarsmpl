@@ -50,6 +50,9 @@ public:
 
 	uint iteration_gpu() const;
 
+	uint matricesAfterConv(bool use_gpu = false) const;
+	uint inputToMlp(bool use_gpu = false) const;
+
 	QVector<int> predict(const QVector<TData> &data, bool use_gpu = false);
 
 	QVector<QVector<ct::Matf> > cnvW(int index, bool use_gpu = false);

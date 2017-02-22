@@ -83,8 +83,7 @@ void gpu_train::init()
 	{
 		m_mlp.resize(m_layers.size());
 
-		int input = m_conv[0].outputFeatures();
-		input *= m_conv.size();
+		int input = m_conv[0].outputFeatures() * m_conv.size();
 
 		qDebug("MLP: input features = %d", input);
 
@@ -246,6 +245,16 @@ void gpu_train::pass()
 std::vector<gpumat::tvconvnn> &gpu_train::cnv(int index)
 {
 	return m_conv[index].cnv();
+}
+
+uint gpu_train::matricesAfterConv() const
+{
+	return m_conv[0].outputMatrices() * m_conv.size();
+}
+
+uint gpu_train::inputToMlp() const
+{
+	return m_conv[0].outputFeatures() * m_conv.size();
 }
 
 template< typename T >

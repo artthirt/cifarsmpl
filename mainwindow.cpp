@@ -26,21 +26,21 @@ MainWindow::MainWindow(QWidget *parent) :
 	std::vector< int > cnv_w;
 	std::vector< char > cnv_p;
 
-	cnv.push_back(10);
-	cnv.push_back(7);
+	cnv.push_back(5);
+	cnv.push_back(5);
 //	cnv.push_back(1);
 
-	cnv_w.push_back(5);
-	cnv_w.push_back(5);
+	cnv_w.push_back(7);
+	cnv_w.push_back(7);
 //	cnv_w.push_back(3);
-	cnv_p.push_back(true);
+	cnv_p.push_back(false);
 	cnv_p.push_back(true);
 //	cnv_p.push_back(true);
 
 	mlp.push_back(1000);
 	mlp.push_back(900);
-	mlp.push_back(800);
-	mlp.push_back(500);
+//	mlp.push_back(800);
+//	mlp.push_back(500);
 	mlp.push_back(10);
 
 	m_train.setCifar(&m_cifar);
@@ -56,6 +56,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	ui->pte_logs->appendPlainText("Current directory: " + m_cifar.currentDirectory());
 	ui->pte_logs->appendPlainText("Binary data exists: " + QString(m_cifar.isBinDataExists()? "True" : "False"));
+
+	ui->pte_logs->appendPlainText(QString("count of matrices output of convolution %1").arg(m_train.matricesAfterConv()));
+	ui->pte_logs->appendPlainText(QString("count of input to MLP %1").arg(m_train.inputToMlp()));
 
 	ui->sb_batch->setValue(m_batch);
 	ui->sb_delay->setValue(m_delay);
@@ -171,8 +174,11 @@ void MainWindow::on_pb_pass_clicked(bool checked)
 
 void MainWindow::on_chb_gpu_clicked(bool checked)
 {
-	if(checked && m_cifar.isBinDataExists())
+	if(checked && m_cifar.isBinDataExists()){
 		m_train.init_gpu();
+		ui->pte_logs->appendPlainText(QString("GPU: count of matrices output of convolution %1").arg(m_train.matricesAfterConv(true)));
+		ui->pte_logs->appendPlainText(QString("GPU: count of input to MLP %1").arg(m_train.inputToMlp(true)));
+	}
 }
 
 void MainWindow::on_dsb_alpha_valueChanged(double arg1)
