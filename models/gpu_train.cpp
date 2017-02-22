@@ -55,10 +55,14 @@ void gpu_train::setMlpLayers(const std::vector<int> &layers)
 
 void gpu_train::setAlpha(double alpha)
 {
+	m_optim.setAlpha(alpha);
+}
+
+void gpu_train::setAlphaCnv(double alpha)
+{
 	for(size_t i = 0; i < m_conv.size(); ++i){
 		m_conv[i].setAlpha(alpha);
 	}
-	m_optim.setAlpha(alpha);
 }
 
 void gpu_train::init()

@@ -447,13 +447,20 @@ void cifar_train::getEstimateTest(double &accuracy, double &l2, bool use_gpu)
 
 void cifar_train::setAlpha(double alpha)
 {
-	for(size_t i = 0; i < m_conv.size(); ++i){
-		m_conv[i].setAlpha(alpha);
-	}
 	m_optim.setAlpha(alpha);
 
 	if(m_gpu_train.isInit()){
 		m_gpu_train.setAlpha(alpha);
+	}
+}
+
+void cifar_train::setAlphaCnv(double val)
+{
+	for(size_t i = 0; i < m_conv.size(); ++i){
+		m_conv[i].setAlpha(val);
+	}
+	if(m_gpu_train.isInit()){
+		m_gpu_train.setAlphaCnv(val);
 	}
 }
 

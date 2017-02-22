@@ -26,7 +26,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	std::vector< int > cnv_w;
 	std::vector< char > cnv_p;
 
-	cnv.push_back(15);
+	cnv.push_back(12);
 	cnv.push_back(3);
 //	cnv.push_back(1);
 
@@ -37,10 +37,10 @@ MainWindow::MainWindow(QWidget *parent) :
 	cnv_p.push_back(true);
 //	cnv_p.push_back(true);
 
-	mlp.push_back(1000);
+	mlp.push_back(900);
 	mlp.push_back(900);
 	mlp.push_back(800);
-	mlp.push_back(500);
+//	mlp.push_back(500);
 	mlp.push_back(10);
 
 	m_train.setCifar(&m_cifar);
@@ -245,4 +245,9 @@ void MainWindow::on_pb_update_clicked()
 
 	update_prediction();
 	update_statistics();
+}
+
+void MainWindow::on_dsb_alpha_cnv_valueChanged(double arg1)
+{
+	m_train.setAlphaCnv(arg1);
 }

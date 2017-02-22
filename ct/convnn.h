@@ -17,6 +17,7 @@ public:
 		m_init = false;
 		A0 = nullptr;
 		m_use_pool = true;
+		m_optim.setAlpha(0.01);
 	}
 
 	ct::Mat_<T> *A0;

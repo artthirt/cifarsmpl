@@ -39,6 +39,7 @@ void convnn::init(int count_weight, const ct::Size &_szA0, int use_pool)
 	update_random();
 
 	m_optim.init(W, B);
+	m_optim.setAlpha(0.01);
 
 	m_init = true;
 }

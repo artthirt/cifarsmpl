@@ -17,6 +17,7 @@ public:
 	void setMlpLayers(const std::vector< int >& layers);
 
 	void setAlpha(double alpha);
+	void setAlphaCnv(double alpha);
 
 	void init();
 	bool isInit() const;

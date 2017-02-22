@@ -45,6 +45,7 @@ public:
 	void getEstimateTest(double& accuracy, double& l2, bool use_gpu = false);
 
 	void setAlpha(double alpha);
+	void setAlphaCnv(double val);
 
 	uint iteration() const;
 
