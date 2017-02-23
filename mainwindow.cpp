@@ -26,8 +26,8 @@ MainWindow::MainWindow(QWidget *parent) :
 	std::vector< int > cnv_w;
 	std::vector< char > cnv_p;
 
-	cnv.push_back(10);
 	cnv.push_back(15);
+	cnv.push_back(9);
 //	cnv.push_back(1);
 
 	cnv_w.push_back(5);
@@ -37,18 +37,19 @@ MainWindow::MainWindow(QWidget *parent) :
 	cnv_p.push_back(true);
 	cnv_p.push_back(true);
 
-	mlp.push_back(1500);
-	mlp.push_back(1300);
-	mlp.push_back(800);
-//	mlp.push_back(500);
+	mlp.push_back(3000);
+	mlp.push_back(2000);
+	mlp.push_back(1000);
+//	mlp.push_back(700);
+//	mlp.push_back(600);
 	mlp.push_back(10);
 
 	m_train.setCifar(&m_cifar);
 	m_train.setConvLayers(cnv, cnv_w, ct::Size(32, 32), &cnv_p);
 	m_train.setMlpLayers(mlp);
 
-	m_train.setUseRandData(false);
-	m_train.setRandData(2, 2);
+	m_train.setUseRandData(true);
+	m_train.setRandData(1, 3);
 
 	m_train.init();
 

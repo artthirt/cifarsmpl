@@ -30,6 +30,7 @@ public:
 	void init(int input, int output, int type);
 
 	inline void apply_func(const GpuMat& Z, GpuMat& A, etypefunction func);
+	inline void apply_func(GpuMat& A, etypefunction func);
 	inline void apply_back_func(const GpuMat& D1, GpuMat& D2, etypefunction func);
 
 	etypefunction funcType() const;

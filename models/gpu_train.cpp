@@ -216,7 +216,7 @@ void gpu_train::pass(const std::vector<ct::Matf> &X, const ct::Matf &y)
 void gpu_train::pass()
 {
 	gpumat::GpuMat *yp;
-	forward(m_XsIn, &yp, true, 0.95);
+	forward(m_XsIn, &yp, true, 0.98);
 
 	////**********************
 

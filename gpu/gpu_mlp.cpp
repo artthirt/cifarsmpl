@@ -65,6 +65,25 @@ void mlp::apply_func(const GpuMat &Z, GpuMat &A, etypefunction func){
 	}
 }
 
+void mlp::apply_func(GpuMat &A, etypefunction func)
+{
+	switch (func) {
+		default:
+		case RELU:
+			reLu(A);
+			break;
+		case SOFTMAX:
+			softmax(A, 1, PartZ);
+			break;
+		case SIGMOID:
+			sigmoid(A);
+			break;
+		case TANH:
+			tanh(A);
+			break;
+	}
+}
+
 void mlp::apply_back_func(const GpuMat &D1, GpuMat &D2, etypefunction func){
 	switch (func) {
 		default:
@@ -118,13 +137,13 @@ void mlp::forward(const GpuMat *mat, etypefunction func, bool save_A0)
 
 	if(m_is_dropout){
 		apply_dropout(W, m_prob, WDropout, Dropout);
-		matmul(*pA0, WDropout, Z);
+		matmul(*pA0, WDropout, A1);
 	}else{
-		matmul(*pA0, W, Z);
+		matmul(*pA0, W, A1);
 	}
 
-	biasPlus(Z, B);
-	apply_func(Z, A1, func);
+	biasPlus(A1, B);
+	apply_func(A1, A1, func);
 
 	if(!save_A0)
 		pA0 = nullptr;
