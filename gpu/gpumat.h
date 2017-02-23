@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "common_types.h"
+#include "cuda_types.h"
 
 #ifdef _MSC_VER
 	typedef unsigned char u_char;
@@ -23,6 +24,10 @@ const int sizeof_enum[] = {
 };
 
 #define SIZEOF_TYPE(type) (sizeof_enum[type])
+
+namespace internal{
+	class SmallMtxArray;
+}
 
 class GpuMat{
 public:
@@ -73,6 +78,11 @@ public:
 	void save(const std::string filename) const;
 
 	void release();
+
+	///** internal **///
+	internal::SmallMtxArray sderiv;
+	internal::SmallMtxArray sW;
+
 
 private:
 };

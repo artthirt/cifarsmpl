@@ -8,7 +8,12 @@
 #include <assert.h>
 #include <exception>
 
+#include "cuda_types.h"
+
 using namespace gpumat;
+
+///////////////////////////////////
+///////////////////////////////////
 
 GpuMat::GpuMat()
 {

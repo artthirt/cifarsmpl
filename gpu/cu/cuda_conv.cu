@@ -703,17 +703,23 @@ void cuda_deriv_prev_conv2d(const std::vector<GpuMat> &deriv,
 
 	dim3 dimGrid(x1, x2), dimBlock(BLOCKSIZE, BLOCKSIZE);
 
-	internal::SmallMtxArray sderiv(deriv);
-	internal::SmallMtxArray sW(W);
+	D.sderiv.set(deriv);
+	D.sW.set(W);
+
+	D.sderiv.setDelete(false);
+	D.sW.setDelete(false);
 
 	switch (D.type) {
 	case GPU_DOUBLE:
-		internal::deriv_prev_conv2d<double> <<<dimGrid, dimBlock>>>(sderiv, sW, sL, sLsub1, stride, D);
+		internal::deriv_prev_conv2d<double> <<<dimGrid, dimBlock>>>(D.sderiv, D.sW, sL, sLsub1, stride, D);
 		break;
 	case GPU_FLOAT:
-		internal::deriv_prev_conv2d<float> <<<dimGrid, dimBlock>>>(sderiv, sW, sL, sLsub1, stride, D);
+		internal::deriv_prev_conv2d<float> <<<dimGrid, dimBlock>>>(D.sderiv, D.sW, sL, sLsub1, stride, D);
 		break;
 	}
+
+	D.sderiv.setDelete(true);
+	D.sW.setDelete(true);
 }
 
 extern "C"
