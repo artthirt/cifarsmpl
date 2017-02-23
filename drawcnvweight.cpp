@@ -166,7 +166,7 @@ void DrawCnvWeight::paintEvent(QPaintEvent *event)
 
 	QSize s;
 	s = draw_weight(painter, m_offset);
-	draw_weightGray(painter, s.height() + 20);
+	draw_weightGray(painter, m_offset + s.height() + 20);
 }
 
 void search_minmax(const QVector< ct::Matf > &Ws, float& vmin, float &vmax)
