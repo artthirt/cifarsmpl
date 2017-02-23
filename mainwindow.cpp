@@ -26,22 +26,22 @@ MainWindow::MainWindow(QWidget *parent) :
 	std::vector< int > cnv_w;
 	std::vector< char > cnv_p;
 
-	cnv.push_back(30);
-	cnv.push_back(2);
-//	cnv.push_back(1);
+	cnv.push_back(5);
+	cnv.push_back(5);
+	cnv.push_back(5);
 
 	cnv_w.push_back(5);
 	cnv_w.push_back(5);
-//	cnv_w.push_back(3);
+	cnv_w.push_back(5);
+	cnv_p.push_back(false);
 	cnv_p.push_back(true);
 	cnv_p.push_back(true);
-//	cnv_p.push_back(true);
 
-	mlp.push_back(900);
+	mlp.push_back(1500);
 	mlp.push_back(1000);
 	mlp.push_back(900);
 	mlp.push_back(800);
-	mlp.push_back(500);
+
 	mlp.push_back(10);
 
 	m_train.setCifar(&m_cifar);
