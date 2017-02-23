@@ -84,7 +84,7 @@ void cifar_train::setConvLayers(const std::vector<int> &layers,
 	m_cnvweights = weight_sizes;
 	m_szA0 = szA0;
 
-	m_conv.resize(3);
+	m_conv.resize(4);
 	for(size_t i = 0; i < m_conv.size(); ++i){
 		m_conv[i].setConvLayers(layers, weight_sizes, szA0, pooling);
 	}
@@ -447,13 +447,20 @@ void cifar_train::getEstimateTest(double &accuracy, double &l2, bool use_gpu)
 
 void cifar_train::setAlpha(double alpha)
 {
-	for(size_t i = 0; i < m_conv.size(); ++i){
-		m_conv[i].setAlpha(alpha);
-	}
 	m_optim.setAlpha(alpha);
 
 	if(m_gpu_train.isInit()){
 		m_gpu_train.setAlpha(alpha);
+	}
+}
+
+void cifar_train::setAlphaCnv(double val)
+{
+	for(size_t i = 0; i < m_conv.size(); ++i){
+		m_conv[i].setAlpha(val);
+	}
+	if(m_gpu_train.isInit()){
+		m_gpu_train.setAlphaCnv(val);
 	}
 }
 
@@ -465,6 +472,22 @@ uint cifar_train::iteration() const
 uint cifar_train::iteration_gpu() const
 {
 	return m_gpu_train.iteration();
+}
+
+uint cifar_train::matricesAfterConv(bool use_gpu) const
+{
+	if(use_gpu)
+		return m_gpu_train.matricesAfterConv();
+	else
+		return m_conv[0].outputMatrices() * m_conv.size();
+}
+
+uint cifar_train::inputToMlp(bool use_gpu) const
+{
+	if(use_gpu)
+		return m_gpu_train.inputToMlp();
+	else
+		return m_conv[0].outputFeatures() * m_conv.size();
 }
 
 QVector< int > cifar_train::predict(const QVector< TData >& data, bool use_gpu)

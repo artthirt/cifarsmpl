@@ -52,6 +52,8 @@ private slots:
 
 	void on_pb_update_clicked();
 
+	void on_dsb_alpha_cnv_valueChanged(double arg1);
+
 private:
 	Ui::MainWindow *ui;
 	QTimer m_timer;

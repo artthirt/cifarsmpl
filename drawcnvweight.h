@@ -21,6 +21,7 @@ public:
 	void set_weightR(const QVector<QVector<ct::Matf> > &W);
 	void set_weightG(const QVector<  QVector < ct::Matf > > &W);
 	void set_weightB(const QVector<  QVector < ct::Matf > > &W);
+	void set_weightGray(const QVector<QVector<ct::Matf> > &W);
 
 private:
 	Ui::DrawCnvWeight *ui;
@@ -37,16 +38,16 @@ private:
 	QVector< QVector < ct::Matf > > m_W_G, m_prevW_G;
 	QVector< QVector < ct::Matf > > m_W_B, m_prevW_B;
 	QPoint m_pt;
+	QVector< QVector < ct::Matf > > m_W_Gray, m_prevW_gray;
 	int m_offset;
 	bool m_update;
 	QTimer m_timer;
 
 	QSize draw_weight(QPainter& painter, int offset);
+	QSize draw_weightGray(QPainter& painter, int offset);
 
 	// QWidget interface
 protected:
-	void mouseReleaseEvent(QMouseEvent *event);
-	void mouseDoubleClickEvent(QMouseEvent *event);
 	void mouseMoveEvent(QMouseEvent *event);
 	void mousePressEvent(QMouseEvent *event);
 

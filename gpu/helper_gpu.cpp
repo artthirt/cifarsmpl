@@ -89,7 +89,7 @@ bool AdamOptimizer::empty() const
 
 bool AdamOptimizer::init(const std::vector<GpuMat> &gradW, const std::vector<GpuMat> &gradB)
 {
-	qDebug("init...");
+//	qDebug("init...");
 	m_iteration = 0;
 
 	m_mW.resize(gradW.size());

@@ -17,6 +17,7 @@ public:
 	void setMlpLayers(const std::vector< int >& layers);
 
 	void setAlpha(double alpha);
+	void setAlphaCnv(double alpha);
 
 	void init();
 	bool isInit() const;
@@ -34,6 +35,9 @@ public:
 	void pass();
 
 	std::vector<gpumat::tvconvnn> &cnv(int index);
+
+	uint matricesAfterConv() const;
+	uint inputToMlp() const;
 
 	bool loadFromFile(const std::string& fn);
 	void saveToFile(const std::string& fn);

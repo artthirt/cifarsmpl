@@ -35,7 +35,7 @@ void gpu_train::setConvLayers(const std::vector<int> &layers,
 	m_cnvweights = weight_sizes;
 	m_szA0 = szA0;
 
-	m_conv.resize(3);
+	m_conv.resize(4);
 	for(size_t i = 0; i < m_conv.size(); ++i){
 		m_conv[i].setConvLayers(layers, weight_sizes, szA0, pooling);
 	}
@@ -55,10 +55,14 @@ void gpu_train::setMlpLayers(const std::vector<int> &layers)
 
 void gpu_train::setAlpha(double alpha)
 {
+	m_optim.setAlpha(alpha);
+}
+
+void gpu_train::setAlphaCnv(double alpha)
+{
 	for(size_t i = 0; i < m_conv.size(); ++i){
 		m_conv[i].setAlpha(alpha);
 	}
-	m_optim.setAlpha(alpha);
 }
 
 void gpu_train::init()
@@ -83,8 +87,7 @@ void gpu_train::init()
 	{
 		m_mlp.resize(m_layers.size());
 
-		int input = m_conv[0].outputFeatures();
-		input *= m_conv.size();
+		int input = m_conv[0].outputFeatures() * m_conv.size();
 
 		qDebug("MLP: input features = %d", input);
 
@@ -246,6 +249,16 @@ void gpu_train::pass()
 std::vector<gpumat::tvconvnn> &gpu_train::cnv(int index)
 {
 	return m_conv[index].cnv();
+}
+
+uint gpu_train::matricesAfterConv() const
+{
+	return m_conv[0].outputMatrices() * m_conv.size();
+}
+
+uint gpu_train::inputToMlp() const
+{
+	return m_conv[0].outputFeatures() * m_conv.size();
 }
 
 template< typename T >
