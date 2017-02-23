@@ -149,7 +149,7 @@ void MainWindow::update_prediction()
 	ui->wdgW->set_weightR(m_train.cnvW(0, ui->chb_gpu->isChecked()));
 	ui->wdgW->set_weightG(m_train.cnvW(1, ui->chb_gpu->isChecked()));
 	ui->wdgW->set_weightB(m_train.cnvW(2, ui->chb_gpu->isChecked()));
-	ui->wdgW->set_weightGray(m_train.cnvW(3, ui->chb_gpu->isChecked()));
+//	ui->wdgW->set_weightGray(m_train.cnvW(3, ui->chb_gpu->isChecked()));
 	ui->wdgW->update();
 }
 

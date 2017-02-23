@@ -134,8 +134,8 @@ template< typename T >
 inline void image2mats(const QByteArray& image, int w, int h, int row,
 					   ct::Mat_<T>& matR,
 					   ct::Mat_<T>& matG,
-					   ct::Mat_<T>& matB,
-					   ct::Mat_<T>& matGray)
+					   ct::Mat_<T>& matB/*,
+					   ct::Mat_<T>& matGray*/)
 {
 	uchar* dbR = (uchar*)image.data() + 0 * w * h;
 	uchar* dbG = (uchar*)image.data() + 1 * w * h;
@@ -143,7 +143,7 @@ inline void image2mats(const QByteArray& image, int w, int h, int row,
 	image2mat(dbR, w, h, row, matR);
 	image2mat(dbG, w, h, row, matG);
 	image2mat(dbB, w, h, row, matB);
-	image2matGray(dbR, dbG, dbB, w, h, row, matGray);
+//	image2matGray(dbR, dbG, dbB, w, h, row, matGray);
 }
 
 /**
