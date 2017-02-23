@@ -19,8 +19,7 @@ DrawCnvWeight::DrawCnvWeight(QWidget *parent) :
 	m_offset = 0;
 
 	connect(&m_timer, SIGNAL(timeout()), this, SLOT(onTimeout()));
-	m_timer.setInterval(50);
-	m_timer.setSingleShot(true);
+	m_timer.start(50);
 }
 
 DrawCnvWeight::~DrawCnvWeight()
@@ -281,7 +280,6 @@ void DrawCnvWeight::mouseMoveEvent(QMouseEvent *event)
 			m_offset = 200;
 		}
 		m_update = true;
-		m_timer.start();
 	}
 }
 
@@ -292,6 +290,5 @@ void DrawCnvWeight::mousePressEvent(QMouseEvent *event)
 	if(event->buttons().testFlag(Qt::RightButton)){
 		m_offset = 0;
 		m_update = true;
-		m_timer.start();
 	}
 }
