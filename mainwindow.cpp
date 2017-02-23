@@ -26,14 +26,14 @@ MainWindow::MainWindow(QWidget *parent) :
 	std::vector< int > cnv_w;
 	std::vector< char > cnv_p;
 
-	cnv.push_back(5);
-	cnv.push_back(5);
-	cnv.push_back(5);
+	cnv.push_back(10);
+	cnv.push_back(15);
+//	cnv.push_back(1);
 
 	cnv_w.push_back(5);
 	cnv_w.push_back(5);
-	cnv_w.push_back(5);
-	cnv_p.push_back(false);
+//	cnv_w.push_back(5);
+//	cnv_p.push_back(false);
 	cnv_p.push_back(true);
 	cnv_p.push_back(true);
 

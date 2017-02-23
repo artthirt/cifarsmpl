@@ -507,7 +507,7 @@ QVector< int > cifar_train::predict(const QVector< TData >& data, bool use_gpu)
 
 		m_cifar->convToXy(data, i, i + cnt, X);
 
-		forward(X, y, false, 0.92, use_gpu);
+		forward(X, y, false, 0.95, use_gpu);
 
 		for(int j = 0; j < y.rows; ++j){
 			pred[i + j] = y.argmax(j, 1);
