@@ -165,7 +165,7 @@ void DrawCnvWeight::paintEvent(QPaintEvent *event)
 	painter.fillRect(rect(), Qt::black);
 
 	QSize s;
-	s = draw_weight(painter, 0);
+	s = draw_weight(painter, m_offset);
 	draw_weightGray(painter, s.height() + 20);
 }
 
@@ -273,11 +273,11 @@ void DrawCnvWeight::mouseMoveEvent(QMouseEvent *event)
 	if(event->buttons().testFlag(Qt::LeftButton)){
 		m_offset += event->pos().y() - m_pt.y();
 		m_pt = event->pos();
-		if(m_offset < -1000){
-			m_offset = -1000;
+		if(m_offset < -2000){
+			m_offset = -2000;
 		}
-		if(m_offset > 1000){
-			m_offset = 1000;
+		if(m_offset > 200){
+			m_offset = 200;
 		}
 		m_update = true;
 	}
