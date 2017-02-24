@@ -538,7 +538,8 @@ void cuda_conv2d(const GpuMat &A0,
 
 //	internal::SmallMtxArray sW(W), sA1(A1), sB(B);
 
-	for(size_t w = 0; w < W.size(); ++w){
+#pragma omp parallel for
+	for(int w = 0; w < W.size(); ++w){
 		switch (A0.type) {
 			case GPU_DOUBLE:{
 				internal::conv2d<double> <<<dimGrid, dimBlock>>>(A0, W[w], A1[w], szI, szO, stride, B[w], func);
