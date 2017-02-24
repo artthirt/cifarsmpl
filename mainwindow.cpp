@@ -49,7 +49,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	m_train.setConvLayers(cnv, cnv_w, ct::Size(32, 32), &cnv_p);
 	m_train.setMlpLayers(mlp);
 
-	m_train.setUseRandData(true);
+	m_train.setUseRandData(false);
 	m_train.setRandData(5, 5);
 
 	m_train.init();

@@ -24,9 +24,9 @@ struct SmallMtxArray{
 
 	void setDelete(bool val);
 
-	size_t count;
-	size_t allocate;
-	size_t size;
+	std::size_t count;
+	std::size_t allocate;
+	std::size_t size;
 	internal::Mtx *mtx;
 	bool m_delete;
 };
