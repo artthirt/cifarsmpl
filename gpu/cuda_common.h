@@ -78,7 +78,7 @@ namespace gpumat{
 		};
 
 		struct SmallMtxArrayStatic{
-			enum {maxcount = 32};
+			enum {maxcount = 50};
 			SmallMtxArrayStatic();
 			~SmallMtxArrayStatic();
 
