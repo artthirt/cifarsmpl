@@ -269,7 +269,7 @@ void cifar_reader::getTrain(int batch, std::vector<ct::Matf> &X, ct::Matf &y)
 
 		getData(v[0], v[1], data);
 
-		if((data.lb == 3 || data.lb == 5) && i < batch - 1){
+		if((data.lb == 3 || data.lb == 5 ||data.lb == 2) && i < batch - 1){
 			ct::image2mats(data.data, WidthIM, HeightIM, i, X[0], X[1], X[2]);
 			dy[i * y.cols + 0] = data.lb;
 			i++;
