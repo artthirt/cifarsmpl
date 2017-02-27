@@ -65,11 +65,11 @@ void test_agg::test_hconcat()
 void test_agg::test_im2col()
 {
 	ct::Size szA0(14, 14), szW(5, 5), szOut, szOut2;
-	int channels = 10;
+	int channels = 2;
 
 	ct::Matf X(1, szA0.area() * channels), Res, Z, Z2, Y, W, Mask;
 	for(int i = 0; i < X.total(); ++i){
-		X.ptr()[i] = i/1000.;
+		X.ptr()[i] = i;
 	}
 
 	int K = 3;
@@ -99,7 +99,9 @@ void test_agg::test_im2col()
 void test_agg::test_conv()
 {
 	cifar_reader rd;
-	rd.openDir("D:/Down/smpl/data/cifar-10-batches-bin");
+	// "/home/catalips/develop/projects/data/cifar-10-batches-bin"
+	rd.openDir("/home/catalips/develop/projects/data/cifar-10-batches-bin");
+//	rd.openDir("D:/Down/smpl/data/cifar-10-batches-bin");
 	if(!rd.isBinDataExists())
 		return;
 
@@ -108,46 +110,54 @@ void test_agg::test_conv()
 	std::vector< ct::Matf > Xs, Xout, Xout2, D;
 	ct::Matf y, X1, dy;
 
-	ct::mlp<float> mlp, mlp1;
+	std::vector< ct::mlp<float> > mlp;
+	mlp.resize(2);
 
 	ct::Size szA0(cifar_reader::WidthIM, cifar_reader::HeightIM), szW(5, 5);
 
-	int K1 = 5;
-	int K2 = 10;
+	int K1 = 7;
+	int K2 = 6;
 
 	cnv1.init(szA0, 3, 1, K1, szW);
-	//cnv2.init(cnv1.szA2, K1, 1, K2, szW);
+	cnv2.init(cnv1.szA2, K1, 1, K2, szW);
 
-	rd.getTrain2(10, Xs, y);
 
-	for(int i = 0; i < 1000; ++i){
+	ct::MlpOptim< float > optim;
+	rd.getTrain2(20, Xs, y);
+
+	for(int i = 0; i < 10000; ++i){
+
 
 		cnv1.forward(&Xs, ct::RELU, Xout);
-//		cnv2.forward(&Xout, ct::RELU, Xout2);
+		cnv2.forward(&Xout, ct::RELU, Xout2);
 
-		conv2::vec2mat(Xout, X1);
+		conv2::vec2mat(Xout2, X1);
 
-		if(!mlp.isInit()){
-			mlp.init(X1.cols, 100);
-			mlp1.init(100, 10);
+		if(!mlp[0].isInit()){
+			mlp[0].init(X1.cols, 100);
+			mlp[1].init(100, 10);
+			optim.init(mlp);
 		}
 
-		mlp.forward(&X1, ct::RELU);
-		mlp1.forward(&mlp.A1, ct::SOFTMAX);
+		mlp[0].forward(&X1, ct::RELU);
+		mlp[1].forward(&mlp[0].A1, ct::SOFTMAX);
 
-		dy = ct::subIndOne(mlp1.A1, y);
+		dy = ct::subIndOne(mlp[1].A1, y);
 
-		ct::Matf dy2 = ct::elemwiseSqr(dy);
-		float sy2 = dy2.sum();
-		qDebug("l2 = %f", sy2);
+		if((i % 3) == 0){
+			ct::Matf dy2 = ct::elemwiseSqr(dy);
+			float sy2 = dy2.sum();
+			qDebug("l2 = %f", sy2);
+		}
 
-		mlp1.backward(dy);
-		mlp.backward(mlp1.DltA0);
+		mlp[1].backward(dy);
+		mlp[0].backward(mlp[1].DltA0);
 
+		optim.pass(mlp);
 		D.clear();
-		conv2::mat2vec(mlp.DltA0, cnv1.szK, D);
+		conv2::mat2vec(mlp[0].DltA0, cnv2.szK, D);
 
-//		cnv2.backward(D);
-		cnv1.backward(D, true);
+		cnv2.backward(D);
+		cnv1.backward(cnv2.Dlt, true);
 	}
 }

@@ -47,7 +47,7 @@ void im2col(const ct::Mat_<T>& X, const ct::Size& szA0, int channels, const ct::
 }
 
 template< typename T >
-void back_deriv(const ct::Mat_<T>& Delta, const ct::Mat_<T>& W, const ct::Size& szOut, const ct::Size& szA0, int channels, const ct::Size& szW, int stride, ct::Mat_<T>& X)
+void back_deriv(const ct::Mat_<T>& Delta, const ct::Size& szOut, const ct::Size& szA0, int channels, const ct::Size& szW, int stride, ct::Mat_<T>& X)
 {
 	if(Delta.empty() || !channels)
 		return;
@@ -57,7 +57,6 @@ void back_deriv(const ct::Mat_<T>& Delta, const ct::Mat_<T>& W, const ct::Size& 
 
 	T *dX = X.ptr();
 	T *dR = Delta.ptr();
-	T *dW = W.ptr();
 	for(int c = 0; c < channels; ++c){
 		T *dXi = &dX[c * szA0.area()];
 		for(int y = 0; y < szOut.height; ++y){
@@ -66,13 +65,11 @@ void back_deriv(const ct::Mat_<T>& Delta, const ct::Mat_<T>& W, const ct::Size& 
 				int x0 = x * stride;
 				int row = y * szOut.width + x;
 
-				T *dWi = &dW[c * szW.area()];
-
 				for(int a = 0; a < szW.height; ++a){
 					for(int b = 0; b < szW.width; ++b){
 						int col = c * szW.area() + (a * szW.width + b);
 						if(y0 + a < szA0.height && x0 + b < szA0.width){
-							dXi[(y0 + a) * szA0.width + (x0 + b)] += dR[row * Delta.cols + col] * dWi[a * szW.width + b];
+							dXi[(y0 + a) * szA0.width + (x0 + b)] += dR[row * Delta.cols + col];
 						}
 					}
 				}
@@ -226,7 +223,6 @@ public:
 	ct::Size szK;
 	std::vector< ct::Mat_<T> >* pX;
 	std::vector< ct::Mat_<T> > Xc;
-	std::vector< ct::Mat_<T> > Z;
 	std::vector< ct::Mat_<T> > Dlt;
 	std::vector< ct::Mat_<T> > vgW;
 	std::vector< ct::Mat_<T> > vgB;
@@ -273,7 +269,6 @@ public:
 		m_func = func;
 
 		Xc.resize(pX->size());
-		Z.resize(pX->size());
 		Xout.resize(pX->size());
 
 		for(size_t i = 0; i < Xc.size(); ++i){
@@ -285,20 +280,19 @@ public:
 
 		for(size_t i = 0; i < Xout.size(); ++i){
 			ct::Mat_<T>& Xi = Xc[i];
-			ct::Mat_<T>& Zi = Z[i];
 			ct::Mat_<T>& Xo = Xout[i];
-			Zi = Xi * W;
-			Zi.biasPlus(B);
+			Xo = Xi * W;
+			Xo.biasPlus(B);
 
 			switch (m_func) {
 				case ct::RELU:
-					ct::v_relu(Zi, Xo);
+					ct::v_relu(Xo);
 					break;
 				case ct::SIGMOID:
-					ct::v_sigmoid(Zi, Xo);
+					ct::v_sigmoid(Xo);
 					break;
 				case ct::TANH:
-					ct::v_tanh(Zi, Xo);
+					ct::v_tanh(Xo);
 					break;
 				default:
 					break;
@@ -390,25 +384,25 @@ public:
 			gW += vgW[i];
 			gB += vgB[i];
 		}
-//		gW *= 1./D.size();
-//		gB *= 1./D.size();
+		gW *= 1./(D.size());
+		gB *= 1./(D.size());
+
+		if(!last_level){
+			Dlt.resize(D.size());
+			for(size_t i = 0; i < D.size(); ++i){
+				ct::Matf Dc;
+				ct::matmulT2(dSub[i], W, Dc);
+				back_deriv(Dc, szA1, szA0, channels, szW, stride, Dlt[i]);
+				ct::Size sz = (*pX)[i].size();
+				Dlt[i].set_dims(sz);
+			}
+		}
 
 		std::vector< ct::Mat_<T>> vgW, vgB, vW, vB;
 		vgW.push_back(gW);
 		vW.push_back(W);
 		vgB.push_back(gB);
 		vB.push_back(B);
-
-		if(!last_level){
-			Dlt.resize(D.size());
-			for(size_t i = 0; i < D.size(); ++i){
-				ct::Matf Dc;
-				ct::matmulT2(W, dSub[i], Dc);
-				back_deriv(Dc, W, szA1, szA0, channels, szW, stride, Dlt[i]);
-				ct::Size sz = (*pX)[i].size();
-				Dlt[i].set_dims(sz);
-			}
-		}
 
 		m_optim.pass(vgW, vgB, vW, vB);
 		W = vW[0]; B = vB[0];
