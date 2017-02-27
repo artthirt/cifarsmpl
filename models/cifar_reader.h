@@ -36,6 +36,7 @@ public:
 	bool getData(int file, int offset, TData& data);
 	bool getData(double percent, TData& data);
 	void getTrain(int batch, std::vector< ct::Matf >& X, ct::Matf &y);
+	void getTrain2(int batch, std::vector< ct::Matf >& X, ct::Matf &y);
 	bool getDataIt(double percent, int batch, QVector<TData> &data);
 	void getTrainIt(double percent, int batch, std::vector< ct::Matf >& X, ct::Matf *y = nullptr);
 
@@ -144,6 +145,18 @@ inline void image2mats(const QByteArray& image, int w, int h, int row,
 	image2mat(dbG, w, h, row, matG);
 	image2mat(dbB, w, h, row, matB);
 //	image2matGray(dbR, dbG, dbB, w, h, row, matGray);
+}
+
+template< typename T >
+inline void image2mat(const QByteArray& image, int w, int h,
+					   ct::Mat_<T>& mat)
+{
+	mat.setSize(1, w * h * 3);
+	T* dX = mat.ptr();
+	for(int i = 0; i < w * h * 3; ++i){
+		T val = (T)image.data()[i] / 255.;
+		dX[i] = val;
+	}
 }
 
 /**

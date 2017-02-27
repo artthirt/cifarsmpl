@@ -26,7 +26,7 @@ const int sizeof_enum[] = {
 #define SIZEOF_TYPE(type) (sizeof_enum[type])
 
 namespace internal{
-	class SmallMtxArray;
+	struct SmallMtxArray;
 }
 
 class GpuMat{

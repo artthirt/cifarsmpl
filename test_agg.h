@@ -9,6 +9,7 @@ public:
 
 	void test_hconcat();
 	void test_im2col();
+	void test_conv();
 };
 
 #endif // TEST_AGG_H

@@ -106,6 +106,10 @@ public:
 		m_prob = p;
 	}
 
+	bool isInit() const{
+		return m_init;
+	}
+
 	void init(int input, int output){
 		double n = 1./sqrt(input);
 

@@ -9,7 +9,7 @@ class GpuMat;
 
 namespace internal{
 
-class Mtx;
+struct Mtx;
 
 struct SmallMtxArray{
 //			enum {maxcount = 64};

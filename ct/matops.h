@@ -423,6 +423,40 @@ inline Mat_<T> sigmoid(const Mat_<T>& m)
 }
 
 /**
+ * @brief v_sigmoid
+ * @param m
+ */
+template< typename T >
+void v_sigmoid(Mat_<T>& m)
+{
+	T* m_val = &(*m.val)[0];
+
+	//#pragma omp parallel for
+#pragma omp parallel for
+	for(int i = 0; i < m.total(); i++){
+		m_val[i] = 1. / (1. + std::exp(-m_val[i]));
+	}
+}
+
+/**
+ * @brief v_sigmoid
+ * @param m
+ */
+template< typename T >
+void v_sigmoid(Mat_<T>& m, Mat_<T>& r)
+{
+	r.setSize(m.size());
+	T* m_val = m.ptr();
+	T* r_val = r.ptr();
+
+	//#pragma omp parallel for
+#pragma omp parallel for
+	for(int i = 0; i < m.total(); i++){
+		r_val[i] = 1. / (1. + std::exp(-m_val[i]));
+	}
+}
+
+/**
  * @brief derivRelu
  * @param m
  * @return
@@ -443,6 +477,27 @@ inline void v_derivSigmoid(const Mat_<T>& m, Mat_<T>& C)
 #endif
 	for(int i = 0; i < m.total(); i++){
 		res_val[i] = m_val[i] * (1 - m_val[i]);
+	}
+}
+
+/**
+ * @brief derivRelu
+ * @param m
+ * @return
+ */
+template< typename T >
+inline void v_derivSigmoid(Mat_<T>& m)
+{
+	T* m_val = m.ptr();
+
+	//#pragma omp parallel for
+#ifdef __GNUC__
+#pragma omp simd
+#else
+#pragma omp parallel for
+#endif
+	for(int i = 0; i < m.total(); i++){
+		m_val[i] = m_val[i] * (1 - m_val[i]);
 	}
 }
 
@@ -468,7 +523,41 @@ inline Mat_<T> tanh(const Mat_<T>& m)
 }
 
 /**
- * @brief derivRelu
+ * @brief v_tanh
+ * @param m
+ */
+template< typename T >
+void v_tanh(Mat_<T>& m)
+{
+	T* m_val = &(*m.val)[0];
+//#pragma omp parallel for
+#pragma omp parallel for
+	for(int i = 0; i < m.total(); i++){
+		T e = std::exp(2 * m_val[i]);
+		m_val[i] = (e - 1.) / (e + 1.);
+	}
+}
+
+/**
+ * @brief v_tanh
+ * @param m
+ */
+template< typename T >
+void v_tanh(Mat_<T>& m, Mat_<T>& r)
+{
+	r.setSize(m.size());
+	T* m_val = m.ptr();
+	T* r_val = r.ptr();
+//#pragma omp parallel for
+#pragma omp parallel for
+	for(int i = 0; i < m.total(); i++){
+		T e = std::exp(2 * m_val[i]);
+		r_val[i] = (e - 1.) / (e + 1.);
+	}
+}
+
+/**
+ * @brief v_derivTanh
  * @param m
  * @return
  */
@@ -488,6 +577,27 @@ inline void v_derivTanh(const Mat_<T>& m, Mat_<T>& C)
 #endif
 	for(int i = 0; i < m.total(); i++){
 		res_val[i] = (1 - m_val[i] * m_val[i]);
+	}
+}
+
+/**
+ * @brief v_derivTanh
+ * @param m
+ * @return
+ */
+template< typename T >
+inline void v_derivTanh(Mat_<T>& m)
+{
+	T* m_val = m.ptr();
+
+	//#pragma omp parallel for
+#ifdef __GNUC__
+#pragma omp simd
+#else
+#pragma omp parallel for
+#endif
+	for(int i = 0; i < m.total(); i++){
+		m_val[i] = (1 - m_val[i] * m_val[i]);
 	}
 }
 
@@ -530,6 +640,27 @@ inline void v_relu(Mat_<T>& m)
 #endif
 	for(int i = 0; i < m.total(); i++){
 		m_val[i] = std::max(T(0), m_val[i]);
+	}
+}
+
+/**
+ * @brief v_relu
+ * @param m
+ * @return
+ */
+template< typename T >
+inline void v_relu(const Mat_<T>& m, Mat_<T>& r)
+{
+	r.setSize(m.size());
+	T *m_val = m.ptr();
+	T *r_val = r.ptr();
+#ifdef __GNUC__
+#pragma omp simd
+#else
+#pragma omp parallel for
+#endif
+	for(int i = 0; i < m.total(); i++){
+		r_val[i] = std::max(T(0), m_val[i]);
 	}
 }
 

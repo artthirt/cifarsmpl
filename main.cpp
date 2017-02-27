@@ -7,6 +7,8 @@
 
 int main(int argc, char *argv[])
 {
+	QApplication a(argc, argv);
+
 	QString progpath = argv[0];
 	QDir dir;
 	dir.setPath(progpath);
@@ -16,10 +18,10 @@ int main(int argc, char *argv[])
 	test_agg tagg;
 //	tagg.test_hconcat();
 	tagg.test_im2col();
+	tagg.test_conv();
 
 	return 0;
 
-	QApplication a(argc, argv);
 	MainWindow w;
 	w.show();
 

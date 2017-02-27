@@ -279,6 +279,51 @@ void cifar_reader::getTrain(int batch, std::vector<ct::Matf> &X, ct::Matf &y)
 	}
 }
 
+void cifar_reader::getTrain2(int batch, std::vector<ct::Matf> &X, ct::Matf &y)
+{
+	std::uniform_real_distribution<double> urnd(0, 1);
+
+	X.resize(batch);
+
+	y.setSize(batch, 1);
+	y.fill(0);
+
+	float *dy = y.ptr();
+
+	std::map< int, std::map<int, bool> > values_exists;
+	std::vector< ct::Vec2i > vals;
+
+	for(int i = 0; i < batch; ++i){
+		bool next = true;
+		do{
+			double val = urnd(generator);
+			int file, offset;
+			get_file_offset(val, file, offset);
+			if(values_exists.find(file) == values_exists.end()){
+				values_exists[file][offset] = true;
+			}else{
+				std::map< int, bool >& vb = values_exists[file];
+				if(vb.find(offset) == vb.end()){
+					values_exists[file][offset] = true;
+					vals.push_back(ct::Vec2i(file, offset));
+					next = false;
+				}
+			}
+		}while(next);
+	}
+
+	for(int i = 0; i < batch; ++i){
+		TData data;
+		ct::Vec2i& v = vals[i];
+
+		getData(v[0], v[1], data);
+
+		ct::image2mat(data.data, WidthIM, HeightIM, X[i]);
+		dy[i * y.cols + 0] = data.lb;
+	}
+
+}
+
 bool cifar_reader::getDataIt(double percent, int batch, QVector< TData > &data)
 {
 	int num = countFiles * percent;

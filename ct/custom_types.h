@@ -607,6 +607,17 @@ public:
 	void swap_dims(){
 		std::swap(rows, cols);
 	}
+	void set_dims(int _rows, int _cols){
+		if(_rows * _cols != total())
+			throw new std::invalid_argument("Mat::swap_dims: need equal area");
+		rows = _rows;
+		cols = _cols;
+	}
+	void set_dims(ct::Size& sz){
+		if(sz.area() != total())
+			throw new std::invalid_argument("Mat::swap_dims: need equal area");
+		set_dims(sz.height, sz.width);
+	}
 
 	///********************
 	inline T* ptr(){
