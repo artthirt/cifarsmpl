@@ -6,6 +6,8 @@
 #include "gpumat.h"
 #include "convnn_gpu.h"
 
+#include "nn.h"
+
 test_agg::test_agg()
 {
 
@@ -32,4 +34,9 @@ void test_agg::test_hconcat()
 	gpumat::hconcat(glist, gout);
 
 	std::cout << "Output matrix\n" << gout.print() << std::endl;
+}
+
+void test_agg::test_im2col()
+{
+
 }

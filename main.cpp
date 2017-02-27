@@ -14,7 +14,10 @@ int main(int argc, char *argv[])
 	QDir::current().setCurrent(dir.canonicalPath());
 
 	test_agg tagg;
-	tagg.test_hconcat();
+//	tagg.test_hconcat();
+	tagg.test_im2col();
+
+	return 0;
 
 	QApplication a(argc, argv);
 	MainWindow w;
