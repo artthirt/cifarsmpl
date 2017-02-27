@@ -8,7 +8,12 @@
 #include <assert.h>
 #include <exception>
 
+#include "cuda_types.h"
+
 using namespace gpumat;
+
+///////////////////////////////////
+///////////////////////////////////
 
 GpuMat::GpuMat()
 {
@@ -579,6 +584,14 @@ extern "C"
 void cuda_reLu(const GpuMat& A, GpuMat& C);
 
 /**
+ * @brief cuda_reLu
+ * @param A
+ * @param C = reLu(A)
+ */
+extern "C"
+void cuda_reLu2(GpuMat& A);
+
+/**
  * @brief cuda_derivReLu
  * @param A
  * @param C = derivRelu(A)
@@ -593,6 +606,13 @@ void cuda_derivReLu(const GpuMat& A, GpuMat& C);
  */
 extern "C"
 void cuda_sigmoid(const GpuMat& A, GpuMat& C);
+
+/**
+ * @brief cuda_sigmoid
+ * @param A = sigmoid(A)
+ */
+extern "C"
+void cuda_sigmoid2(GpuMat& A);
 
 /**
  * @brief cuda_deriv_sigmoid
@@ -611,6 +631,13 @@ extern "C"
 void cuda_tanh(const GpuMat& A, GpuMat& C);
 
 /**
+ * @brief cuda_tanh
+ * @param A = tanh(A)
+ */
+extern "C"
+void cuda_tanh2(GpuMat& A);
+
+/**
  * @brief cuda_deriv_tanh
  * @param A
  * @param C = deriv_tanh(A)
@@ -626,6 +653,14 @@ void cuda_deriv_tanh(const GpuMat& A, GpuMat& C);
  */
 extern "C"
 void cuda_softmax(const GpuMat& A, int axis, GpuMat& C, GpuMat& partZ);
+
+/**
+ * @brief cuda_softmax
+ * @param A = softmax(A)
+ * @param axis -> 0 - in row, 1 - in col
+ */
+extern "C"
+void cuda_softmax2(GpuMat& A, int axis, GpuMat& partZ);
 
 /**
  * @brief cuda_adamgrad
@@ -943,6 +978,15 @@ void reLu(const GpuMat &A, GpuMat &C)
 	cuda_reLu(A, C);
 }
 
+void reLu(GpuMat &A)
+{
+	if(A.empty()){
+		throw new std::invalid_argument("reLu");
+	}
+
+	cuda_reLu2(A);
+}
+
 void deriv_reLu(const GpuMat &A, GpuMat &C)
 {
 	if(A.empty()){
@@ -967,6 +1011,15 @@ void sigmoid(const GpuMat &A, GpuMat &C)
 	cuda_sigmoid(A, C);
 }
 
+void sigmoid(GpuMat &A)
+{
+	if(A.empty()){
+		throw new std::invalid_argument("sigmoid");
+	}
+
+	cuda_sigmoid2(A);
+}
+
 void deriv_sigmoid(const GpuMat &A, GpuMat &C)
 {
 	if(A.empty()){
@@ -989,6 +1042,15 @@ void tanh(const GpuMat &A, GpuMat &C)
 		C.resize(A);
 
 	cuda_tanh(A, C);
+}
+
+void tanh(GpuMat &A)
+{
+	if(A.empty()){
+		throw new std::invalid_argument("tanh");
+	}
+
+	cuda_tanh2(A);
 }
 
 void deriv_tanh(const GpuMat &A, GpuMat &C)
@@ -1024,6 +1086,27 @@ void softmax(const GpuMat &A, int axis, GpuMat &C, GpuMat &partZ)
 	}
 	cuda_softmax(A, axis, C, partZ);
 }
+
+
+void softmax(GpuMat &A, int axis, GpuMat &partZ)
+{
+	if(A.empty()){
+		throw new std::invalid_argument("softmax");
+	}
+
+	if(axis == 0){
+		if(partZ.cols != A.cols || partZ.rows != 1){
+			partZ.resize(1, A.cols, A.type);
+		}
+	}
+	if(axis == 1){
+		if(partZ.rows != A.rows || partZ.cols != 1){
+			partZ.resize(A.rows, 1, A.type);
+		}
+	}
+	cuda_softmax2(A, axis, partZ);
+}
+
 
 void sumRows(const GpuMat &A, GpuMat &C, double val)
 {

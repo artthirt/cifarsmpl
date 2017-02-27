@@ -3,6 +3,8 @@
 #include <QMap>
 ////////////////////
 
+const int channels = 3;
+
 template< typename T >
 void translate(int x, int y, int w, int h, T *X)
 {
@@ -84,7 +86,7 @@ void cifar_train::setConvLayers(const std::vector<int> &layers,
 	m_cnvweights = weight_sizes;
 	m_szA0 = szA0;
 
-	m_conv.resize(4);
+	m_conv.resize(channels);
 	for(size_t i = 0; i < m_conv.size(); ++i){
 		m_conv[i].setConvLayers(layers, weight_sizes, szA0, pooling);
 	}
@@ -507,7 +509,7 @@ QVector< int > cifar_train::predict(const QVector< TData >& data, bool use_gpu)
 
 		m_cifar->convToXy(data, i, i + cnt, X);
 
-		forward(X, y, false, 0.92, use_gpu);
+		forward(X, y, false, 0.95, use_gpu);
 
 		for(int j = 0; j < y.rows; ++j){
 			pred[i + j] = y.argmax(j, 1);

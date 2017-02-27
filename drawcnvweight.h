@@ -2,6 +2,7 @@
 #define DRAWCNVWEIGHT_H
 
 #include <QWidget>
+#include <QTimer>
 
 #include "custom_types.h"
 
@@ -25,6 +26,9 @@ public:
 private:
 	Ui::DrawCnvWeight *ui;
 
+public slots:
+	void onTimeout();
+
 	// QWidget interface
 protected:
 	virtual void paintEvent(QPaintEvent *event);
@@ -33,10 +37,20 @@ private:
 	QVector< QVector < ct::Matf > > m_W_R, m_prevW_R;
 	QVector< QVector < ct::Matf > > m_W_G, m_prevW_G;
 	QVector< QVector < ct::Matf > > m_W_B, m_prevW_B;
+	QPoint m_pt;
 	QVector< QVector < ct::Matf > > m_W_Gray, m_prevW_gray;
+	int m_offset;
+	bool m_update;
+	QTimer m_timer;
 
 	QSize draw_weight(QPainter& painter, int offset);
 	QSize draw_weightGray(QPainter& painter, int offset);
+
+	// QWidget interface
+protected:
+	void mouseMoveEvent(QMouseEvent *event);
+	void mousePressEvent(QMouseEvent *event);
+
 };
 
 #endif // DRAWCNVWEIGHT_H

@@ -8,13 +8,16 @@ HEADERS += \
     $$PWD/cuda_common.h \
     $$PWD/convnn_gpu.h \
     $$PWD/cu/common_devices.h \
-    $$PWD/gpu_mlp.h
+    $$PWD/gpu_mlp.h \
+    $$PWD/cuda_types.h
 
 SOURCES += \
     $$PWD/gpumat.cpp \
     $$PWD/helper_gpu.cpp \
     $$PWD/convnn_gpu.cpp \
-    $$PWD/gpu_mlp.cpp
+    $$PWD/gpu_mlp.cpp \
+    $$PWD/cuda_common.cpp \
+    $$PWD/cuda_types.cpp
 
 CUDA_SOURCES += $$PWD/cu/cuda_arithm.cu \
                 $$PWD/cu/cuda_conv.cu

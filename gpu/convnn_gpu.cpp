@@ -38,8 +38,6 @@ void convnn::init(int count_weight, const ct::Size &_szA0, int use_pool)
 
 	update_random();
 
-	m_optim.init(W, B);
-
 	m_init = true;
 }
 
@@ -52,11 +50,6 @@ void convnn::update_random()
 		Bi.randn(0, 0.1);
 		gpumat::convert_to_gpu(Bi, B[i]);
 	}
-}
-
-void convnn::setAlpha(double alpha)
-{
-	m_optim.setAlpha(alpha);
 }
 
 void convnn::clear()
@@ -103,7 +96,7 @@ void convnn::apply_func(const GpuMat &A, GpuMat &B, etypefunction func)
 	}
 }
 
-void convnn::back2conv(const convnn::tvmat &A1, const convnn::tvmat &dA2, convnn::tvmat &dA1, etypefunction func)
+void convnn::back2conv(const tvmat &A1, const tvmat &dA2, tvmat &dA1, etypefunction func)
 {
 	dA1.resize(A1.size());
 //#pragma omp parallel for
@@ -113,7 +106,7 @@ void convnn::back2conv(const convnn::tvmat &A1, const convnn::tvmat &dA2, convnn
 	}
 }
 
-void convnn::back2conv(const convnn::tvmat &A1, const convnn::tvmat &dA2, int first, int last, convnn::tvmat &dA1, etypefunction func)
+void convnn::back2conv(const tvmat &A1, const tvmat &dA2, int first, int last, tvmat &dA1, etypefunction func)
 {
 	dA1.resize(last - first);
 //#pragma omp parallel for
@@ -123,7 +116,7 @@ void convnn::back2conv(const convnn::tvmat &A1, const convnn::tvmat &dA2, int fi
 	}
 }
 
-void convnn::back2conv(const convnn::tvmat &A1, const std::vector<convnn> &dA2, int first, int last, convnn::tvmat &dA1, etypefunction func)
+void convnn::back2conv(const tvmat &A1, const std::vector<convnn> &dA2, int first, int last, tvmat &dA1, etypefunction func)
 {
 	dA1.resize(last - first);
 //#pragma omp parallel for
@@ -171,7 +164,7 @@ void convnn::backward(const std::vector<GpuMat> &Delta, etypefunction func, int 
 //	qt_work_mat::q_save_mat(A0, "_A0.txt");
 //	qt_work_mat::q_save_mat(DltA0, "_DltA0.txt");
 
-	m_optim.pass(gradW, gradB, W, B);
+//	m_optim.pass(gradW, gradB, W, B);
 }
 
 void convnn::backward(const std::vector<convnn> &Delta, etypefunction func, int first, int last, bool last_layer)
@@ -192,7 +185,7 @@ void convnn::backward(const std::vector<convnn> &Delta, etypefunction func, int 
 
 	if(!last_layer)
 		gpumat::deriv_prev_cnv(dA1, W, szA1, szA0, stride, DltA0);
-	m_optim.pass(gradW, gradB, W, B);
+//	m_optim.pass(gradW, gradB, W, B);
 }
 
 void convnn::hconcat(const std::vector<convnn> &cnv, GpuMat &_out)
@@ -252,6 +245,54 @@ void convnn::read(std::fstream &fs)
 }
 
 /////////////////////////////////////////
+/////////////////////////////////////////
+
+
+void ConvOptim::init(const std::vector<std::vector<convnn> > &cnv)
+{
+	if(cnv.empty())
+		return;
+
+	m_optim.resize(cnv.size());
+
+	for(size_t i = 0; i < cnv.size(); ++i){
+		m_optim[i].resize(cnv[i].size());
+		for(size_t j = 0; j < cnv[i].size(); ++j){
+			const convnn& c = cnv[i][j];
+			AdamOptimizer& a = m_optim[i][j];
+			a.init(c.W, c.B);
+		}
+	}
+}
+
+void ConvOptim::pass(std::vector<std::vector<convnn> > &cnv)
+{
+	if(cnv.empty() || m_optim.empty())
+		return;
+
+	for(size_t i = 0; i < m_optim.size(); ++i){
+		for(size_t j = 0; j < m_optim[i].size(); ++j){
+			convnn& c = cnv[i][j];
+			AdamOptimizer& a = m_optim[i][j];
+			a.pass(c.gradW, c.gradB, c.W, c.B);
+		}
+	}
+
+}
+
+void ConvOptim::setAlpha(double val)
+{
+	if(m_optim.empty())
+		return;
+	for(size_t i = 0; i < m_optim.size(); ++i){
+		for(size_t j = 0; j < m_optim[i].size(); ++j){
+			AdamOptimizer& a = m_optim[i][j];
+			a.setAlpha(val);
+		}
+	}
+}
+
+/////////////////////////////////////////
 ///////**********************////////////
 /////////////////////////////////////////
 
@@ -262,12 +303,7 @@ ConvNN::ConvNN()
 
 void ConvNN::setAlpha(float alpha)
 {
-	for(size_t i = 0; i < m_conv.size(); ++i){
-		for(size_t j = 0; j < m_conv[i].size(); ++j){
-			convnn& cnv = m_conv[i][j];
-			cnv.setAlpha(alpha);
-		}
-	}
+	m_optim.setAlpha(alpha);
 }
 
 int ConvNN::outputFeatures() const
@@ -305,6 +341,8 @@ void ConvNN::init()
 		input = m_cnvlayers[i] * input;
 		szA0 = m_conv[i][0].szOut();
 	}
+
+	m_optim.init(m_conv);
 }
 
 void ConvNN::setConvLayers(const std::vector<int> &layers, std::vector<int> weight_sizes,
@@ -380,6 +418,8 @@ void ConvNN::backward(const GpuMat &X)
 		}
 //			qDebug("----");
 	}
+
+	m_optim.pass(m_conv);
 }
 
 std::vector<tvconvnn> &ConvNN::cnv()

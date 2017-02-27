@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "common_types.h"
+#include "cuda_types.h"
 
 #ifdef _MSC_VER
 	typedef unsigned char u_char;
@@ -23,6 +24,10 @@ const int sizeof_enum[] = {
 };
 
 #define SIZEOF_TYPE(type) (sizeof_enum[type])
+
+namespace internal{
+	class SmallMtxArray;
+}
 
 class GpuMat{
 public:
@@ -73,6 +78,11 @@ public:
 	void save(const std::string filename) const;
 
 	void release();
+
+	///** internal **///
+	internal::SmallMtxArray sderiv;
+	internal::SmallMtxArray sW;
+
 
 private:
 };
@@ -281,24 +291,31 @@ void transpose(const GpuMat& A, GpuMat& C);
 /**
  * @brief reLu
  * @param A
- * @param B
  * @param C - out C = reLu(A)
  */
 void reLu(const GpuMat& A, GpuMat& C);
 /**
+ * @brief reLu
+ * @param A
+ */
+void reLu(GpuMat& A);
+/**
  * @brief deriv_reLu
  * @param A
- * @param B
  * @param C - out C = deriv_reLu(A)
  */
 void deriv_reLu(const GpuMat& A, GpuMat& C);
 /**
  * @brief sigmoid
  * @param A
- * @param B
  * @param C - out C = sigmoid(A)
  */
 void sigmoid(const GpuMat& A, GpuMat& C);
+/**
+ * @brief sigmoid
+ * @param A
+ */
+void sigmoid(GpuMat& A);
 /**
  * @brief deriv_sigmoid
  * @param A
@@ -314,6 +331,11 @@ void deriv_sigmoid(const GpuMat& A, GpuMat& C);
  */
 void tanh(const GpuMat& A, GpuMat& C);
 /**
+ * @brief tanh
+ * @param A = tanh(A)
+ */
+void tanh(GpuMat& A);
+/**
  * @brief deriv_tanh
  * @param A
  * @param B
@@ -328,6 +350,13 @@ void deriv_tanh(const GpuMat& A, GpuMat& C);
  * @param partZ = sum(exp(A), axis)
  */
 void softmax(const GpuMat& A, int axis, GpuMat& C, GpuMat& partZ);
+/**
+ * @brief softmax
+ * @param A = softmax(A)
+ * @param axis -> 0 - in row, 1 - in col
+ * @param partZ = sum(exp(A), axis)
+ */
+void softmax(GpuMat& A, int axis, GpuMat& partZ);
 /**
  * @brief sub
  * @param A

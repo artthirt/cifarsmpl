@@ -9,34 +9,36 @@
 
 namespace gpumat{
 
+typedef std::vector< GpuMat > tvmat;
+
 class convnn
 {
 public:
-	typedef std::vector< GpuMat > tvmat;
-
 	convnn();
 
 	gpumat::GpuMat *pA0;
 	gpumat::GpuMat DltA0;
 	tvmat A1;
 	tvmat A2;
+
 	tvmat W;
 	tvmat B;
+
+	tvmat gradW;
+	tvmat gradB;
+
 	tvmat Masks;
 	ct::Size szA0;
 	ct::Size szA1;
 	ct::Size szA2;
 	int stride;
 	int weight_size;
-	gpumat::AdamOptimizer m_optim;
 
 	void setWeightSize(int ws, bool use_pool);
 
 	void init(int count_weight, const ct::Size& _szA0, int use_pool);
 
 	void update_random();
-
-	void setAlpha(double alpha);
 
 	void clear();
 
@@ -74,11 +76,20 @@ private:
 	bool m_use_pool;
 
 	tvmat m_tmp1;
-	tvmat gradW;
-	tvmat gradB;
 
 	std::vector< gpumat::GpuMat  > dA2, dA1;
 	std::vector< gpumat::GpuMat  > slice;
+};
+
+///////////////////////////////////
+
+class ConvOptim{
+public:
+	std::vector< std::vector< gpumat::AdamOptimizer > > m_optim;
+
+	void init(const std::vector< std::vector< gpumat::convnn > >& cnv);
+	void pass(std::vector< std::vector< gpumat::convnn > >& cnv);
+	void setAlpha(double val);
 };
 
 ///////////////////////////////////
@@ -91,6 +102,9 @@ public:
 	std::vector< int > m_cnvweights;
 	std::vector< char > m_cnvpooling;
 	std::vector< std::vector< gpumat::convnn > > m_conv;
+
+	ConvOptim m_optim;
+
 	ct::Size m_szA0;
 	gpumat::convnn m_adds;
 

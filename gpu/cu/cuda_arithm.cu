@@ -507,6 +507,22 @@ __global__ void reLu(Mtx A, Mtx C)
 }
 
 /**
+ * @brief reLu
+ * @param A = reLu(A)
+ */
+template< class T >
+__global__ void reLu(Mtx A)
+{
+	int row = threadIdx.y + blockIdx.y * blockDim.y;
+	int col = threadIdx.x + blockIdx.x * blockDim.x;
+
+	T* dA = (T*)A.data;
+
+	if(row < A.rows && col < A.cols)
+		dA[row * A.cols + col] = max(dA[row * A.cols + col], 0.);
+}
+
+/**
  * @brief deriv_reLu
  * @param A
  * @param C = reLu(A)
@@ -539,7 +555,24 @@ __global__ void sigmoid(Mtx A, Mtx C)
 	T* dC = (T*)C.data;
 
 	if(row < A.rows && col < A.cols)
-		dC[row * C.cols + col] = 1 / (1 + exp(-dA[row * C.cols + col]));
+		dC[row * C.cols + col] = 1 / (1 + exp(-dA[row * A.cols + col]));
+}
+
+/**
+ * @brief sigmoid
+ * @param A
+ * @param C = sigmoid(A)
+ */
+template< class T >
+__global__ void sigmoid(Mtx A)
+{
+	int row = threadIdx.y + blockIdx.y * blockDim.y;
+	int col = threadIdx.x + blockIdx.x * blockDim.x;
+
+	T* dA = (T*)A.data;
+
+	if(row < A.rows && col < A.cols)
+		dA[row * A.cols + col] = 1 / (1 + exp(-dA[row * A.cols + col]));
 }
 
 /**
@@ -557,7 +590,7 @@ __global__ void deriv_sigmoid(Mtx A, Mtx C)
 	T* dC = (T*)C.data;
 
 	if(row < A.rows && col < A.cols){
-		T val = dA[row * C.cols + col];
+		T val = dA[row * A.cols + col];
 		dC[row * C.cols + col] = val * (1 - val);
 	}
 }
@@ -577,8 +610,27 @@ __global__ void tanh(Mtx A, Mtx C)
 	T* dC = (T*)C.data;
 
 	if(row < A.rows && col < A.cols){
-		T val = exp(2 * dA[row * C.cols + col]);
+		T val = exp(2 * dA[row * A.cols + col]);
 		dC[row * C.cols + col] = (val - 1.) / (val + 1.);
+	}
+}
+
+/**
+ * @brief tanh
+ * @param A
+ * @param C = tanh(A)
+ */
+template< class T >
+__global__ void tanh(Mtx A)
+{
+	int row = threadIdx.y + blockIdx.y * blockDim.y;
+	int col = threadIdx.x + blockIdx.x * blockDim.x;
+
+	T* dA = (T*)A.data;
+
+	if(row < A.rows && col < A.cols){
+		T val = exp(2 * dA[row * A.cols + col]);
+		dA[row * A.cols + col] = (val - 1.) / (val + 1.);
 	}
 }
 
@@ -597,7 +649,7 @@ __global__ void deriv_tanh(Mtx A, Mtx C)
 	T* dC = (T*)C.data;
 
 	if(row < A.rows && col < A.cols){
-		T val = dA[row * C.cols + col];
+		T val = dA[row * A.cols + col];
 		dC[row * C.cols + col] = (1. - val * val);
 	}
 }
@@ -706,7 +758,29 @@ __global__ void exp_rows(Mtx A, Mtx Max, Mtx C)
 	if(row < A.rows && col < A.cols){
 		T val = dA[row * A.cols + col] - dmax[col];
 		val = exp(val);
-		dC[row * A.cols + col] = val;
+		dC[row * C.cols + col] = val;
+	}
+}
+
+/**
+ * @brief exp_rows
+ * @param A
+ * @param Max
+ * @param C = exp(A[i, j] - Max[j])
+ */
+template< class T >
+__global__ void exp_rows(Mtx A, Mtx Max)
+{
+	int row = threadIdx.y + blockIdx.y * blockDim.y;
+	int col = threadIdx.x + blockIdx.x * blockDim.x;
+
+	T* dA = (T*)A.data;
+	T* dmax = (T*)Max.data;
+
+	if(row < A.rows && col < A.cols){
+		T val = dA[row * A.cols + col] - dmax[col];
+		val = exp(val);
+		dA[row * A.cols + col] = val;
 	}
 }
 
@@ -729,7 +803,30 @@ __global__ void exp_cols(Mtx A, Mtx Max, Mtx C)
 	if(row < A.rows && col < A.cols){
 		T val = dA[row * A.cols + col] - dmax[row];
 		val = exp(val);
-		dC[row * A.cols + col] = val;
+		dC[row * C.cols + col] = val;
+	}
+
+}
+
+/**
+ * @brief exp_cols
+ * @param A
+ * @param Max
+ * @param C = exp(A[i, j] - Max[i])
+ */
+template< class T >
+__global__ void exp_cols(Mtx A, Mtx Max)
+{
+	int row = threadIdx.y + blockIdx.y * blockDim.y;
+	int col = threadIdx.x + blockIdx.x * blockDim.x;
+
+	T* dA = (T*)A.data;
+	T* dmax = (T*)Max.data;
+
+	if(row < A.rows && col < A.cols){
+		T val = dA[row * A.cols + col] - dmax[row];
+		val = exp(val);
+		dA[row * A.cols + col] = val;
 	}
 
 }
@@ -1866,6 +1963,29 @@ void cuda_reLu(const GpuMat& A, GpuMat& C)
 }
 
 /**
+ * @brief cuda_reLu
+ * @param A
+ * @param C = reLu(A)
+ */
+extern "C"
+void cuda_reLu2(GpuMat& A)
+{
+	int x1 = A.cols / BLOCKSIZE + 1;
+	int x2 = A.rows / BLOCKSIZE + 1;
+
+	dim3 dimGrid(x1, x2), dimBlock(BLOCKSIZE, BLOCKSIZE);
+
+	switch (A.type) {
+	case GPU_DOUBLE:
+		internal::reLu<double> <<<dimGrid, dimBlock>>>(A);
+		break;
+	case GPU_FLOAT:
+		internal::reLu<float> <<<dimGrid, dimBlock>>>(A);
+		break;
+	}
+}
+
+/**
  * @brief cuda_derivReLu
  * @param A
  * @param C = reLu(A)
@@ -1891,7 +2011,7 @@ void cuda_derivReLu(const GpuMat& A, GpuMat& C)
 /**
  * @brief cuda_sigmoid
  * @param A
- * @param C = reLu(A)
+ * @param C = sigmoid(A)
  */
 extern "C"
 void cuda_sigmoid(const GpuMat& A, GpuMat& C)
@@ -1912,9 +2032,31 @@ void cuda_sigmoid(const GpuMat& A, GpuMat& C)
 }
 
 /**
+ * @brief cuda_sigmoid2
+ * @param A
+ */
+extern "C"
+void cuda_sigmoid2(GpuMat& A)
+{
+	int x1 = A.cols / BLOCKSIZE + 1;
+	int x2 = A.rows / BLOCKSIZE + 1;
+
+	dim3 dimGrid(x1, x2), dimBlock(BLOCKSIZE, BLOCKSIZE);
+
+	switch (A.type) {
+	case GPU_DOUBLE:
+		internal::sigmoid<double> <<<dimGrid, dimBlock>>>(A);
+		break;
+	case GPU_FLOAT:
+		internal::sigmoid<float> <<<dimGrid, dimBlock>>>(A);
+		break;
+	}
+}
+
+/**
  * @brief cuda_deriv_sigmoid
  * @param A
- * @param C = reLu(A)
+ * @param C = derivative sigmoid(A)
  */
 extern "C"
 void cuda_deriv_sigmoid(const GpuMat& A, GpuMat& C)
@@ -1953,6 +2095,28 @@ void cuda_tanh(const GpuMat& A, GpuMat& C)
 		break;
 	case GPU_FLOAT:
 		internal::tanh<float> <<<dimGrid, dimBlock>>>(A, C);
+		break;
+	}
+}
+
+/**
+ * @brief cuda_tanh
+ * @param A
+ */
+extern "C"
+void cuda_tanh2(GpuMat& A)
+{
+	int x1 = A.cols / BLOCKSIZE + 1;
+	int x2 = A.rows / BLOCKSIZE + 1;
+
+	dim3 dimGrid(x1, x2), dimBlock(BLOCKSIZE, BLOCKSIZE);
+
+	switch (A.type) {
+	case GPU_DOUBLE:
+		internal::tanh<double> <<<dimGrid, dimBlock>>>(A);
+		break;
+	case GPU_FLOAT:
+		internal::tanh<float> <<<dimGrid, dimBlock>>>(A);
 		break;
 	}
 }
@@ -2043,6 +2207,56 @@ void cuda_softmax(const GpuMat& A, int axis, GpuMat& C, GpuMat& partZ)
 //			internal::sum_cols<float> <<<dim3(1, x2), dim3(1, BLOCKSIZE)>>>(C, partZ);
 //			internal::div_row<float> <<<dimGrid, dimBlock>>>(C, partZ);
 //		}
+		break;
+	}
+}
+
+/**
+ * @brief cuda_softmax2
+ * @param A
+ * @param axis -> 0 - in row, 1 - in col
+ * @param C = softmax(A)
+ * axis = 0: exp(x[i, j]) / S(exp(x[k, j]) = exp(  ln(exp(x[i, j] - max(x[..., j])) - ln(S(exp(x[k, j] - max(x[..., j]))))  )
+ * axis = 1: exp(x[i, j]) / S(exp(x[i, k]) = exp(  ln(exp(x[i, j] - max(x[i, ...])) - ln(S(exp(x[i, k] - max(x[i, ...]))))  )
+ */
+extern "C"
+void cuda_softmax2(GpuMat& A, int axis, GpuMat& partZ)
+{
+	int x1 = A.cols / BLOCKSIZE + 1;
+	int x2 = A.rows / BLOCKSIZE + 1;
+
+	dim3 dimGrid(x1, x2), dimBlock(BLOCKSIZE, BLOCKSIZE);
+
+	switch (A.type) {
+	case GPU_DOUBLE:
+			if(axis == 0){
+				internal::max_rows<double> <<<dim3(x1, 1), dim3(BLOCKSIZE, 1)>>>(A, partZ);
+				internal::exp_rows<double> <<<dimGrid, dimBlock>>>(A, partZ);
+				internal::sum_rows<double> <<<dim3(x1, 1), dim3(BLOCKSIZE, 1)>>>(A, partZ);
+				internal::sub_ln_rows<double> <<<dimGrid, dimBlock>>>(A, partZ);
+				internal::_exp<double> <<<dimGrid, dimBlock>>>(A);
+			}else{
+				internal::max_cols<double> <<<dim3(1, x2), dim3(1, BLOCKSIZE)>>>(A, partZ);
+				internal::exp_cols<double> <<<dimGrid, dimBlock>>>(A, partZ);
+				internal::sum_cols<double> <<<dim3(1, x2), dim3(1, BLOCKSIZE)>>>(A, partZ);
+				internal::sub_ln_cols<double> <<<dimGrid, dimBlock>>>(A, partZ);
+				internal::_exp<double> <<<dimGrid, dimBlock>>>(A);
+			}
+		break;
+	case GPU_FLOAT:
+			if(axis == 0){
+				internal::max_rows<float> <<<dim3(x1, 1), dim3(BLOCKSIZE, 1)>>>(A, partZ);
+				internal::exp_rows<float> <<<dimGrid, dimBlock>>>(A, partZ);
+				internal::sum_rows<float> <<<dim3(x1, 1), dim3(BLOCKSIZE, 1)>>>(A, partZ);
+				internal::sub_ln_rows<float> <<<dimGrid, dimBlock>>>(A, partZ);
+				internal::_exp<float> <<<dimGrid, dimBlock>>>(A);
+			}else{
+				internal::max_cols<float> <<<dim3(1, x2), dim3(1, BLOCKSIZE)>>>(A, partZ);
+				internal::exp_cols<float> <<<dimGrid, dimBlock>>>(A, partZ);
+				internal::sum_cols<float> <<<dim3(1, x2), dim3(1, BLOCKSIZE)>>>(A, partZ);
+				internal::sub_ln_cols<float> <<<dimGrid, dimBlock>>>(A, partZ);
+				internal::_exp<float> <<<dimGrid, dimBlock>>>(A);
+			}
 		break;
 	}
 }

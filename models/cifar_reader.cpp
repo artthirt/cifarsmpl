@@ -26,6 +26,8 @@ const int outLen[] = {
 	100
 };
 
+const int channels = 3;
+
 const int countFiles = sizeof(train_images_file) / sizeof(*train_images_file);
 
 const int sizeCData = 3072;
@@ -171,14 +173,14 @@ void cifar_reader::convToXy(const QVector<TData> &data, int first, int last, std
 		}
 	}
 
-	X.resize(4);
+	X.resize(channels);
 
 	for(size_t i = 0; i < X.size(); ++i){
 		X[i].setSize(size, WidthIM * HeightIM);
 	}
 
 	for(int i = first, j = 0; i < last; ++i, ++j){
-		ct::image2mats(data[i].data, WidthIM, HeightIM, j, X[0], X[1], X[2], X[3]);
+		ct::image2mats(data[i].data, WidthIM, HeightIM, j, X[0], X[1], X[2]/*, X[3]*/);
 	}
 }
 
@@ -228,7 +230,7 @@ void cifar_reader::getTrain(int batch, std::vector<ct::Matf> &X, ct::Matf &y)
 {
 	std::uniform_real_distribution<double> urnd(0, 1);
 
-	X.resize(4);
+	X.resize(channels);
 
 	y.setSize(batch, 1);
 	y.fill(0);
@@ -267,12 +269,12 @@ void cifar_reader::getTrain(int batch, std::vector<ct::Matf> &X, ct::Matf &y)
 
 		getData(v[0], v[1], data);
 
-//		if((data.lb == 3 || data.lb == 5) && i < batch - 1){
-//			ct::image2mats(data.data, WidthIM, HeightIM, i, X[0], X[1], X[2]);
-//			dy[i * y.cols + 0] = data.lb;
-//			i++;
-//		}
-		ct::image2mats(data.data, WidthIM, HeightIM, i, X[0], X[1], X[2], X[3]);
+		if((data.lb == 3 || data.lb == 5 ||data.lb == 2) && i < batch - 1){
+			ct::image2mats(data.data, WidthIM, HeightIM, i, X[0], X[1], X[2]);
+			dy[i * y.cols + 0] = data.lb;
+			i++;
+		}
+		ct::image2mats(data.data, WidthIM, HeightIM, i, X[0], X[1], X[2]/*, X[3]*/);
 		dy[i * y.cols + 0] = data.lb;
 	}
 }
@@ -302,7 +304,7 @@ bool cifar_reader::getDataIt(double percent, int batch, QVector< TData > &data)
 
 void cifar_reader::getTrainIt(double percent, int batch, std::vector<ct::Matf> &X, ct::Matf *y)
 {
-	X.resize(4);
+	X.resize(channels);
 
 	for(size_t i = 0; i < X.size(); ++i){
 		X[i].setSize(batch, WidthIM * HeightIM);
@@ -322,7 +324,7 @@ void cifar_reader::getTrainIt(double percent, int batch, std::vector<ct::Matf> &
 
 
 	for(int i = 0; i < batch; ++i){
-		ct::image2mats(data[i].data, WidthIM, HeightIM, i, X[0], X[1], X[2], X[3]);
+		ct::image2mats(data[i].data, WidthIM, HeightIM, i, X[0], X[1], X[2]/*, X[3]*/);
 	}
 }
 
@@ -333,7 +335,7 @@ uint cifar_reader::getTest(uint beg, uint batch, std::vector<ct::Matf> &Xs, ct::
 	if(m_current_test.empty())
 		return 0;
 
-	Xs.resize(4);
+	Xs.resize(channels);
 
 	y.setSize(m_current_test.size(), 1);
 	y.fill(0);
@@ -347,7 +349,7 @@ uint cifar_reader::getTest(uint beg, uint batch, std::vector<ct::Matf> &Xs, ct::
 	for(uint i = 0; i < m_current_test.size(); ++i){
 		TData &data = m_current_test[i];
 
-		ct::image2mats(data.data, WidthIM, HeightIM, i, Xs[0], Xs[1], Xs[2], Xs[3]);
+		ct::image2mats(data.data, WidthIM, HeightIM, i, Xs[0], Xs[1], Xs[2]/*, Xs[3]*/);
 
 		dy[i * y.cols + 0] = data.lb;
 	}
@@ -369,7 +371,7 @@ uint cifar_reader::getTest(uint batch, std::vector<ct::Matf> &Xs, ct::Matf &y)
 		readCifar1(m_current_test_object, m_current_test[i], off);
 	}
 
-	Xs.resize(4);
+	Xs.resize(channels);
 
 	y.setSize(m_current_test.size(), 1);
 	y.fill(0);
@@ -383,7 +385,7 @@ uint cifar_reader::getTest(uint batch, std::vector<ct::Matf> &Xs, ct::Matf &y)
 	for(uint i = 0; i < m_current_test.size(); ++i){
 		TData &data = m_current_test[i];
 
-		ct::image2mats(data.data, WidthIM, HeightIM, i, Xs[0], Xs[1], Xs[2], Xs[3]);
+		ct::image2mats(data.data, WidthIM, HeightIM, i, Xs[0], Xs[1], Xs[2]/*, Xs[3]*/);
 
 		dy[i * y.cols + 0] = data.lb;
 	}

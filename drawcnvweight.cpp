@@ -13,6 +13,13 @@ DrawCnvWeight::DrawCnvWeight(QWidget *parent) :
 	ui(new Ui::DrawCnvWeight)
 {
 	ui->setupUi(this);
+	setMouseTracking(true);
+	m_update = false;
+
+	m_offset = 0;
+
+	connect(&m_timer, SIGNAL(timeout()), this, SLOT(onTimeout()));
+	m_timer.start(50);
 }
 
 DrawCnvWeight::~DrawCnvWeight()
@@ -68,6 +75,14 @@ void DrawCnvWeight::set_weightB(const QVector< QVector<ct::Matf> > &W)
 		copy_weights(m_W_B, m_prevW_B);
 
 	update();
+}
+
+void DrawCnvWeight::onTimeout()
+{
+	if(m_update){
+		m_update = false;
+		update();
+	}
 }
 
 void DrawCnvWeight::set_weightGray(const QVector<QVector<ct::Matf> > &W)
@@ -150,8 +165,8 @@ void DrawCnvWeight::paintEvent(QPaintEvent *event)
 	painter.fillRect(rect(), Qt::black);
 
 	QSize s;
-	s = draw_weight(painter, 0);
-	draw_weightGray(painter, s.height() + 20);
+	s = draw_weight(painter, m_offset);
+	draw_weightGray(painter, m_offset + s.height() + 20);
 }
 
 void search_minmax(const QVector< ct::Matf > &Ws, float& vmin, float &vmax)
@@ -251,4 +266,29 @@ QSize DrawCnvWeight::draw_weightGray(QPainter &painter, int offset)
 		y += h + 2;
 	}
 	return QSize(x, y - offset);
+}
+
+void DrawCnvWeight::mouseMoveEvent(QMouseEvent *event)
+{
+	if(event->buttons().testFlag(Qt::LeftButton)){
+		m_offset += event->pos().y() - m_pt.y();
+		m_pt = event->pos();
+		if(m_offset < -2000){
+			m_offset = -2000;
+		}
+		if(m_offset > 200){
+			m_offset = 200;
+		}
+		m_update = true;
+	}
+}
+
+
+void DrawCnvWeight::mousePressEvent(QMouseEvent *event)
+{
+	m_pt = event->pos();
+	if(event->buttons().testFlag(Qt::RightButton)){
+		m_offset = 0;
+		m_update = true;
+	}
 }

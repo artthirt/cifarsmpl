@@ -85,12 +85,12 @@ __global__ void conv2d(Mtx A0, SmallMtxArray W, SmallMtxArray A1,
 
 	typedef T (*func_t)(T val);
 
-	func_t _func = empty;
-	switch (func) {
-		case RELU:
-			_func = reLu;
-			break;
-	}
+//	func_t _func = empty;
+//	switch (func) {
+//		case RELU:
+//			_func = reLu;
+//			break;
+//	}
 
 	if(row < A1.mtx[0].rows && col < A1.mtx[0].cols){
 		int yr = col / szO.width;
@@ -122,7 +122,76 @@ __global__ void conv2d(Mtx A0, SmallMtxArray W, SmallMtxArray A1,
 			}
 
 			sum += dBi[0];
-			sum = _func(sum);
+
+			switch (func) {
+			case RELU:
+				sum = reLu(sum);
+				break;
+			default:
+				break;
+			}
+
+//			sum = _func(sum);
+			dA1i[col] = sum;
+		}
+	}
+}
+
+template< typename T >
+__global__ void conv2d(Mtx A0, Mtx W, Mtx A1,
+					   ct::Size szI, ct::Size szO, int stride,
+					   Mtx B, etypefunction func)
+{
+	int row = threadIdx.y + blockIdx.y * blockDim.y;
+	int col = threadIdx.x + blockIdx.x * blockDim.x;
+
+	typedef T (*func_t)(T val);
+
+//	func_t _func = empty;
+//	switch (func) {
+//		case RELU:
+//			_func = reLu;
+//			break;
+//	}
+
+	if(row < A1.rows && col < A1.cols){
+		int yr = col / szO.width;
+		int xr = col - yr * szO.width;
+
+		int x = xr * stride;
+		int y = yr * stride;
+
+		T *dA0 = (T*)A0.data;
+		T *dA0i = &dA0[row * A0.cols];
+
+		{
+			T *dA1 = (T*)A1.data;
+			T *dA1i = &dA1[row * A1.cols];
+			T *dBi = (T*)B.data;
+
+			T *dW = (T*)W.data;
+			T sum = 0;
+			for(int a = 0; a < W.rows; ++a){
+				if(y + a < szI.height){
+					for(int b = 0; b < W.cols; ++b){
+						if(x + b < szI.width){
+							sum += dA0i[(y + a) * szI.width + (x + b)] * dW[a * W.cols + b];
+						}
+					}
+				}
+			}
+
+			sum += dBi[0];
+
+			switch (func) {
+			case RELU:
+				sum = reLu(sum);
+				break;
+			default:
+				break;
+			}
+
+//			sum = _func(sum);
 			dA1i[col] = sum;
 		}
 	}
@@ -467,19 +536,21 @@ void cuda_conv2d(const GpuMat &A0,
 
 	dim3 dimGrid(x1, x2), dimBlock(BLOCKSIZE, BLOCKSIZE);
 
-	internal::SmallMtxArray sW(W), sA1(A1), sB(B);
+//	internal::SmallMtxArray sW(W), sA1(A1), sB(B);
 
-	switch (A0.type) {
-		case GPU_DOUBLE:{
-			internal::conv2d<double> <<<dimGrid, dimBlock>>>(A0, sW, sA1, szI, szO, stride, sB, func);
-			break;
-		}
-		case GPU_FLOAT:{
-			internal::conv2d<float> <<<dimGrid, dimBlock>>>(A0, sW, sA1, szI, szO, stride, sB, func);
-			break;
+#pragma omp parallel for
+	for(int w = 0; w < W.size(); ++w){
+		switch (A0.type) {
+			case GPU_DOUBLE:{
+				internal::conv2d<double> <<<dimGrid, dimBlock>>>(A0, W[w], A1[w], szI, szO, stride, B[w], func);
+				break;
+			}
+			case GPU_FLOAT:{
+				internal::conv2d<float> <<<dimGrid, dimBlock>>>(A0, W[w], A1[w], szI, szO, stride, B[w], func);
+				break;
+			}
 		}
 	}
-
 }
 
 extern "C"
@@ -703,23 +774,29 @@ void cuda_deriv_prev_conv2d(const std::vector<GpuMat> &deriv,
 
 	dim3 dimGrid(x1, x2), dimBlock(BLOCKSIZE, BLOCKSIZE);
 
-	internal::SmallMtxArray sderiv(deriv);
-	internal::SmallMtxArray sW(W);
+	D.sderiv.set(deriv);
+	D.sW.set(W);
+
+	D.sderiv.setDelete(false);
+	D.sW.setDelete(false);
 
 	switch (D.type) {
 	case GPU_DOUBLE:
-		internal::deriv_prev_conv2d<double> <<<dimGrid, dimBlock>>>(sderiv, sW, sL, sLsub1, stride, D);
+		internal::deriv_prev_conv2d<double> <<<dimGrid, dimBlock>>>(D.sderiv, D.sW, sL, sLsub1, stride, D);
 		break;
 	case GPU_FLOAT:
-		internal::deriv_prev_conv2d<float> <<<dimGrid, dimBlock>>>(sderiv, sW, sL, sLsub1, stride, D);
+		internal::deriv_prev_conv2d<float> <<<dimGrid, dimBlock>>>(D.sderiv, D.sW, sL, sLsub1, stride, D);
 		break;
 	}
+
+	D.sderiv.setDelete(true);
+	D.sW.setDelete(true);
 }
 
 extern "C"
 void cuda_hsplit(const GpuMat &res, std::vector<GpuMat> &list)
 {
-#if 0
+#if 1
 	int x1 = res.cols / BLOCKSIZE + 1;
 	int x2 = res.rows / BLOCKSIZE + 1;
 
@@ -774,7 +851,7 @@ void cuda_hsplit(const GpuMat &res, std::vector<GpuMat> &list)
 extern "C"
 void cuda_hconcat(const std::vector<GpuMat> &list, GpuMat &res)
 {
-#if 0
+#if 1
 	int x1 = res.cols / BLOCKSIZE + 1;
 	int x2 = res.rows / BLOCKSIZE + 1;
 
