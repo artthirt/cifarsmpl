@@ -99,8 +99,7 @@ void test_agg::test_im2col()
 void test_agg::test_conv()
 {
 	cifar_reader rd;
-	// "/home/catalips/develop/projects/data/cifar-10-batches-bin"
-	rd.openDir("/home/catalips/develop/projects/data/cifar-10-batches-bin");
+	rd.openDir("../../../data/cifar-10-batches-bin");
 //	rd.openDir("D:/Down/smpl/data/cifar-10-batches-bin");
 	if(!rd.isBinDataExists())
 		return;
