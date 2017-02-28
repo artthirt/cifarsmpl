@@ -42,8 +42,8 @@ class TestCnv{
 public:
 	TestCnv(){
 		mlp.resize(3);
-		int K1 = 15;
-		int K2 = 10;
+		int K1 = 25;
+		int K2 = 15;
 
 		szA0 = ct::Size(cifar_reader::WidthIM, cifar_reader::HeightIM);
 		szW = ct::Size(5, 5);
@@ -65,27 +65,26 @@ public:
 
 		cnv1.forward(&Xs, ct::RELU);
 
+//		Xout.resize(cnv1.A2.size());
+//		for(size_t i = 0; i < cnv1.A2.size(); ++i){
+//			Xout[i] = cnv1.A2[i].t();
+//			Xout[i].set_dims(1, cnv1.A2[i].total());
+//		}
 
-		Xout.resize(cnv1.A2.size());
-		for(size_t i = 0; i < cnv1.A2.size(); ++i){
-			Xout[i] = cnv1.A2[i].t();
-			Xout[i].set_dims(1, cnv1.A2[i].total());
-		}
+		cnv2.forward(&cnv1.A2, ct::RELU);
 
-		cnv2.forward(&Xout, ct::RELU);
+//		Xout2.resize(cnv2.A2.size());
+//		for(size_t i = 0; i < cnv2.A2.size(); ++i){
+//			Xout2[i] = cnv2.A2[i].t();
+//			Xout2[i].set_dims(1, cnv2.A2[i].total());
+//		}
 
-		Xout2.resize(cnv2.A2.size());
-		for(size_t i = 0; i < cnv2.A2.size(); ++i){
-			Xout2[i] = cnv2.A2[i].t();
-			Xout2[i].set_dims(1, cnv2.A2[i].total());
-		}
-
-		conv2::vec2mat(Xout2, X1);
+		conv2::vec2mat(cnv2.A2, X1);
 
 		if(!mlp[0].isInit()){
-			mlp[0].init(X1.cols, 100);
-			mlp[1].init(100, 100);
-			mlp[2].init(100, 10);
+			mlp[0].init(X1.cols, 700);
+			mlp[1].init(700, 600);
+			mlp[2].init(600, 10);
 			optim.init(mlp);
 		}
 
@@ -106,16 +105,16 @@ public:
 		D.clear();
 		conv2::mat2vec(mlp[0].DltA0, cnv2.szK.t(), D);
 
-		for(size_t i = 0; i < Xout2.size(); ++i){
-			D[i] = D[i].t();
-		}
+//		for(size_t i = 0; i < Xout2.size(); ++i){
+//			D[i] = D[i].t();
+//		}
 
 		cnv2.backward(D);
 
-		for(size_t i = 0; i < Xout2.size(); ++i){
-			cnv2.Dlt[i].set_dims(cnv1.szK.t());
-			cnv2.Dlt[i] = cnv2.Dlt[i].t();
-		}
+//		for(size_t i = 0; i < Xout2.size(); ++i){
+//			cnv2.Dlt[i].set_dims(cnv1.szK.t());
+//			cnv2.Dlt[i] = cnv2.Dlt[i].t();
+//		}
 
 		cnv1.backward(cnv2.Dlt, true);
 	}
@@ -233,11 +232,13 @@ void test_agg::test_conv()
 
 	ShowMatrices sh;
 
+	ct::generator.seed(time(0));
+
 	TestCnv tcnv;
 
 	for(int i = 0; i < 10000; ++i){
 
-		rd.getTrain2(20, Xs, y);
+		rd.getTrain2(70, Xs, y);
 
 		tcnv.forward(Xs, yp);
 
@@ -254,8 +255,8 @@ void test_agg::test_conv()
 
 		tcnv.backward(dy);
 
-		if((i % 20) == 0){
-			rd.getTrain2(300, Xs, y);
+		if((i % 30) == 0){
+			rd.getTrain2(500, Xs, y);
 			double l2, acc;
 			tcnv.test(Xs, y, l2, acc);
 			qDebug("l2=%f,\tacc=%f", l2, acc);

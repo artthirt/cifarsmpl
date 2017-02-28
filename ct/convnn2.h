@@ -441,9 +441,12 @@ public:
 
 		if(!last_level){
 			Dlt.resize(D.size());
+
+			ct::Mat_<T> Wf;
+			flipW(W, szW, channels, Wf);
+
 			for(size_t i = 0; i < D.size(); ++i){
-				ct::Matf Dc, Wf;
-				//flipW(W, szW, channels, Wf);
+				ct::Mat_<T> Dc;
 				ct::matmulT2(dSub[i], W, Dc);
 				back_deriv(Dc, szA1, szA0, channels, szW, stride, Dlt[i]);
 				//ct::Size sz = (*pX)[i].size();
