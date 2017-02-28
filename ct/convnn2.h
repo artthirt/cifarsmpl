@@ -36,6 +36,9 @@ void im2col(const ct::Mat_<T>& X, const ct::Size& szA0, int channels, const ct::
 				int x0 = x * stride;
 				int row = y * szOut.width + x;
 
+#ifdef __GNUC__
+#pragma omp simd
+#endif
 				for(int a = 0; a < szW.height; ++a){
 					for(int b = 0; b < szW.width; ++b){
 						int col = c * szW.area() + (a * szW.width + b);
@@ -71,6 +74,9 @@ void back_deriv(const ct::Mat_<T>& Delta, const ct::Size& szOut, const ct::Size&
 
 #pragma omp parallel for
 				for(int a = 0; a < szW.height; ++a){
+#ifdef __GNUC__
+#pragma omp simd
+#endif
 					for(int b = 0; b < szW.width; ++b){
 						int col = c * szW.area() + (a * szW.width + b);
 						if(y0 + a < szA0.height && x0 + b < szA0.width){
@@ -114,6 +120,9 @@ void subsample(const ct::Mat_<T>& X, const ct::Size& szA, ct::Mat_<T>& Y, ct::Ma
 
 				T mmax = dX[(y0 * szA.width + x0) * X.cols];
 				int xm = x0, ym = y0;
+#ifdef __GNUC__
+#pragma omp simd
+#endif
 				for(int a = 0; a < stride; ++a){
 					for(int b = 0; b < stride; ++b){
 						if(y0 + a < szA.height && x0 + b < szA.width){
@@ -159,6 +168,9 @@ void upsample(const ct::Mat_<T>& Y, const ct::Mat_<T>& Mask, const ct::Size& szO
 
 				T val = dY[(y * szO.width + x) * Y.cols];
 
+#ifdef __GNUC__
+#pragma omp simd
+#endif
 				for(int a = 0; a < stride; ++a){
 					for(int b = 0; b < stride; ++b){
 						if(y0 + a < szA.height && x0 + b < szA.width){
@@ -227,11 +239,15 @@ void flipW(const ct::Mat_<T>& W, const ct::Size& sz,int channels, ct::Mat_<T>& W
 
 	Wr.setSize(W.size());
 
+#pragma omp parallel for
 	for(int k = 0; k < W.cols; ++k){
 		for(int c = 0; c < channels; ++c){
 			T *dW = W.ptr() + c * sz.area() * W.cols + k;
 			T *dWr = Wr.ptr() + c * sz.area() * W.cols + k;
 
+#ifdef __GNUC__
+#pragma omp simd
+#endif
 			for(int a = 0; a < sz.height; ++a){
 				for(int b = 0; b < sz.width; ++b){
 					dWr[((sz.height - a - 1) * sz.width + b) * W.cols] = dW[((a) * sz.width + b) * W.cols];
@@ -442,8 +458,8 @@ public:
 		if(!last_level){
 			Dlt.resize(D.size());
 
-			ct::Mat_<T> Wf;
-			flipW(W, szW, channels, Wf);
+			//ct::Mat_<T> Wf;
+			//flipW(W, szW, channels, Wf);
 
 			for(size_t i = 0; i < D.size(); ++i){
 				ct::Mat_<T> Dc;

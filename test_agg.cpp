@@ -59,7 +59,7 @@ public:
 
 	ct::Size szA0, szW;
 
-	void forward(const std::vector< ct::Matf > &Xs, ct::Matf& yp)
+	void forward(const std::vector< ct::Matf > &Xs, ct::Matf& yp, bool dropout = true)
 	{
 		std::vector< ct::Matf > Xout, Xout2;
 
@@ -87,6 +87,9 @@ public:
 			mlp[2].init(600, 10);
 			optim.init(mlp);
 		}
+
+		mlp[0].setDropout(dropout, 0.94);
+		mlp[1].setDropout(dropout, 0.94);
 
 		mlp[0].forward(&X1, ct::RELU);
 		mlp[1].forward(&mlp[0].A1, ct::RELU);
@@ -121,7 +124,7 @@ public:
 
 	void test(const std::vector< ct::Matf > &Xs, const ct::Matf& yind, double &l2, double &acc){
 		ct::Matf yp, dy;
-		forward(Xs, yp);
+		forward(Xs, yp, false);
 		dy = ct::subIndOne(yp, yind);
 
 		ct::Matf dy2 = ct::elemwiseSqr(dy);
@@ -222,8 +225,8 @@ void test_agg::test_im2col()
 void test_agg::test_conv()
 {
 	cifar_reader rd;
-//	rd.openDir("../../../data/cifar-10-batches-bin");
-	rd.openDir("D:/Down/smpl/data/cifar-10-batches-bin");
+	rd.openDir("../../../data/cifar-10-batches-bin");
+	//rd.openDir("D:/Down/smpl/data/cifar-10-batches-bin");
 	if(!rd.isBinDataExists())
 		return;
 
@@ -236,7 +239,7 @@ void test_agg::test_conv()
 
 	TestCnv tcnv;
 
-	for(int i = 0; i < 10000; ++i){
+	for(int i = 0; i < 15000; ++i){
 
 		rd.getTrain2(70, Xs, y);
 
@@ -259,7 +262,14 @@ void test_agg::test_conv()
 			rd.getTrain2(500, Xs, y);
 			double l2, acc;
 			tcnv.test(Xs, y, l2, acc);
-			qDebug("l2=%f,\tacc=%f", l2, acc);
+			qDebug("train (batch=500) -> l2=%f,\tacc=%f", l2, acc);
+
+			l2 = 0; acc = 0;
+			Xs.clear();
+			y.fill(0);
+			rd.getTest2(500, Xs, y);
+			tcnv.test(Xs, y, l2, acc);
+			qDebug("test  (batch=500) -> l2=%f,\tacc=%f", l2, acc);
 		}
 	}
 }

@@ -403,7 +403,7 @@ uint cifar_reader::getTest(uint beg, uint batch, std::vector<ct::Matf> &Xs, ct::
 
 uint cifar_reader::getTest(uint batch, std::vector<ct::Matf> &Xs, ct::Matf &y)
 {
-	if(m_current_test.empty() || batch <= 0)
+	if(batch <= 0)
 		return 0;
 
 	open_test_file();
@@ -439,7 +439,7 @@ uint cifar_reader::getTest(uint batch, std::vector<ct::Matf> &Xs, ct::Matf &y)
 
 uint cifar_reader::getTest2(uint batch, std::vector<ct::Matf> &Xs, ct::Matf &y)
 {
-	if(m_current_test.empty() || batch <= 0)
+	if(batch <= 0)
 		return 0;
 
 	open_test_file();
