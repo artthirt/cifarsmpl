@@ -356,7 +356,8 @@ public:
 
 		if(m_use_pool){
 			for(size_t i = 0; i < D.size(); ++i){
-				const ct::Mat_<T>& Di = D[i];
+				ct::Mat_<T> Di = D[i];
+				Di.set_dims(szA2.area(), K);
 				upsample(Di, Mask[i], szA2, szA1, dSub[i]);
 			}
 			backcnv(dSub, dSub);
@@ -393,8 +394,8 @@ public:
 				ct::Matf Dc;
 				ct::matmulT2(dSub[i], W, Dc);
 				back_deriv(Dc, szA1, szA0, channels, szW, stride, Dlt[i]);
-				ct::Size sz = (*pX)[i].size();
-				Dlt[i].set_dims(sz);
+				//ct::Size sz = (*pX)[i].size();
+				//Dlt[i].set_dims(sz);
 			}
 		}
 

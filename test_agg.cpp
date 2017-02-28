@@ -122,12 +122,19 @@ void test_agg::test_conv()
 
 
 	ct::MlpOptim< float > optim;
+
 	rd.getTrain2(20, Xs, y);
 
 	for(int i = 0; i < 10000; ++i){
 
 
 		cnv1.forward(&Xs, ct::RELU, Xout);
+
+		for(size_t i = 0; i < Xout.size(); ++i){
+			Xout[i] = Xout[i].t();
+			Xout[i].set_dims(1, Xout[i].total());
+		}
+
 		cnv2.forward(&Xout, ct::RELU, Xout2);
 
 		conv2::vec2mat(Xout2, X1);
