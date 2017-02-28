@@ -259,6 +259,8 @@ public:
 	ct::Size szK;
 	std::vector< ct::Mat_<T> >* pX;
 	std::vector< ct::Mat_<T> > Xc;
+	std::vector< ct::Mat_<T> > A1;
+	std::vector< ct::Mat_<T> > A2;
 	std::vector< ct::Mat_<T> > Dlt;
 	std::vector< ct::Mat_<T> > vgW;
 	std::vector< ct::Mat_<T> > vgB;
@@ -271,6 +273,13 @@ public:
 	convnn(){
 		m_use_pool = false;
 		stride = 1;
+	}
+
+	std::vector< ct::Mat_<T> >& XOut1(){
+		return A1;
+	}
+	std::vector< ct::Mat_<T> >& XOut2(){
+		return A2;
 	}
 
 	void init(const ct::Size& _szA0, int _channels, int stride, int _K, ct::Size& _szW, bool use_pool = true){
@@ -298,14 +307,14 @@ public:
 		m_optim.init(vW, vB);
 	}
 
-	void forward(const std::vector< ct::Mat_<T> >* _pX, ct::etypefunction func, std::vector< ct::Mat_<T> >& Xout){
+	void forward(const std::vector< ct::Mat_<T> >* _pX, ct::etypefunction func){
 		if(!_pX)
 			return;
 		pX = (std::vector< ct::Mat_<T> >*)_pX;
 		m_func = func;
 
 		Xc.resize(pX->size());
-		Xout.resize(pX->size());
+		A1.resize(pX->size());
 
 		for(size_t i = 0; i < Xc.size(); ++i){
 			ct::Mat_<T>& Xi = (*pX)[i];
@@ -314,37 +323,42 @@ public:
 			im2col(Xi, szA0, channels, szW, stride, Xc[i], szOut);
 		}
 
-		for(size_t i = 0; i < Xout.size(); ++i){
+		for(size_t i = 0; i < Xc.size(); ++i){
 			ct::Mat_<T>& Xi = Xc[i];
-			ct::Mat_<T>& Xo = Xout[i];
-			Xo = Xi * W;
-			Xo.biasPlus(B);
+			ct::Mat_<T>& A1i = A1[i];
+			A1i = Xi * W;
+			A1i.biasPlus(B);
+		}
 
+		for(size_t i = 0; i < A1.size(); ++i){
+			ct::Mat_<T>& Ao = A1[i];
 			switch (m_func) {
 				case ct::RELU:
-					ct::v_relu(Xo);
+					ct::v_relu(Ao);
 					break;
 				case ct::SIGMOID:
-					ct::v_sigmoid(Xo);
+					ct::v_sigmoid(Ao);
 					break;
 				case ct::TANH:
-					ct::v_tanh(Xo);
+					ct::v_tanh(Ao);
 					break;
 				default:
 					break;
 			}
-
 		}
 		if(m_use_pool){
 			Mask.resize(Xc.size());
-			for(size_t i = 0; i < Xout.size(); ++i){
-				ct::Mat_<T> &Xo = Xout[i], Y;
+			A2.resize(A1.size());
+			for(size_t i = 0; i < A1.size(); ++i){
+				ct::Mat_<T> &A1i = A1[i];
+				ct::Mat_<T> &A2i = A2[i];
 				ct::Size szOut;
-				conv2::subsample(Xo, szA1, Y, Mask[i], szOut);
-				Xo = Y;
+				conv2::subsample(A1i, szA1, A2i, Mask[i], szOut);
 			}
+			szK = A2[0].size();
+		}else{
+			szK = A1[0].size();
 		}
-		szK = Xout[0].size();
 	}
 
 	inline void backcnv(const std::vector< ct::Mat_<T> >& D, std::vector< ct::Mat_<T> >& DS){
@@ -352,13 +366,13 @@ public:
 			for(size_t i = 0; i < D.size(); ++i){
 				switch (m_func) {
 					case ct::RELU:
-						ct::v_derivRelu(D[i], DS[i]);
+						ct::elemwiseMult(D[i], derivRelu(A1[i]), DS[i]);
 						break;
 					case ct::SIGMOID:
-						ct::v_derivSigmoid(D[i], DS[i]);
+						ct::elemwiseMult(D[i], derivSigmoid(A1[i]), DS[i]);
 						break;
 					case ct::TANH:
-						ct::v_derivTanh(D[i], DS[i]);
+						ct::elemwiseMult(D[i], derivTanh(A1[i]), DS[i]);
 						break;
 					default:
 						break;
@@ -368,13 +382,13 @@ public:
 			for(size_t i = 0; i < D.size(); ++i){
 				switch (m_func) {
 					case ct::RELU:
-						ct::v_derivRelu(DS[i]);
+						ct::elemwiseMult(DS[i], ct::derivRelu(A1[i]));
 						break;
 					case ct::SIGMOID:
-						ct::v_derivSigmoid(DS[i]);
+						ct::elemwiseMult(DS[i], ct::derivSigmoid(A1[i]));
 						break;
 					case ct::TANH:
-						ct::v_derivTanh(DS[i]);
+						ct::elemwiseMult(DS[i], ct::derivTanh(A1[i]));
 						break;
 					default:
 						break;
@@ -422,8 +436,8 @@ public:
 			gW += vgW[i];
 			gB += vgB[i];
 		}
-		gW *= (T)1./(D.size() * K);
-		gB *= (T)1./(D.size() * K);
+		gW *= (T)1./(D.size());
+		gB *= (T)1./(D.size());
 
 		if(!last_level){
 			Dlt.resize(D.size());

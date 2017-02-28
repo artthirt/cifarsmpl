@@ -59,27 +59,33 @@ public:
 
 	ct::Size szA0, szW;
 
-	void forward(const std::vector< ct::Matf > &Xs, ct::Matf& yp){
-		cnv1.forward(&Xs, ct::LINEAR, Xout);
+	void forward(const std::vector< ct::Matf > &Xs, ct::Matf& yp)
+	{
+		std::vector< ct::Matf > Xout, Xout2;
 
-		for(size_t i = 0; i < Xout.size(); ++i){
-			Xout[i] = Xout[i].t();
-			Xout[i].set_dims(1, Xout[i].total());
+		cnv1.forward(&Xs, ct::RELU);
+
+
+		Xout.resize(cnv1.A2.size());
+		for(size_t i = 0; i < cnv1.A2.size(); ++i){
+			Xout[i] = cnv1.A2[i].t();
+			Xout[i].set_dims(1, cnv1.A2[i].total());
 		}
 
-		cnv2.forward(&Xout, ct::LINEAR, Xout2);
+		cnv2.forward(&Xout, ct::RELU);
 
-		for(size_t i = 0; i < Xout2.size(); ++i){
-			Xout2[i] = Xout2[i].t();
-			Xout2[i].set_dims(1, Xout2[i].total());
+		Xout2.resize(cnv2.A2.size());
+		for(size_t i = 0; i < cnv2.A2.size(); ++i){
+			Xout2[i] = cnv2.A2[i].t();
+			Xout2[i].set_dims(1, cnv2.A2[i].total());
 		}
 
 		conv2::vec2mat(Xout2, X1);
 
 		if(!mlp[0].isInit()){
-			mlp[0].init(X1.cols, 500);
-			mlp[1].init(500, 400);
-			mlp[2].init(400, 10);
+			mlp[0].init(X1.cols, 100);
+			mlp[1].init(100, 100);
+			mlp[2].init(100, 10);
 			optim.init(mlp);
 		}
 
@@ -89,7 +95,9 @@ public:
 
 		yp = mlp.back().A1;
 	}
-	void backward(const ct::Matf dy){
+
+	void backward(const ct::Matf dy)
+	{
 		mlp[2].backward(dy);
 		mlp[1].backward(mlp[2].DltA0);
 		mlp[0].backward(mlp[1].DltA0);

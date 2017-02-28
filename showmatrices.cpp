@@ -33,7 +33,7 @@ void ShowMatrices::saveMat(const QString &name, const ct::Matf &mat, const ct::S
 	m_K = K;
 	m_channels = channels;
 	mat.copyTo(m_mat);
-	save2Image(name, 1000, 1000);
+	save2Image(name, 900, 800);
 }
 
 void ShowMatrices::save2Image(const QString &name, int width, int height)
