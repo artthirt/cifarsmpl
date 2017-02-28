@@ -512,12 +512,14 @@ public:
 	Mat_(){
 		cols = rows = 0;
 	}
+
 	Mat_(int rows, int cols){
 		this->rows = rows;
 		this->cols = cols;
 		val = sm::make_shared<vtype>();
 		val().resize(rows * cols);
 	}
+
 	Mat_(const Mat_<T>& m){
 		this->val = m.val;
 		this->rows = m.rows;
@@ -530,6 +532,7 @@ public:
 		val().resize(rows * cols);
 		std::copy((char*)data, (char*)data + rows * cols * depth, (char*)&val()[0]);
 	}
+
 	template< int count >
 	Mat_(const Vec_< T, count>& v){
 		rows = 1;
@@ -538,6 +541,7 @@ public:
 		val().resize(rows * cols);
 		std::copy((char*)v.val, (char*)v.val + sizeof(v.val), (char*)&val()[0]);
 	}
+
 	///**********************
 	inline Mat_<T>& operator= (const Mat_<T>& m){
 		this->rows = m.rows;
@@ -547,6 +551,7 @@ public:
 //		std::copy(data, data + rows * cols * depth, (char*)&val[0]);
 		return *this;
 	}
+
 	template< int count >
 	inline Mat_<T>& operator= (const Vec_<T, count>& v){
 		this->rows = count;
@@ -556,13 +561,16 @@ public:
 			val[i] = v.val[i];
 		return *this;
 	}
+
 	///***********************
 	void copyTo(Mat_<T>& mat) const {
 		if(empty())
 			return;
 		mat = Mat_<T>(rows, cols, ptr());
 	}
+
 	///***********************
+	///
 	inline int total() const{
 		return rows * cols;
 	}
@@ -607,12 +615,14 @@ public:
 	void swap_dims(){
 		std::swap(rows, cols);
 	}
+
 	void set_dims(int _rows, int _cols){
 		if(_rows * _cols != total())
 			throw new std::invalid_argument("Mat::swap_dims: need equal area");
 		rows = _rows;
 		cols = _cols;
 	}
+
 	void set_dims(ct::Size& sz){
 		if(sz.area() != total())
 			throw new std::invalid_argument("Mat::swap_dims: need equal area");
@@ -626,17 +636,21 @@ public:
 		T* val = &(*this->val)[0];
 		return &val[0];
 	}
+
 	inline T* ptr() const{
 		T* val = &(*this->val)[0];
 		return &val[0];
 	}
+
 	inline Size size() const{
 		return Size(cols, rows);
 	}
+
 	///****************
 	inline char* bytes(){
 		return (char*)val[0];
 	}
+
 	inline char* bytes() const{
 		return (char*)val[0];
 	}
@@ -645,18 +659,22 @@ public:
 		T* val = &(*this->val)[0];
 		return val[i0 * cols + i1];
 	}
+
 	inline T& at(int i0){
 		T* val = &(*this->val)[0];
 		return val[i0 * cols];
 	}
+
 	inline const T& at(int i0, int i1)const{
 		T* val = &(*this->val)[0];
 		return val[i0 * cols + i1];
 	}
+
 	inline const T& at(int i0)const {
 		T* val = &(*this->val)[0];
 		return val[i0 * cols];
 	}
+
 	///********************
 	inline Mat_<T>& operator += (const Mat_<T>& v){
 		T* val1 = &(*this->val)[0];
@@ -668,6 +686,7 @@ public:
 		}
 		return *this;
 	}
+
 	inline Mat_<T>& operator -= (const Mat_<T>& v){
 		T* val1 = &(*this->val)[0];
 		T* val2 = &(*v.val)[0];
@@ -678,6 +697,7 @@ public:
 		}
 		return *this;
 	}
+
 	///********************
 	inline Mat_<T>& operator *= (T v){
 		T* val = &(*this->val)[0];
@@ -688,6 +708,7 @@ public:
 		}
 		return *this;
 	}
+
 	inline Mat_<T>& operator += (T v){
 		T* val = &(*this->val)[0];
 //#pragma omp parallel for
@@ -697,6 +718,7 @@ public:
 		}
 		return *this;
 	}
+
 	inline Mat_<T>& operator -= (T v){
 		T* val = &(*this->val)[0];
 //#pragma omp parallel for
@@ -706,6 +728,7 @@ public:
 		}
 		return *this;
 	}
+
 	inline Mat_<T>& biasPlus(const Mat_<T > & m){
 		if(m.cols != 1 || cols != m.rows)
 			return *this;
@@ -722,6 +745,7 @@ public:
 		}
 		return *this;
 	}
+
 	inline Mat_<T>& biasMinus(const Mat_<T > & m){
 		if(m.cols != 1 || cols != m.rows)
 			return *this;
@@ -750,6 +774,7 @@ public:
 	}
 
 	///**************************
+	///
 	Mat_<T> t() const{
 		Mat_<T> res(cols, rows);
 
@@ -768,6 +793,7 @@ public:
 
 		return res;
 	}
+
 	Mat_<T> getRows(std::vector<int> rowsI) const{
 		if((int)rowsI.size() > rows)
 			return Mat_<T>();
@@ -790,6 +816,7 @@ public:
 
 		return res;
 	}
+
 	Mat_<T> getRows(int index, int count) const{
 		if(index >= rows)
 			return Mat_<T>();
@@ -811,6 +838,35 @@ public:
 
 		return res;
 	}
+
+	Mat_<T> row(int index){
+		Mat_<T> res;
+		if(empty() || index < 0 || index >= rows)
+			return res;
+		res.setSize(1, cols);
+
+		T *dM = ptr();
+		T *dR = res.ptr();
+		for(int i = 0; i < cols; ++i){
+			dR[i] = dM[index * cols + i];
+		}
+		return res;
+	}
+
+	Mat_<T> col(int index){
+		Mat_<T> res;
+		if(empty() || index < 0 || index >= cols)
+			return res;
+		res.setSize(rows, 1);
+
+		T *dM = ptr();
+		T *dR = res.ptr();
+		for(int i = 0; i < rows; ++i){
+			dR[i] = dM[i * cols + index];
+		}
+		return res;
+	}
+
 	T sum() const{
 		T res(0);
 		T* val = &(*this->val)[0];
@@ -830,6 +886,7 @@ public:
 		}
 		return res;
 	}
+
 	T min() const{
 		T res(0);
 		T* val = &(*this->val)[0];
@@ -840,9 +897,11 @@ public:
 		}
 		return res;
 	}
+
 	bool empty() const{
 		return val.empty() || val.get()->empty();
 	}
+
 	/**
 	 * @brief mean
 	 * @param axis 0 - mean for all elements; 1 - mean for rows; 2 - mean for cols
@@ -940,6 +999,7 @@ public:
 	}
 
 	///***********************
+	///
 	template < int count >
 	inline Vec_<T, count > toVecCol(int col = 0) const{
 		Vec_< T, count > res;
@@ -953,6 +1013,7 @@ public:
 		}
 		return res;
 	}
+
 	template < int count >
 	inline Vec_<T, count > toVecRow(int row = 0) const{
 		Vec_< T, count > res;
@@ -967,6 +1028,7 @@ public:
 		}
 		return res;
 	}
+
 	template < int count >
 	inline Vec_<T, count > toVec() const{
 		Vec_< T, count > res;
@@ -981,7 +1043,9 @@ public:
 		}
 		return res;
 	}
+
 	///**************************
+	///
 	operator std::string() const{
 		if(this->val.empty())
 			return "";
@@ -997,6 +1061,7 @@ public:
 		res << "]";
 		return res.str();
 	}
+
 	std::string print(int _rows = -1) const{
 		if(this->val.empty())
 			return "";
@@ -1032,6 +1097,7 @@ public:
 			val[i] = 0;
 		return res;
 	}
+
 	static inline Mat_< T > ones(int rows, int cols){
 		Mat_< T > res(rows, cols);
 		T* val = &(*res.val)[0];
@@ -1044,12 +1110,15 @@ public:
 			val[i] = 1.;
 		return res;
 	}
+
 	static inline Mat_< T > zeros(const Size& size){
 		return Mat_<T>::zeros(size.height, size.width);
 	}
+
 	static inline Mat_< T > ones(const Size& size){
 		return Mat_<T>::ones(size.height, size.width);
 	}
+
 	static inline Mat_< T > eye(int rows, int cols){
 		Mat_< T > res = zeros(rows, cols);
 		T* val = &(*res.val)[0];

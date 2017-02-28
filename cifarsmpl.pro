@@ -22,7 +22,9 @@ SOURCES += main.cpp\
     drawcnvweight.cpp \
     qt_work_mat.cpp \
     models/gpu_train.cpp \
-    test_agg.cpp
+    test_agg.cpp \
+    showmatrices.cpp \
+    imutils.cpp
 
 HEADERS  += mainwindow.h \
     widgetcifar.h \
@@ -32,11 +34,14 @@ HEADERS  += mainwindow.h \
     drawcnvweight.h \
     qt_work_mat.h \
     models/gpu_train.h \
-    test_agg.h
+    test_agg.h \
+    showmatrices.h \
+    imutils.h
 
 FORMS    += mainwindow.ui \
     widgetcifar.ui \
-    drawcnvweight.ui
+    drawcnvweight.ui \
+    showmatrices.ui
 
 win32{
     QMAKE_CXXFLAGS += /openmp

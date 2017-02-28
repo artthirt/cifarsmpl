@@ -6,6 +6,8 @@
 #include <vector>
 #include "nn.h"
 
+#include <exception>
+
 namespace conv2{
 
 template< typename T >
@@ -24,8 +26,10 @@ void im2col(const ct::Mat_<T>& X, const ct::Size& szA0, int channels, const ct::
 
 	T *dX = X.ptr();
 	T *dR = Res.ptr();
+#pragma omp parallel for
 	for(int c = 0; c < channels; ++c){
 		T *dXi = &dX[c * szA0.area()];
+#pragma omp parallel for
 		for(int y = 0; y < szOut.height; ++y){
 			int y0 = y * stride;
 			for(int x = 0; x < szOut.width; ++x){
@@ -65,6 +69,7 @@ void back_deriv(const ct::Mat_<T>& Delta, const ct::Size& szOut, const ct::Size&
 				int x0 = x * stride;
 				int row = y * szOut.width + x;
 
+#pragma omp parallel for
 				for(int a = 0; a < szW.height; ++a){
 					for(int b = 0; b < szW.width; ++b){
 						int col = c * szW.area() + (a * szW.width + b);
@@ -95,11 +100,13 @@ void subsample(const ct::Mat_<T>& X, const ct::Size& szA, ct::Mat_<T>& Y, ct::Ma
 
 	int stride = 2;
 
+#pragma omp parallel for
 	for(int k = 0; k < K; ++k){
 		T *dX = X.ptr() + k;
 		T* dM = Mask.ptr() + k;
 		T *dY = Y.ptr() + k;
 
+#pragma omp parallel for
 		for(int y = 0; y < szO.height; ++y){
 			int y0 = y * stride;
 			for(int x = 0; x < szO.width; ++x){
@@ -138,11 +145,13 @@ void upsample(const ct::Mat_<T>& Y, const ct::Mat_<T>& Mask, const ct::Size& szO
 
 	int stride = 2;
 
+#pragma omp parallel for
 	for(int k = 0; k < K; ++k){
 		T *dX = X.ptr() + k;
 		T* dM = Mask.ptr() + k;
 		T *dY = Y.ptr() + k;
 
+#pragma omp parallel for
 		for(int y = 0; y < szO.height; ++y){
 			int y0 = y * stride;
 			for(int x = 0; x < szO.width; ++x){
@@ -175,7 +184,9 @@ void vec2mat(const std::vector< ct::Mat_<T> >& vec, ct::Mat_<T>& mat)
 	mat.setSize(rows, cols);
 
 	T *dM = mat.ptr();
-	for(size_t i = 0; i < rows; ++i){
+
+#pragma omp parallel for
+	for(int i = 0; i < rows; ++i){
 		const ct::Mat_<T>& V = vec[i];
 		T *dV = V.ptr();
 		for(int j = 0; j < V.total(); ++j){
@@ -196,12 +207,37 @@ void mat2vec(const ct::Mat_<T>& mat, const ct::Size& szOut, std::vector< ct::Mat
 	vec.resize(rows);
 
 	T *dM = mat.ptr();
-	for(size_t i = 0; i < rows; ++i){
+
+#pragma omp parallel for
+	for(int i = 0; i < rows; ++i){
 		ct::Mat_<T>& V = vec[i];
 		V.setSize(szOut);
 		T *dV = V.ptr();
 		for(int j = 0; j < V.total(); ++j){
 			dV[j] = dM[i * cols + j];
+		}
+	}
+}
+
+template< typename T >
+void flipW(const ct::Mat_<T>& W, const ct::Size& sz,int channels, ct::Mat_<T>& Wr)
+{
+	if(W.empty() || W.rows != sz.area() * channels)
+		return;
+
+	Wr.setSize(W.size());
+
+	for(int k = 0; k < W.cols; ++k){
+		for(int c = 0; c < channels; ++c){
+			T *dW = W.ptr() + c * sz.area() * W.cols + k;
+			T *dWr = Wr.ptr() + c * sz.area() * W.cols + k;
+
+			for(int a = 0; a < sz.height; ++a){
+				for(int b = 0; b < sz.width; ++b){
+					dWr[((sz.height - a - 1) * sz.width + b) * W.cols] = dW[((a) * sz.width + b) * W.cols];
+				}
+			}
+
 		}
 	}
 }
@@ -262,10 +298,10 @@ public:
 		m_optim.init(vW, vB);
 	}
 
-	void forward(std::vector< ct::Mat_<T> >* _pX, ct::etypefunction func, std::vector< ct::Mat_<T> >& Xout){
+	void forward(const std::vector< ct::Mat_<T> >* _pX, ct::etypefunction func, std::vector< ct::Mat_<T> >& Xout){
 		if(!_pX)
 			return;
-		pX = _pX;
+		pX = (std::vector< ct::Mat_<T> >*)_pX;
 		m_func = func;
 
 		Xc.resize(pX->size());
@@ -348,8 +384,9 @@ public:
 	}
 
 	void backward(const std::vector< ct::Mat_<T> >& D, bool last_level = false){
-		if(D.empty() || D.size() != Mask.size())
-			return;
+		if(D.empty() || D.size() != Xc.size()){
+			throw new std::invalid_argument("vector D not complies saved parameters");
+		}
 
 		std::vector< ct::Mat_<T> > dSub;
 		dSub.resize(D.size());
@@ -374,7 +411,7 @@ public:
 			ct::Mat_<T>& vgBi = vgB[i];
 			matmulT1(Xci, dSubi, Wi);
 			vgBi = (ct::sumRows(dSubi)) * (1.f/dSubi.rows);
-			//Wi *= (1.f/dSubi.rows);
+			//Wi *= (1.f/dSubi.total());
 			//vgBi.swap_dims();
 		}
 		gW.setSize(W.size());
@@ -385,13 +422,14 @@ public:
 			gW += vgW[i];
 			gB += vgB[i];
 		}
-		gW *= 1./(D.size());
-		gB *= 1./(D.size());
+		gW *= (T)1./(D.size() * K);
+		gB *= (T)1./(D.size() * K);
 
 		if(!last_level){
 			Dlt.resize(D.size());
 			for(size_t i = 0; i < D.size(); ++i){
-				ct::Matf Dc;
+				ct::Matf Dc, Wf;
+				//flipW(W, szW, channels, Wf);
 				ct::matmulT2(dSub[i], W, Dc);
 				back_deriv(Dc, szA1, szA0, channels, szW, stride, Dlt[i]);
 				//ct::Size sz = (*pX)[i].size();

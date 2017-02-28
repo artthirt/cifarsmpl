@@ -14,6 +14,8 @@
 #include "cifar_reader.h"
 #include "mlp.h"
 
+#include "showmatrices.h"
+
 template< typename T >
 void saveimage2file(const ct::Mat_<T>& X, const ct::Size &szA, int channels, const std::string& fn)
 {
@@ -33,6 +35,113 @@ void saveimage2file(const ct::Mat_<T>& X, const ct::Size &szA, int channels, con
 	}
 	fs.close();
 }
+
+/////////////////////
+
+class TestCnv{
+public:
+	TestCnv(){
+		mlp.resize(3);
+		int K1 = 15;
+		int K2 = 10;
+
+		szA0 = ct::Size(cifar_reader::WidthIM, cifar_reader::HeightIM);
+		szW = ct::Size(5, 5);
+
+		cnv1.init(szA0, 3, 1, K1, szW);
+		cnv2.init(cnv1.szA2, K1, 1, K2, szW);
+
+	}
+
+	conv2::convnn<float> cnv1, cnv2;
+	ct::MlpOptim< float > optim;
+	std::vector< ct::mlp<float> > mlp;
+
+	ct::Size szA0, szW;
+
+	void forward(const std::vector< ct::Matf > &Xs, ct::Matf& yp){
+		cnv1.forward(&Xs, ct::LINEAR, Xout);
+
+		for(size_t i = 0; i < Xout.size(); ++i){
+			Xout[i] = Xout[i].t();
+			Xout[i].set_dims(1, Xout[i].total());
+		}
+
+		cnv2.forward(&Xout, ct::LINEAR, Xout2);
+
+		for(size_t i = 0; i < Xout2.size(); ++i){
+			Xout2[i] = Xout2[i].t();
+			Xout2[i].set_dims(1, Xout2[i].total());
+		}
+
+		conv2::vec2mat(Xout2, X1);
+
+		if(!mlp[0].isInit()){
+			mlp[0].init(X1.cols, 500);
+			mlp[1].init(500, 400);
+			mlp[2].init(400, 10);
+			optim.init(mlp);
+		}
+
+		mlp[0].forward(&X1, ct::RELU);
+		mlp[1].forward(&mlp[0].A1, ct::RELU);
+		mlp[2].forward(&mlp[1].A1, ct::SOFTMAX);
+
+		yp = mlp.back().A1;
+	}
+	void backward(const ct::Matf dy){
+		mlp[2].backward(dy);
+		mlp[1].backward(mlp[2].DltA0);
+		mlp[0].backward(mlp[1].DltA0);
+
+		optim.pass(mlp);
+		D.clear();
+		conv2::mat2vec(mlp[0].DltA0, cnv2.szK.t(), D);
+
+		for(size_t i = 0; i < Xout2.size(); ++i){
+			D[i] = D[i].t();
+		}
+
+		cnv2.backward(D);
+
+		for(size_t i = 0; i < Xout2.size(); ++i){
+			cnv2.Dlt[i].set_dims(cnv1.szK.t());
+			cnv2.Dlt[i] = cnv2.Dlt[i].t();
+		}
+
+		cnv1.backward(cnv2.Dlt, true);
+	}
+
+	void test(const std::vector< ct::Matf > &Xs, const ct::Matf& yind, double &l2, double &acc){
+		ct::Matf yp, dy;
+		forward(Xs, yp);
+		dy = ct::subIndOne(yp, yind);
+
+		ct::Matf dy2 = ct::elemwiseSqr(dy);
+		l2 = dy2.sum() / dy2.rows;
+
+		int count = 0;
+		for(int i = 0; i < yp.rows; ++i){
+			int idp = yp.argmax(i, 1);
+			int idy = yind.at(i, 0);
+//			ct::Vec2i vec = m_statistics[idy];
+			if(idy == idp){
+				count++;
+//				vec[0]++;
+			}
+//			vec[1]++;
+//			m_statistics[idy] = vec;
+		}
+		acc = (double)1. * count / yind.rows;
+
+	}
+
+private:
+	std::vector< ct::Matf > Xout, Xout2, D;
+	ct::Matf X1;
+};
+
+/////////////////////
 
 test_agg::test_agg()
 {
@@ -65,7 +174,7 @@ void test_agg::test_hconcat()
 void test_agg::test_im2col()
 {
 	ct::Size szA0(14, 14), szW(5, 5), szOut, szOut2;
-	int channels = 2;
+	int channels = 3;
 
 	ct::Matf X(1, szA0.area() * channels), Res, Z, Z2, Y, W, Mask;
 	for(int i = 0; i < X.total(); ++i){
@@ -76,6 +185,9 @@ void test_agg::test_im2col()
 
 	W.setSize(szW.area() * channels, K);
 	W.fill(1.);
+	for(int i = 0; i < W.total(); ++i){
+		W.ptr()[i] = i;
+	}
 
 	saveimage2file(X, szA0, channels, "X.txt");
 
@@ -84,8 +196,12 @@ void test_agg::test_im2col()
 	ct::save_mat(Res, "Res.txt");
 
 	Z = Res * W;
-	ct::save_mat(W, "W.txt");
+	ct::save_mat(W.t(), "W.txt");
 	ct::save_mat(Z, "Z.txt");
+
+	ct::Matf Wr;
+	conv2::flipW(W, szW, channels, Wr);
+	ct::save_mat(Wr.t(), "Wr.txt");
 
 	conv2::subsample(Z, szOut, Y, Mask, szOut2);
 
@@ -99,71 +215,42 @@ void test_agg::test_im2col()
 void test_agg::test_conv()
 {
 	cifar_reader rd;
-	rd.openDir("../../../data/cifar-10-batches-bin");
-//	rd.openDir("D:/Down/smpl/data/cifar-10-batches-bin");
+//	rd.openDir("../../../data/cifar-10-batches-bin");
+	rd.openDir("D:/Down/smpl/data/cifar-10-batches-bin");
 	if(!rd.isBinDataExists())
 		return;
 
-	conv2::convnn<float> cnv1, cnv2;
+	std::vector< ct::Matf > Xs;
+	ct::Matf y, yp, X1, dy;
 
-	std::vector< ct::Matf > Xs, Xout, Xout2, D;
-	ct::Matf y, X1, dy;
+	ShowMatrices sh;
 
-	std::vector< ct::mlp<float> > mlp;
-	mlp.resize(2);
-
-	ct::Size szA0(cifar_reader::WidthIM, cifar_reader::HeightIM), szW(5, 5);
-
-	int K1 = 7;
-	int K2 = 6;
-
-	cnv1.init(szA0, 3, 1, K1, szW);
-	cnv2.init(cnv1.szA2, K1, 1, K2, szW);
-
-
-	ct::MlpOptim< float > optim;
-
-	rd.getTrain2(20, Xs, y);
+	TestCnv tcnv;
 
 	for(int i = 0; i < 10000; ++i){
 
+		rd.getTrain2(20, Xs, y);
 
-		cnv1.forward(&Xs, ct::RELU, Xout);
+		tcnv.forward(Xs, yp);
 
-		for(size_t i = 0; i < Xout.size(); ++i){
-			Xout[i] = Xout[i].t();
-			Xout[i].set_dims(1, Xout[i].total());
-		}
+		dy = ct::subIndOne(yp, y);
 
-		cnv2.forward(&Xout, ct::RELU, Xout2);
+		if((i % 10) == 0){
+			sh.saveMat("cnv1.bmp", tcnv.cnv1.W, tcnv.cnv1.szW, tcnv.cnv1.K, tcnv.cnv1.channels);
+			sh.saveMat("cnv2.bmp", tcnv.cnv2.W, tcnv.cnv2.szW, tcnv.cnv2.K, tcnv.cnv2.channels);
 
-		conv2::vec2mat(Xout2, X1);
-
-		if(!mlp[0].isInit()){
-			mlp[0].init(X1.cols, 100);
-			mlp[1].init(100, 10);
-			optim.init(mlp);
-		}
-
-		mlp[0].forward(&X1, ct::RELU);
-		mlp[1].forward(&mlp[0].A1, ct::SOFTMAX);
-
-		dy = ct::subIndOne(mlp[1].A1, y);
-
-		if((i % 3) == 0){
 			ct::Matf dy2 = ct::elemwiseSqr(dy);
-			float sy2 = dy2.sum();
-			qDebug("l2 = %f", sy2);
+			double sy2 = (double)dy2.sum()/dy2.rows;
+			qDebug("pass %d: l2 = %f", i, sy2);
 		}
 
-		mlp[1].backward(dy);
-		mlp[0].backward(mlp[1].DltA0);
+		tcnv.backward(dy);
 
-		optim.pass(mlp);
-		D.clear();
-		conv2::mat2vec(mlp[0].DltA0, cnv2.szK, D);
-
-		cnv2.backward(D);
-		cnv1.backward(cnv2.Dlt, true);
+		if((i % 20) == 0){
+			rd.getTrain2(300, Xs, y);
+			double l2, acc;
+			tcnv.test(Xs, y, l2, acc);
+			qDebug("l2=%f,\tacc=%f", l2, acc);
+		}
 	}
 }

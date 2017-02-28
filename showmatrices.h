@@ -1,0 +1,40 @@
+#ifndef SHOWMATRICES_H
+#define SHOWMATRICES_H
+
+#include <QWidget>
+
+#include "custom_types.h"
+
+namespace Ui {
+class ShowMatrices;
+}
+
+class ShowMatrices : public QWidget
+{
+	Q_OBJECT
+
+public:
+	explicit ShowMatrices(QWidget *parent = 0);
+	~ShowMatrices();
+
+	void setMat(const ct::Matf& mat, const ct::Size& sz, int K, int channels = 1);
+	void saveMat(const QString& name, const ct::Matf& mat, const ct::Size& sz, int K, int channels = 1);
+
+	void save2Image(const QString& name, int width, int height);
+
+private:
+	Ui::ShowMatrices *ui;
+
+	ct::Matf m_mat;
+	ct::Size m_sz;
+	int m_channels;
+	int m_K;
+
+	// QWidget interface
+protected:
+	virtual void paintEvent(QPaintEvent *event);
+
+	void paint_cast(QPainter& painter, int width = -1);
+};
+
+#endif // SHOWMATRICES_H

@@ -22,6 +22,9 @@ struct Size{
 	int area() const{
 		return width * height;
 	}
+	Size t(){
+		return Size(height, width);
+	}
 
 	int width;
 	int height;

@@ -42,6 +42,7 @@ public:
 
 	uint getTest(uint beg, uint batch, std::vector< ct::Matf >& X, ct::Matf &y);
 	uint getTest(uint batch, std::vector< ct::Matf >& Xs, ct::Matf &y);
+	uint getTest2(uint batch, std::vector< ct::Matf >& Xs, ct::Matf &y);
 
 	uint count();
 	uint current_file();
@@ -155,7 +156,7 @@ inline void image2mat(const QByteArray& image, int w, int h,
 	T* dX = mat.ptr();
 	for(int i = 0; i < w * h * 3; ++i){
 		T val = (T)image.data()[i] / 255.;
-		dX[i] = val;
+		dX[i] = 2. * val - 1.;
 	}
 }
 
