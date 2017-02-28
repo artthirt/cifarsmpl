@@ -93,6 +93,7 @@ void ShowMatrices::paint_cast(QPainter &painter, int width)
 				painter.setPen(Qt::black);
 				draw_W(painter, R, G, B, x, y, wd, m1, m2);
 			}else{
+				int y_prev = y;
 				for(int i = 0; i < m_channels; ++i){
 					ct::Matf R;
 					R = m.getRows(i * m_sz.area(), m_sz.area());
@@ -100,32 +101,27 @@ void ShowMatrices::paint_cast(QPainter &painter, int width)
 					painter.setPen(Qt::black);
 					draw_W(painter, R, x, y, wd, m1, m2);
 
-					pen.setColor(Qt::green);
+					pen.setColor(Qt::red);
 					painter.setPen(pen);
 					QPoint p1 = QPoint(x, y);
 					QPoint p2 = p1 + QPoint(0,  wd * m_sz.height);
 					painter.drawLine(p1, p2);
 
-					pen.setColor(Qt::red);
+					pen.setColor(Qt::green);
 					painter.setPen(pen);
 					p1 = QPoint(x, y + wd * m_sz.height);
 					p2 = QPoint(x + wd * m_sz.width, y + wd * m_sz.height);
 					painter.drawLine(p1, p2);
 
-					x += wd * m_sz.width;
-					if(x > width){
-						y += wd * m_sz.height;
-						x = 0;
-					}
+					y += wd * m_sz.height;
 				}
-				y += wd * m_sz.height;
-				x = -wd * m_sz.width;
+				y = y_prev;
 			}
 		}
 
 		x += wd * m_sz.width;
 		if(x > width){
-			y += wd * m_sz.height;
+			y += wd * m_sz.height * m_channels;
 			x = 0;
 		}
 	}
