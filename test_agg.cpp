@@ -88,8 +88,8 @@ public:
 			optim.init(mlp);
 		}
 
-		mlp[0].setDropout(dropout, 0.94);
-		mlp[1].setDropout(dropout, 0.94);
+		mlp[0].setDropout(dropout, 0.9);
+		mlp[1].setDropout(dropout, 0.9);
 
 		mlp[0].forward(&X1, ct::RELU);
 		mlp[1].forward(&mlp[0].A1, ct::RELU);
