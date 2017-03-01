@@ -108,13 +108,21 @@ void cuda_im2cols(const gpumat::GpuMat &X,
 				  gpumat::GpuMat &Res,
 				  ct::Size &szOut);
 
+extern "C"
+void cuda_back_deriv(const gpumat::GpuMat &Delta,
+				const ct::Size &szOut,
+				const ct::Size &szA0,
+				int channels,
+				const ct::Size &szW,
+				int stride,
+				gpumat::GpuMat &X);
 
 ///////////////////////////////
 
 void im2cols(const gpumat::GpuMat &X, const ct::Size &szA0, int channels, const ct::Size &szW,
 			 int stride, gpumat::GpuMat &Res, ct::Size &szOut)
 {
-	if(X.empty() || ! channels || !szA0.area() || !szW.area() || ! stride)
+	if(X.empty() || ! channels || !szA0.area() || !szW.area() || !stride)
 		throw new std::invalid_argument("im2cols: empty parameters");
 
 	szOut.width = (szA0.width - szW.width)/stride + 1;
@@ -126,4 +134,21 @@ void im2cols(const gpumat::GpuMat &X, const ct::Size &szA0, int channels, const 
 	Res.resize(rows, cols, X.type);
 
 	cuda_im2cols(X, szA0, channels, szW, stride, Res, szOut);
+}
+
+void back_deriv(const gpumat::GpuMat &Delta,
+				const ct::Size &szOut,
+				const ct::Size &szA0,
+				int channels,
+				const ct::Size &szW,
+				int stride,
+				gpumat::GpuMat &X)
+{
+	if(Delta.empty() || ! channels || !szA0.area() || !szW.area() || !stride)
+		throw new std::invalid_argument("im2cols: empty parameters");
+
+	X.resize(1, channels * szA0.area(), Delta.type);
+	X.zeros();
+
+	cuda_back_deriv(Delta, szOut, szA0, channels, szW, stride, X);
 }

@@ -70,8 +70,32 @@ private:
 
 };
 
+/**
+ * @brief im2cols
+ * @param X
+ * @param szA0
+ * @param channels
+ * @param szW
+ * @param stride
+ * @param Res
+ * @param szOut
+ */
 void im2cols(const gpumat::GpuMat & X, const ct::Size& szA0, int channels, const ct::Size& szW,
 			 int stride, gpumat::GpuMat & Res, ct::Size& szOut);
+
+/**
+ * @brief back_deriv
+ * @param Delta
+ * @param szOut
+ * @param szA0
+ * @param channels
+ * @param szW
+ * @param stride
+ * @param X
+ */
+void back_deriv(const gpumat::GpuMat& Delta, const ct::Size& szOut, const ct::Size& szA0,
+				int channels, const ct::Size& szW, int stride, gpumat::GpuMat& X);
+
 
 }
 
