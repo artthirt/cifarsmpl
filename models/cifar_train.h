@@ -55,7 +55,7 @@ public:
 
 	QVector<int> predict(const QVector<TData> &data, bool use_gpu = false);
 
-	ct::Matf &cnvW(int index, bool use_gpu = false);
+	ct::Matf cnvW(int index, bool use_gpu = false);
 	ct::Size& szW(int index);
 	int Kernels(int index);
 	int channels(int index);
