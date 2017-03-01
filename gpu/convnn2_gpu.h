@@ -1,0 +1,80 @@
+#ifndef CONV2_GPU_H
+#define CONV2_GPU_H
+
+#include "gpumat.h"
+#include "helper_gpu.h"
+#include "cuda_common.h"
+
+namespace gpumat{
+
+namespace conv2{
+
+class convnn_gpu
+{
+public:
+	std::vector< gpumat::GpuMat > W;		/// weights
+	std::vector< gpumat::GpuMat > B;		/// biases
+	int K;									/// kernels
+	int channels;							/// input channels
+	int stride;
+	ct::Size szA0;							/// input size
+	ct::Size szA1;							/// size after convolution
+	ct::Size szA2;							/// size after pooling
+	ct::Size szW;							/// size of weights
+	ct::Size szK;							/// size of output data (set in forward)
+	std::vector< gpumat::GpuMat >* pX;		/// input data
+	std::vector< gpumat::GpuMat > Xc;		///
+	std::vector< gpumat::GpuMat > A1;		/// out after appl nonlinear function
+	std::vector< gpumat::GpuMat > A2;		/// out after pooling
+	std::vector< gpumat::GpuMat > Dlt;		/// delta after backward pass
+	std::vector< gpumat::GpuMat > vgW;		/// for delta weights
+	std::vector< gpumat::GpuMat > vgB;		/// for delta bias
+	std::vector< gpumat::GpuMat > Mask;		/// masks for bakward pass (created in forward pass)
+	gpumat::AdamOptimizer m_optim;
+
+	gpumat::GpuMat gW;						/// gradient for weights
+	gpumat::GpuMat gB;						/// gradient for biases
+
+	convnn_gpu();
+
+	void setAlpha(double val);
+
+	/**
+	 * @brief XOut1
+	 * out after convolution
+	 * @return
+	 */
+	std::vector< gpumat::GpuMat >& XOut1();
+	/**
+	 * @brief XOut2
+	 * out after pooling
+	 * @return
+	 */
+	std::vector< gpumat::GpuMat >& XOut2();
+
+	int outputFeatures() const;
+
+	ct::Size szOut() const;
+
+	void init(const ct::Size& _szA0, int _channels, int stride, int _K, ct::Size& _szW, bool use_pool = true);
+
+	void forward(const std::vector< gpumat::GpuMat >* _pX, gpumat::etypefunction func);
+
+	void backcnv(const std::vector< gpumat::GpuMat >& D, std::vector< gpumat::GpuMat >& DS);
+
+	void backward(const std::vector< gpumat::GpuMat >& D, bool last_level = false);
+
+private:
+	bool m_use_pool;
+	gpumat::etypefunction m_func;
+
+};
+
+void im2cols(const gpumat::GpuMat & X, const ct::Size& szA0, int channels, const ct::Size& szW,
+			 int stride, gpumat::GpuMat & Res, ct::Size& szOut);
+
+}
+
+}
+
+#endif // CONV2_GPU_H

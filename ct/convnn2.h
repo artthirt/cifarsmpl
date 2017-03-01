@@ -11,7 +11,8 @@
 namespace conv2{
 
 template< typename T >
-void im2col(const ct::Mat_<T>& X, const ct::Size& szA0, int channels, const ct::Size& szW, int stride, ct::Mat_<T>& Res, ct::Size& szOut)
+void im2col(const ct::Mat_<T>& X, const ct::Size& szA0, int channels, const ct::Size& szW,
+			int stride, ct::Mat_<T>& Res, ct::Size& szOut)
 {
 	if(X.empty() || !channels)
 		return;
@@ -54,7 +55,8 @@ void im2col(const ct::Mat_<T>& X, const ct::Size& szA0, int channels, const ct::
 }
 
 template< typename T >
-void back_deriv(const ct::Mat_<T>& Delta, const ct::Size& szOut, const ct::Size& szA0, int channels, const ct::Size& szW, int stride, ct::Mat_<T>& X)
+void back_deriv(const ct::Mat_<T>& Delta, const ct::Size& szOut, const ct::Size& szA0,
+				int channels, const ct::Size& szW, int stride, ct::Mat_<T>& X)
 {
 	if(Delta.empty() || !channels)
 		return;
@@ -143,7 +145,8 @@ void subsample(const ct::Mat_<T>& X, const ct::Size& szA, ct::Mat_<T>& Y, ct::Ma
 }
 
 template< typename T >
-void upsample(const ct::Mat_<T>& Y, const ct::Mat_<T>& Mask, const ct::Size& szO, const ct::Size& szA, ct::Mat_<T>& X)
+void upsample(const ct::Mat_<T>& Y, const ct::Mat_<T>& Mask, const ct::Size& szO,
+			  const ct::Size& szA, ct::Mat_<T>& X)
 {
 	if(Y.empty() || Mask.empty() || Y.rows != szO.area())
 		return;

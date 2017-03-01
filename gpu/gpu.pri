@@ -9,7 +9,8 @@ HEADERS += \
     $$PWD/convnn_gpu.h \
     $$PWD/cu/common_devices.h \
     $$PWD/gpu_mlp.h \
-    $$PWD/cuda_types.h
+    $$PWD/cuda_types.h \
+    $$PWD/convnn2_gpu.h
 
 SOURCES += \
     $$PWD/gpumat.cpp \
@@ -17,10 +18,12 @@ SOURCES += \
     $$PWD/convnn_gpu.cpp \
     $$PWD/gpu_mlp.cpp \
     $$PWD/cuda_common.cpp \
-    $$PWD/cuda_types.cpp
+    $$PWD/cuda_types.cpp \
+    $$PWD/convnn2_gpu.cpp
 
 CUDA_SOURCES += $$PWD/cu/cuda_arithm.cu \
-                $$PWD/cu/cuda_conv.cu
+                $$PWD/cu/cuda_conv.cu \
+                $$PWD/cu/cuda_conv2.cu
 
 win32{
     CUDA_DIR					= "c:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v8.0/"
@@ -95,4 +98,5 @@ else {
     cuda.dependency_type = TYPE_C
     QMAKE_EXTRA_COMPILERS += cuda
 }
+
 
