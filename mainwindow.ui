@@ -18,7 +18,7 @@
     <item>
      <widget class="QTabWidget" name="tb_main">
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="tab">
        <attribute name="title">
@@ -41,9 +41,36 @@
        <attribute name="title">
         <string>Weights</string>
        </attribute>
-       <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <layout class="QVBoxLayout" name="verticalLayout_3">
         <item>
-         <widget class="DrawCnvWeight" name="wdgW" native="true"/>
+         <widget class="ShowMatrices" name="wdgW" native="true">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_3">
+          <item>
+           <widget class="QSpinBox" name="sb_wid"/>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_2">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
         </item>
        </layout>
       </widget>
@@ -356,9 +383,9 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>DrawCnvWeight</class>
+   <class>ShowMatrices</class>
    <extends>QWidget</extends>
-   <header>drawcnvweight.h</header>
+   <header>showmatrices.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

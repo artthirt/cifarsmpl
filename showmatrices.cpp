@@ -33,7 +33,7 @@ void ShowMatrices::saveMat(const QString &name, const ct::Matf &mat, const ct::S
 	m_K = K;
 	m_channels = channels;
 	mat.copyTo(m_mat);
-	save2Image(name, 900, 800);
+	save2Image(name, 900, 900);
 }
 
 void ShowMatrices::save2Image(const QString &name, int width, int height)
@@ -41,7 +41,7 @@ void ShowMatrices::save2Image(const QString &name, int width, int height)
 	QImage im(width, height, QImage::Format_ARGB32);
 
 	QPainter painter(&im);
-	paint_cast(painter, width);
+	paint_cast(painter, width, height);
 
 	im.save(name);
 }
@@ -49,9 +49,11 @@ void ShowMatrices::save2Image(const QString &name, int width, int height)
 void ShowMatrices::paintEvent(QPaintEvent *event)
 {
 	QPainter painter(this);
+
+	paint_cast(painter, width(), height());
 }
 
-void ShowMatrices::paint_cast(QPainter &painter, int width)
+void ShowMatrices::paint_cast(QPainter &painter, int width, int height)
 {
 	if(m_mat.empty() || m_mat.cols != m_K)
 		return;
@@ -62,6 +64,10 @@ void ShowMatrices::paint_cast(QPainter &painter, int width)
 
 	if(width == -1)
 		width = this->width();
+	if(height == -1)
+		height = this->height();
+
+	painter.fillRect(QRect(0, 0, width, height), Qt::white);
 
 	QPen pen;
 	pen.setWidth(2);
@@ -120,7 +126,7 @@ void ShowMatrices::paint_cast(QPainter &painter, int width)
 		}
 
 		x += wd * m_sz.width;
-		if(x > width){
+		if(x + wd * m_sz.width > width){
 			y += wd * m_sz.height * m_channels;
 			x = 0;
 		}

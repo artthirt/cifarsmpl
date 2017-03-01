@@ -27,7 +27,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	std::vector< char > cnv_p;
 
 	cnv.push_back(20);
-	cnv.push_back(7);
+	cnv.push_back(20);
 //	cnv.push_back(2);
 //	cnv.push_back(1);
 
@@ -38,9 +38,9 @@ MainWindow::MainWindow(QWidget *parent) :
 	cnv_p.push_back(true);
 	cnv_p.push_back(true);
 
-	mlp.push_back(2048);
-	mlp.push_back(2048);
 	mlp.push_back(1024);
+	mlp.push_back(1024);
+	mlp.push_back(512);
 	mlp.push_back(10);
 
 	m_train.setCifar(&m_cifar);
@@ -57,12 +57,13 @@ MainWindow::MainWindow(QWidget *parent) :
 	ui->pte_logs->appendPlainText("Current directory: " + m_cifar.currentDirectory());
 	ui->pte_logs->appendPlainText("Binary data exists: " + QString(m_cifar.isBinDataExists()? "True" : "False"));
 
-	ui->pte_logs->appendPlainText(QString("count of matrices output of convolution %1").arg(m_train.matricesAfterConv()));
 	ui->pte_logs->appendPlainText(QString("count of input to MLP %1").arg(m_train.inputToMlp()));
 
 	ui->sb_batch->setValue(m_batch);
 	ui->sb_delay->setValue(m_delay);
 	ui->sb_iter_numb->setValue(m_delimiter);
+
+	ui->sb_wid->setMaximum(cnv.size());
 }
 
 MainWindow::~MainWindow()
@@ -145,11 +146,7 @@ void MainWindow::update_prediction()
 
 	ui->wcifar->updatePredictfromIndex(pr);
 
-	ui->wdgW->set_weightR(m_train.cnvW(0, ui->chb_gpu->isChecked()));
-	ui->wdgW->set_weightG(m_train.cnvW(1, ui->chb_gpu->isChecked()));
-	ui->wdgW->set_weightB(m_train.cnvW(2, ui->chb_gpu->isChecked()));
-//	ui->wdgW->set_weightGray(m_train.cnvW(3, ui->chb_gpu->isChecked()));
-	ui->wdgW->update();
+	ui->wdgW->setMat(m_train.cnvW(m_wid), m_train.szW(m_wid), m_train.Kernels(m_wid), m_train.channels(m_wid));
 }
 
 void MainWindow::update_statistics()
@@ -175,9 +172,8 @@ void MainWindow::on_pb_pass_clicked(bool checked)
 void MainWindow::on_chb_gpu_clicked(bool checked)
 {
 	if(checked && m_cifar.isBinDataExists()){
-		m_train.init_gpu();
-		ui->pte_logs->appendPlainText(QString("GPU: count of matrices output of convolution %1").arg(m_train.matricesAfterConv(true)));
-		ui->pte_logs->appendPlainText(QString("GPU: count of input to MLP %1").arg(m_train.inputToMlp(true)));
+//		m_train.init_gpu();
+//		ui->pte_logs->appendPlainText(QString("GPU: count of input to MLP %1").arg(m_train.inputToMlp(true)));
 	}
 }
 
@@ -250,4 +246,11 @@ void MainWindow::on_pb_update_clicked()
 void MainWindow::on_dsb_alpha_cnv_valueChanged(double arg1)
 {
 	m_train.setAlphaCnv(arg1);
+}
+
+void MainWindow::on_sb_wid_valueChanged(int arg1)
+{
+	m_wid = arg1;
+
+	ui->wdgW->setMat(m_train.cnvW(m_wid), m_train.szW(m_wid), m_train.Kernels(m_wid), m_train.channels(m_wid));
 }

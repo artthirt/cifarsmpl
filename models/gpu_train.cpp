@@ -40,11 +40,6 @@ void gpu_train::setConvLayers(const std::vector<int> &layers,
 	m_cnvweights = weight_sizes;
 	m_szA0 = szA0;
 
-	m_conv.resize(channels);
-	for(size_t i = 0; i < m_conv.size(); ++i){
-		m_conv[i].setConvLayers(layers, weight_sizes, szA0, pooling);
-	}
-
 	m_init = false;
 }
 
@@ -65,9 +60,9 @@ void gpu_train::setAlpha(double alpha)
 
 void gpu_train::setAlphaCnv(double alpha)
 {
-	for(size_t i = 0; i < m_conv.size(); ++i){
-		m_conv[i].setAlpha(alpha);
-	}
+	////////////////////
+	/// need realization
+	////////////////////
 }
 
 void gpu_train::init()
@@ -81,10 +76,10 @@ void gpu_train::init()
 	//// 1
 
 	{
-		for(size_t i = 0; i < m_conv.size(); ++i){
-			m_conv[i].init();
-		}
-		qDebug("CNV: ouput matrices = %d", m_conv[0].outputMatrices() * m_conv.size());
+		////////////////////
+		/// need realization
+		////////////////////
+		return;
 	}
 
 	//// 2
@@ -92,7 +87,7 @@ void gpu_train::init()
 	{
 		m_mlp.resize(m_layers.size());
 
-		int input = m_conv[0].outputFeatures() * m_conv.size();
+		int input = 0;
 
 		qDebug("MLP: input features = %d", input);
 
@@ -181,12 +176,9 @@ void gpu_train::forward(const std::vector<gpumat::GpuMat> &X,
 
 	gpumat::etypefunction func = gpumat::RELU;
 
-	m_Xs.resize(m_conv.size());
-	for(size_t i = 0; i < m_conv.size(); ++i){
-		m_conv[i].conv(X[i], m_Xs[i]);
-	}
-
-	gpumat::hconcat(m_Xs, m_Xout);
+////////////////////
+/// need realization
+////////////////////
 
 	gpumat::GpuMat *pA = &m_Xout;
 
@@ -242,28 +234,7 @@ void gpu_train::pass()
 		pD = &mlp.DltA0;
 	}
 
-	gpumat::hsplit(m_mlp.front().DltA0, m_conv.size(), m_splitD);
-
-	for(size_t i = 0; i < m_conv.size(); ++i){
-		m_conv[i].backward(m_splitD[i]);
-	}
-
 	m_optim.pass(m_mlp);
-}
-
-std::vector<gpumat::tvconvnn> &gpu_train::cnv(int index)
-{
-	return m_conv[index].cnv();
-}
-
-uint gpu_train::matricesAfterConv() const
-{
-	return m_conv[0].outputMatrices() * m_conv.size();
-}
-
-uint gpu_train::inputToMlp() const
-{
-	return m_conv[0].outputFeatures() * m_conv.size();
 }
 
 template< typename T >
@@ -310,10 +281,9 @@ bool gpu_train::loadFromFile(const std::string &fn)
 
 	init();
 
-	for(size_t i = 0; i < m_conv.size(); ++i){
-		gpumat::ConvNN &cnv = m_conv[i];
-		cnv.read(fs);
-	}
+	////////////////////
+	/// need realization
+	////////////////////
 
 	for(size_t i = 0; i < m_mlp.size(); ++i){
 		m_mlp[i].read(fs);
@@ -339,10 +309,9 @@ void gpu_train::saveToFile(const std::string &fn)
 
 	fs.write((char*)&m_szA0, sizeof(m_szA0));
 
-	for(size_t i = 0; i < m_conv.size(); ++i){
-		gpumat::ConvNN &cnv = m_conv[i];
-		cnv.write(fs);
-	}
+	////////////////////
+	/// need realization
+	////////////////////
 
 	for(size_t i = 0; i < m_mlp.size(); ++i){
 		m_mlp[i].write(fs);

@@ -85,11 +85,6 @@ void cifar_train::setConvLayers(const std::vector<int> &layers,
 	m_cnvlayers = layers;
 	m_cnvweights = weight_sizes;
 	m_szA0 = szA0;
-
-	m_conv.resize(channels);
-	for(size_t i = 0; i < m_conv.size(); ++i){
-		m_conv[i].setConvLayers(layers, weight_sizes, szA0, pooling);
-	}
 }
 
 void cifar_train::setMlpLayers(const std::vector<int> &layers)
@@ -108,10 +103,18 @@ void cifar_train::init()
 	//// 1
 
 	{
+		m_conv.resize(m_cnvlayers.size());
+
+		int input = ::channels;
+		ct::Size sz = m_szA0;
 		for(size_t i = 0; i < m_conv.size(); ++i){
-			m_conv[i].init();
+			conv2::convnn<float>& cnv = m_conv[i];
+			ct::Size szW(m_cnvweights[i], m_cnvweights[i]);
+			bool pool = m_cnvpooling.size() > i? m_cnvpooling[i] : true;
+			cnv.init(sz, input, 1, m_cnvlayers[i], szW, pool);
+			input = m_cnvlayers[i];
+			sz = cnv.szOut();
 		}
-		qDebug("CNV: ouput matrices = %d", m_conv[0].outputMatrices() * m_conv.size());
 	}
 
 	//// 2
@@ -119,8 +122,7 @@ void cifar_train::init()
 	{
 		m_mlp.resize(m_layers.size());
 
-		int input = m_conv[0].outputFeatures();
-		input *= m_conv.size();
+		int input = m_conv.back().outputFeatures();
 
 		qDebug("MLP: input features = %d", input);
 
@@ -146,7 +148,7 @@ void cifar_train::forward(const std::vector< ct::Matf > &X, ct::Matf &a_out,
 		return;
 
 	if(use_gpu && m_gpu_train.isInit()){
-		m_gpu_train.forward(X, a_out, use_drop, p);
+//		m_gpu_train.forward(X, a_out, use_drop, p);
 		return;
 	}
 
@@ -158,12 +160,15 @@ void cifar_train::forward(const std::vector< ct::Matf > &X, ct::Matf &a_out,
 		else
 			clearDropout();
 
-		std::vector< ct::Matf > Xs_out;
-		Xs_out.resize(m_conv.size());
-		for(size_t i = 0; i < m_conv.size(); ++i){
-			m_conv[i].conv(X[i], Xs_out[i]);
+		std::vector< ct::Matf > *pvX = (std::vector< ct::Matf >*)&X;
+
+		for(int i = 0; i < m_conv.size(); ++i){
+			conv2::convnn<float>& cnv = m_conv[i];
+			cnv.forward(pvX, ct::RELU);
+			pvX = &cnv.A2;
 		}
-		ct::hconcat(Xs_out, m_X_out);
+
+		conv2::vec2mat(m_conv.back().A2, m_X_out);
 
 		ct::Matf *pX = &m_X_out;
 
@@ -172,10 +177,10 @@ void cifar_train::forward(const std::vector< ct::Matf > &X, ct::Matf &a_out,
 
 			if(i < m_mlp.size() - 1){
 				mlp.forward(pX, ct::RELU);
-				pX = &mlp.A1;
 			}else{
 				mlp.forward(pX, ct::SOFTMAX);
 			}
+			pX = &mlp.A1;
 		}
 		a_out = m_mlp.back().A1;
 	}
@@ -238,18 +243,18 @@ void cifar_train::pass(int batch, bool use_gpu)
 	ct::Matf yp;
 	ct::Matf y;
 
-	m_cifar->getTrain(batch, Xs, y);
+	m_cifar->getTrain2(batch, Xs, y);
 
 	if(m_use_rand_data){
 		randValues(y.rows, m_vals, m_rand_data[0], m_rand_data[1]);
 
-		for(size_t i = 0; i < Xs.size(); ++i){
-			randX(Xs[i], m_vals);
-		}
+//		for(size_t i = 0; i < Xs.size(); ++i){
+//			randX(Xs[i], m_vals);
+//		}
 	}
 
 	if(use_gpu && m_gpu_train.isInit()){
-		m_gpu_train.pass(Xs, y);
+//		m_gpu_train.pass(Xs, y);
 		return;
 	}
 
@@ -273,10 +278,16 @@ void cifar_train::pass(int batch, bool use_gpu)
 		pD = &mlp.DltA0;
 	}
 
-	ct::hsplit(m_mlp.front().DltA0, m_conv.size(), m_splitD);
+	std::vector< ct::Matf > vm, *pvm;
 
-	for(size_t i = 0; i < m_conv.size(); ++i){
-		m_conv[i].backward(m_splitD[i]);
+	conv2::mat2vec(m_mlp.front().DltA0, m_conv.back().szK.t(), vm);
+	pvm = &vm;
+
+	for(int i = m_conv.size() - 1; i > -1; --i){
+		conv2::convnn<float>& cnv = m_conv[i];
+
+		cnv.backward(*pvm, i == 0);
+		pvm = &cnv.Dlt;
 	}
 
 	m_optim.pass(m_mlp);
@@ -391,7 +402,7 @@ void cifar_train::getEstimate(int batch, double &accuracy, double &l2, bool use_
 	std::vector< ct::Matf > Xs;
 	ct::Matf y;
 
-	m_cifar->getTrain(batch, Xs, y);
+	m_cifar->getTrain2(batch, Xs, y);
 
 	m_statistics.clear();
 
@@ -409,7 +420,7 @@ void cifar_train::getEstimateTest(int batch, double &accuracy, double &l2, bool 
 	std::vector< ct::Matf > Xs;
 	ct::Matf y;
 
-	m_cifar->getTest(batch, Xs, y);
+	m_cifar->getTest2(batch, Xs, y);
 
 	m_statistics.clear();
 
@@ -432,7 +443,7 @@ void cifar_train::getEstimateTest(double &accuracy, double &l2, bool use_gpu)
 	m_statistics.clear();
 
 	while(ind < size){
-		batch = m_cifar->getTest(ind, batch, Xs, y);
+		batch = m_cifar->getTest2(ind, batch, Xs, y);
 
 		getEstimate(Xs, y, right, l2i, use_gpu);
 		l2 += l2i;
@@ -476,20 +487,13 @@ uint cifar_train::iteration_gpu() const
 	return m_gpu_train.iteration();
 }
 
-uint cifar_train::matricesAfterConv(bool use_gpu) const
-{
-	if(use_gpu)
-		return m_gpu_train.matricesAfterConv();
-	else
-		return m_conv[0].outputMatrices() * m_conv.size();
-}
 
 uint cifar_train::inputToMlp(bool use_gpu) const
 {
 	if(use_gpu)
-		return m_gpu_train.inputToMlp();
+		return 0;
 	else
-		return m_conv[0].outputFeatures() * m_conv.size();
+		return m_conv.back().outputFeatures();
 }
 
 QVector< int > cifar_train::predict(const QVector< TData >& data, bool use_gpu)
@@ -507,7 +511,7 @@ QVector< int > cifar_train::predict(const QVector< TData >& data, bool use_gpu)
 
 		int cnt = std::min(data.size() - i, batch);
 
-		m_cifar->convToXy(data, i, i + cnt, X);
+		m_cifar->convToXy2(data, i, i + cnt, X);
 
 		forward(X, y, false, 0.95, use_gpu);
 
@@ -520,37 +524,40 @@ QVector< int > cifar_train::predict(const QVector< TData >& data, bool use_gpu)
 	return pred;
 }
 
-QVector<QVector<ct::Matf> > cifar_train::cnvW(int index, bool use_gpu)
+ct::Matf& cifar_train::cnvW(int index, bool use_gpu)
 {
-	QVector< QVector < ct::Matf > > res;
-
 	if(!use_gpu){
-		std::vector<tvconvnnf> &cnv = m_conv[index]();
-		res.resize(cnv.size());
-
-		for(size_t i = 0; i < cnv.size(); ++i){
-			for(size_t j = 0; j < cnv[i].size(); ++j){
-				for(size_t k = 0; k < cnv[i][j].W.size(); ++k){
-					res[i].push_back(cnv[i][j].W[k]);
-				}
-			}
-		}
-
+		return m_conv[index].W;
 	}else{
-		res.resize(m_gpu_train.cnv(index).size());
-		std::vector< std::vector< gpumat::convnn > > &cnv = m_gpu_train.cnv(index);
+//		res.resize(m_gpu_train.cnv(index).size());
+//		std::vector< std::vector< gpumat::convnn > > &cnv = m_gpu_train.cnv(index);
 
-		for(size_t i = 0; i < cnv.size(); ++i){
-			for(size_t j = 0; j < cnv[i].size(); ++j){
-				for(size_t k = 0; k < cnv[i][j].W.size(); ++k){
-					ct::Matf Wf;
-					gpumat::convert_to_mat(cnv[i][j].W[k], Wf);
-					res[i].push_back(Wf);
-				}
-			}
-		}
+//		for(size_t i = 0; i < cnv.size(); ++i){
+//			for(size_t j = 0; j < cnv[i].size(); ++j){
+//				for(size_t k = 0; k < cnv[i][j].W.size(); ++k){
+//					ct::Matf Wf;
+//					gpumat::convert_to_mat(cnv[i][j].W[k], Wf);
+//					res[i].push_back(Wf);
+//				}
+//			}
+//		}
 	}
-	return res;
+	return ct::Matf();
+}
+
+ct::Size &cifar_train::szW(int index)
+{
+	return m_conv[index].szW;
+}
+
+int cifar_train::Kernels(int index)
+{
+	return m_conv[index].K;
+}
+
+int cifar_train::channels(int index)
+{
+	return m_conv[index].channels;
 }
 
 void cifar_train::init_gpu()
@@ -599,7 +606,7 @@ bool cifar_train::loadFromFile(const QString &fn, bool gpu)
 	init();
 
 	for(size_t i = 0; i < m_conv.size(); ++i){
-		convnn::ConvNN &cnv = m_conv[i];
+		conv2::convnn<float> &cnv = m_conv[i];
 		cnv.read(fs);
 	}
 
@@ -641,7 +648,7 @@ void cifar_train::saveToFile(const QString &fn, bool gpu)
 	fs.write((char*)&m_szA0, sizeof(m_szA0));
 
 	for(size_t i = 0; i < m_conv.size(); ++i){
-		convnn::ConvNN &cnv = m_conv[i];
+		conv2::convnn<float> &cnv = m_conv[i];
 		cnv.write(fs);
 	}
 

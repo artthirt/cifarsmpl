@@ -34,7 +34,7 @@ private:
 protected:
 	virtual void paintEvent(QPaintEvent *event);
 
-	void paint_cast(QPainter& painter, int width = -1);
+	void paint_cast(QPainter& painter, int width = -1, int height = -1);
 };
 
 #endif // SHOWMATRICES_H

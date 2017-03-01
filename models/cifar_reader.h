@@ -32,6 +32,7 @@ public:
 	uint count_test();
 
 	void convToXy(const QVector<TData> &data, int first, int last, std::vector< ct::Matf >& X, ct::Matf *y = nullptr);
+	void convToXy2(const QVector<TData> &data, int first, int last, std::vector< ct::Matf >& X, ct::Matf *y = nullptr);
 
 	bool getData(int file, int offset, TData& data);
 	bool getData(double percent, TData& data);
@@ -41,6 +42,7 @@ public:
 	void getTrainIt(double percent, int batch, std::vector< ct::Matf >& X, ct::Matf *y = nullptr);
 
 	uint getTest(uint beg, uint batch, std::vector< ct::Matf >& X, ct::Matf &y);
+	uint getTest2(uint beg, uint batch, std::vector< ct::Matf >& X, ct::Matf &y);
 	uint getTest(uint batch, std::vector< ct::Matf >& Xs, ct::Matf &y);
 	uint getTest2(uint batch, std::vector< ct::Matf >& Xs, ct::Matf &y);
 

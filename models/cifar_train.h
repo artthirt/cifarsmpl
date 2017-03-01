@@ -3,9 +3,9 @@
 
 #include "custom_types.h"
 #include "cifar_reader.h"
-#include "convnn.h"
 #include "mlp.h"
-#include "convnnf.h"
+
+#include "convnn2.h"
 
 #include "gpu_train.h"
 
@@ -51,12 +51,14 @@ public:
 
 	uint iteration_gpu() const;
 
-	uint matricesAfterConv(bool use_gpu = false) const;
 	uint inputToMlp(bool use_gpu = false) const;
 
 	QVector<int> predict(const QVector<TData> &data, bool use_gpu = false);
 
-	QVector<QVector<ct::Matf> > cnvW(int index, bool use_gpu = false);
+	ct::Matf &cnvW(int index, bool use_gpu = false);
+	ct::Size& szW(int index);
+	int Kernels(int index);
+	int channels(int index);
 
 	void init_gpu();
 
@@ -85,7 +87,7 @@ private:
 
 	std::vector< ct::Matf > m_splitD;
 
-	std::vector< convnn::ConvNN > m_conv;
+	std::vector< conv2::convnn<float> > m_conv;
 	std::vector< ct::mlpf > m_mlp;
 	ct::MlpOptim< float > m_optim;
 

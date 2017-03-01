@@ -26,10 +26,10 @@ void im2col(const ct::Mat_<T>& X, const ct::Size& szA0, int channels, const ct::
 
 	T *dX = X.ptr();
 	T *dR = Res.ptr();
-#pragma omp parallel for
+//#pragma omp parallel for
 	for(int c = 0; c < channels; ++c){
 		T *dXi = &dX[c * szA0.area()];
-#pragma omp parallel for
+
 		for(int y = 0; y < szOut.height; ++y){
 			int y0 = y * stride;
 			for(int x = 0; x < szOut.width; ++x){
@@ -112,7 +112,6 @@ void subsample(const ct::Mat_<T>& X, const ct::Size& szA, ct::Mat_<T>& Y, ct::Ma
 		T* dM = Mask.ptr() + k;
 		T *dY = Y.ptr() + k;
 
-#pragma omp parallel for
 		for(int y = 0; y < szO.height; ++y){
 			int y0 = y * stride;
 			for(int x = 0; x < szO.width; ++x){
@@ -160,7 +159,6 @@ void upsample(const ct::Mat_<T>& Y, const ct::Mat_<T>& Mask, const ct::Size& szO
 		T* dM = Mask.ptr() + k;
 		T *dY = Y.ptr() + k;
 
-#pragma omp parallel for
 		for(int y = 0; y < szO.height; ++y){
 			int y0 = y * stride;
 			for(int x = 0; x < szO.width; ++x){
@@ -263,39 +261,71 @@ void flipW(const ct::Mat_<T>& W, const ct::Size& sz,int channels, ct::Mat_<T>& W
 template< typename T >
 class convnn{
 public:
-	ct::Mat_<T> W;
-	ct::Mat_<T> B;
-	int K;
-	int channels;
+	ct::Mat_<T> W;							/// weights
+	ct::Mat_<T> B;							/// biases
+	int K;									/// kernels
+	int channels;							/// input channels
 	int stride;
-	ct::Size szA0;
-	ct::Size szA1;
-	ct::Size szA2;
-	ct::Size szW;
-	ct::Size szK;
-	std::vector< ct::Mat_<T> >* pX;
-	std::vector< ct::Mat_<T> > Xc;
-	std::vector< ct::Mat_<T> > A1;
-	std::vector< ct::Mat_<T> > A2;
-	std::vector< ct::Mat_<T> > Dlt;
-	std::vector< ct::Mat_<T> > vgW;
-	std::vector< ct::Mat_<T> > vgB;
-	std::vector< ct::Mat_<T> > Mask;
+	ct::Size szA0;							/// input size
+	ct::Size szA1;							/// size after convolution
+	ct::Size szA2;							/// size after pooling
+	ct::Size szW;							/// size of weights
+	ct::Size szK;							/// size of output data (set in forward)
+	std::vector< ct::Mat_<T> >* pX;			/// input data
+	std::vector< ct::Mat_<T> > Xc;			///
+	std::vector< ct::Mat_<T> > A1;			/// out after appl nonlinear function
+	std::vector< ct::Mat_<T> > A2;			/// out after pooling
+	std::vector< ct::Mat_<T> > Dlt;			/// delta after backward pass
+	std::vector< ct::Mat_<T> > vgW;			/// for delta weights
+	std::vector< ct::Mat_<T> > vgB;			/// for delta bias
+	std::vector< ct::Mat_<T> > Mask;		/// masks for bakward pass (created in forward pass)
 	ct::AdamOptimizer< T > m_optim;
 
-	ct::Mat_<T> gW;
-	ct::Mat_<T> gB;
+	ct::Mat_<T> gW;							/// gradient for weights
+	ct::Mat_<T> gB;							/// gradient for biases
 
 	convnn(){
 		m_use_pool = false;
+		pX = nullptr;
 		stride = 1;
 	}
 
+	/**
+	 * @brief XOut1
+	 * out after convolution
+	 * @return
+	 */
 	std::vector< ct::Mat_<T> >& XOut1(){
 		return A1;
 	}
+	/**
+	 * @brief XOut2
+	 * out after pooling
+	 * @return
+	 */
 	std::vector< ct::Mat_<T> >& XOut2(){
 		return A2;
+	}
+
+	int outputFeatures() const{
+		if(m_use_pool){
+			int val = szA2.area() * K;
+			return val;
+		}else{
+			int val= szA1.area() * K;
+			return val;
+		}
+	}
+
+	ct::Size szOut() const{
+		if(m_use_pool)
+			return szA2;
+		else
+			return szA1;
+	}
+
+	void setAlpha(T alpha){
+		m_optim.setAlpha(alpha);
 	}
 
 	void init(const ct::Size& _szA0, int _channels, int stride, int _K, ct::Size& _szW, bool use_pool = true){
@@ -479,6 +509,15 @@ public:
 		m_optim.pass(vgW, vgB, vW, vB);
 		W = vW[0]; B = vB[0];
 
+	}
+
+	void write(std::fstream& fs){
+		ct::write_fs(fs, W);
+		ct::write_fs(fs, B);
+	}
+	void read(std::fstream& fs){
+		ct::read_fs(fs, W);
+		ct::read_fs(fs, B);
 	}
 
 private:

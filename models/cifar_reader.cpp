@@ -184,6 +184,30 @@ void cifar_reader::convToXy(const QVector<TData> &data, int first, int last, std
 	}
 }
 
+void cifar_reader::convToXy2(const QVector<TData> &data, int first, int last, std::vector<ct::Matf> &X, ct::Matf *y)
+{
+	if(data.empty() || first >= last)
+		return;
+
+	int size = last - first;
+
+	if(y){
+		y->setSize(size, 1);
+		y->fill(0);
+		float *dy = y->ptr();
+		int i = 0;
+		for(int i = first, j = 0; i < last; ++i, ++j){
+			dy[j * y->cols + 0] = data[i].lb;
+		}
+	}
+
+	X.resize(size);
+
+	for(int i = first, j = 0; i < last; ++i, ++j){
+		ct::image2mat(data[i].data, WidthIM, HeightIM, X[j]);
+	}
+}
+
 bool cifar_reader::getData(int file, int offset, TData &data)
 {
 	QString fn = m_directory + "/" + train_images_file[(int)file];
@@ -395,6 +419,30 @@ uint cifar_reader::getTest(uint beg, uint batch, std::vector<ct::Matf> &Xs, ct::
 		TData &data = m_current_test[i];
 
 		ct::image2mats(data.data, WidthIM, HeightIM, i, Xs[0], Xs[1], Xs[2]/*, Xs[3]*/);
+
+		dy[i * y.cols + 0] = data.lb;
+	}
+	return m_current_test.size();
+}
+
+uint cifar_reader::getTest2(uint beg, uint batch, std::vector<ct::Matf> &X, ct::Matf &y)
+{
+	test(beg, batch);
+
+	if(m_current_test.empty())
+		return 0;
+
+	X.resize(m_current_test.size());
+
+	y.setSize(m_current_test.size(), 1);
+	y.fill(0);
+
+	float *dy = y.ptr();
+
+	for(uint i = 0; i < m_current_test.size(); ++i){
+		TData &data = m_current_test[i];
+
+		ct::image2mat(data.data, WidthIM, HeightIM, X[i]);
 
 		dy[i * y.cols + 0] = data.lb;
 	}

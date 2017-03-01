@@ -34,11 +34,6 @@ public:
 	void pass(const std::vector< ct::Matf >& X, const ct::Matf &y);
 	void pass();
 
-	std::vector<gpumat::tvconvnn> &cnv(int index);
-
-	uint matricesAfterConv() const;
-	uint inputToMlp() const;
-
 	bool loadFromFile(const std::string& fn);
 	void saveToFile(const std::string& fn);
 
@@ -50,7 +45,6 @@ private:
 	ct::Size m_szA0;
 	bool m_init;
 
-	std::vector< gpumat::ConvNN > m_conv;
 	std::vector< gpumat::mlp > m_mlp;
 	gpumat::MlpOptim m_optim;
 

@@ -54,6 +54,8 @@ private slots:
 
 	void on_dsb_alpha_cnv_valueChanged(double arg1);
 
+	void on_sb_wid_valueChanged(int arg1);
+
 private:
 	Ui::MainWindow *ui;
 	QTimer m_timer;
@@ -61,6 +63,7 @@ private:
 	uint m_batch;
 	uint m_delimiter;
 	int m_delay;
+	int m_wid;
 
 	cifar_train m_train;
 	cifar_reader m_cifar;
