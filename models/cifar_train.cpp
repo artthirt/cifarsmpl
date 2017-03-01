@@ -526,6 +526,9 @@ QVector< int > cifar_train::predict(const QVector< TData >& data, bool use_gpu)
 
 ct::Matf& cifar_train::cnvW(int index, bool use_gpu)
 {
+	if(index >= m_cnvlayers.size())
+		index = m_cnvlayers.size() - 1;
+
 	if(!use_gpu){
 		return m_conv[index].W;
 	}else{
@@ -547,16 +550,25 @@ ct::Matf& cifar_train::cnvW(int index, bool use_gpu)
 
 ct::Size &cifar_train::szW(int index)
 {
+	if(index >= m_cnvlayers.size())
+		index = m_cnvlayers.size() - 1;
+
 	return m_conv[index].szW;
 }
 
 int cifar_train::Kernels(int index)
 {
+	if(index >= m_cnvlayers.size())
+		index = m_cnvlayers.size() - 1;
+
 	return m_conv[index].K;
 }
 
 int cifar_train::channels(int index)
 {
+	if(index >= m_cnvlayers.size())
+		index = m_cnvlayers.size() - 1;
+
 	return m_conv[index].channels;
 }
 
