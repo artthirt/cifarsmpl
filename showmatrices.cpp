@@ -5,12 +5,20 @@
 #include "imutils.h"
 
 #include <QPainter>
+#include <QMouseEvent>
 
 ShowMatrices::ShowMatrices(QWidget *parent) :
 	QWidget(parent),
 	ui(new Ui::ShowMatrices)
 {
 	ui->setupUi(this);
+
+	setMouseTracking(true);
+	m_update = false;
+	m_offset = 0;
+
+	connect(&m_timer, SIGNAL(timeout()), this, SLOT(onTimeout()));
+	m_timer.start(50);
 }
 
 ShowMatrices::~ShowMatrices()
@@ -50,15 +58,15 @@ void ShowMatrices::paintEvent(QPaintEvent *event)
 {
 	QPainter painter(this);
 
-	paint_cast(painter, width(), height());
+	paint_cast(painter, width(), height(), m_offset);
 }
 
-void ShowMatrices::paint_cast(QPainter &painter, int width, int height)
+void ShowMatrices::paint_cast(QPainter &painter, int width, int height, int offset)
 {
 	if(m_mat.empty() || m_mat.cols != m_K)
 		return;
 
-	int x = 0, y = 0;
+	int x = 0, y = offset;
 
 	int wd = 10;
 
@@ -130,5 +138,38 @@ void ShowMatrices::paint_cast(QPainter &painter, int width, int height)
 			y += wd * m_sz.height * m_channels;
 			x = 0;
 		}
+	}
+}
+
+void ShowMatrices::onTimeout()
+{
+	if(m_update){
+		m_update = false;
+		update();
+	}
+}
+
+void ShowMatrices::mousePressEvent(QMouseEvent *event)
+{
+	m_pt = event->pos();
+	if(event->buttons().testFlag(Qt::RightButton)){
+		m_offset = 0;
+		m_update = true;
+	}
+}
+
+
+void ShowMatrices::mouseMoveEvent(QMouseEvent *event)
+{
+	if(event->buttons().testFlag(Qt::LeftButton)){
+		m_offset += event->pos().y() - m_pt.y();
+		m_pt = event->pos();
+		if(m_offset < -4000){
+			m_offset = -4000;
+		}
+		if(m_offset > 200){
+			m_offset = 200;
+		}
+		m_update = true;
 	}
 }

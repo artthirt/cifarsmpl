@@ -2,6 +2,7 @@
 #define SHOWMATRICES_H
 
 #include <QWidget>
+#include <QTimer>
 
 #include "custom_types.h"
 
@@ -22,6 +23,9 @@ public:
 
 	void save2Image(const QString& name, int width, int height);
 
+public slots:
+	void onTimeout();
+
 private:
 	Ui::ShowMatrices *ui;
 
@@ -30,11 +34,18 @@ private:
 	int m_channels;
 	int m_K;
 
+	QPoint m_pt;
+	int m_offset;
+	bool m_update;
+	QTimer m_timer;
+
 	// QWidget interface
 protected:
 	virtual void paintEvent(QPaintEvent *event);
+	void mouseMoveEvent(QMouseEvent *event);
+	void mousePressEvent(QMouseEvent *event);
 
-	void paint_cast(QPainter& painter, int width = -1, int height = -1);
+	void paint_cast(QPainter& painter, int width = -1, int height = -1, int offset = 0);
 };
 
 #endif // SHOWMATRICES_H
