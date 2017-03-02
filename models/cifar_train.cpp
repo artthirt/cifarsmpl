@@ -351,7 +351,7 @@ void cifar_train::pass(int batch, bool use_gpu)
 
 	////**********************
 
-	forward(Xs, yp, true);
+	forward(Xs, yp, true, 0.98);
 
 	////**********************
 

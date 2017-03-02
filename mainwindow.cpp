@@ -27,7 +27,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	std::vector< char > cnv_p;
 
 	cnv.push_back(20);
-	cnv.push_back(50);
+	cnv.push_back(40);
 //	cnv.push_back(2);
 //	cnv.push_back(1);
 
