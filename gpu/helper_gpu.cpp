@@ -108,6 +108,9 @@ bool AdamOptimizer::init(const std::vector<GpuMat> &gradW, const std::vector<Gpu
 		m_mb[i].resize(gradB[i]);
 		m_vb[i].resize(gradB[i]);
 
+		sW[i].resize(gradW[i]);
+		sB[i].resize(gradB[i]);
+
 		m_mW[i].zeros();
 		m_vW[i].zeros();
 		m_mb[i].zeros();

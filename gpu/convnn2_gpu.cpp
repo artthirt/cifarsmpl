@@ -169,7 +169,7 @@ void convnn_gpu::backward(const std::vector<gpumat::GpuMat> &D, bool last_level)
 	dSub.resize(D.size());
 
 	if(m_use_pool){
-		gpumat::conv2::upsample(D, Mask, szA2, szA1, dSub);
+		gpumat::conv2::upsample(D, K, Mask, szA2, szA1, dSub);
 		backcnv(dSub, dSub);
 	}else{
 		backcnv(D, dSub);
@@ -440,25 +440,22 @@ void gpumat::conv2::mat2vec(const gpumat::GpuMat &mat, const ct::Size &szOut, st
 	cuda_mat2vec(mat, vec);
 }
 
-void gpumat::conv2::upsample(const gpumat::GpuMat &Y, const gpumat::GpuMat &Mask, const ct::Size &szO,
+void gpumat::conv2::upsample(const gpumat::GpuMat &Y, int K, const gpumat::GpuMat &Mask, const ct::Size &szO,
 			  const ct::Size &szA, gpumat::GpuMat &X)
 {
-	if(Y.empty() || Mask.empty() || Y.rows != szO.area())
+	if(Y.empty() || Mask.empty() || Y.total() != szO.area() * K)
 		throw new std::invalid_argument("mat2vec: empty parameters");
 
-	int K = Y.cols;
 	X.resize(szA.area(), K, Y.type);
 
 	cuda_upsample2(Y, Mask, szO, szA, X);
 }
 
-void gpumat::conv2::upsample(const std::vector<gpumat::GpuMat> &Y, const std::vector<gpumat::GpuMat> &Mask,
+void gpumat::conv2::upsample(const std::vector<gpumat::GpuMat> &Y, int K, const std::vector<gpumat::GpuMat> &Mask,
 			  const ct::Size &szO, const ct::Size &szA, std::vector<gpumat::GpuMat> &X)
 {
-	if(Y.empty() || Y[0].empty() || Mask.empty() || Mask[0].empty() || Y[0].rows != szO.area())
+	if(Y.empty() || Y[0].empty() || Mask.empty() || Mask[0].empty() || Y[0].total() != szO.area() * K)
 		throw new std::invalid_argument("mat2vec: empty parameters");
-
-	int K = Y[0].cols;
 
 	X.resize(Y.size());
 

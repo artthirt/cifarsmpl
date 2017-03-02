@@ -150,10 +150,10 @@ void subsample(const GpuMat& X, const ct::Size& szA, GpuMat& Y, GpuMat& Mask, ct
  */
 void subsample(const std::vector< GpuMat >& X, const ct::Size& szA, std::vector< GpuMat >& Y, std::vector< GpuMat >& Mask, ct::Size& szO);
 
-void upsample(const GpuMat& Y, const GpuMat& Mask, const ct::Size& szO,
+void upsample(const GpuMat& Y,int K, const GpuMat& Mask, const ct::Size& szO,
 			  const ct::Size& szA, GpuMat& X);
 
-void upsample(const std::vector< GpuMat >& Y, const std::vector< GpuMat >& Mask, const ct::Size& szO,
+void upsample(const std::vector< GpuMat >& Y, int K, const std::vector< GpuMat >& Mask, const ct::Size& szO,
 			  const ct::Size& szA, std::vector< GpuMat >& X);
 
 /**
