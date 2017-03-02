@@ -63,7 +63,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	ui->sb_delay->setValue(m_delay);
 	ui->sb_iter_numb->setValue(m_delimiter);
 
-	ui->sb_wid->setMaximum(cnv.size());
+	ui->sb_wid->setMaximum((int)cnv.size());
 }
 
 MainWindow::~MainWindow()

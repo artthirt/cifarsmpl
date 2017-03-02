@@ -351,7 +351,7 @@ void cifar_train::pass(int batch, bool use_gpu)
 
 	////**********************
 
-	forward(Xs, yp, true, 0.98);
+	forward(Xs, yp, true, 0.98f);
 
 	////**********************
 
@@ -361,7 +361,7 @@ void cifar_train::pass(int batch, bool use_gpu)
 
 	ct::Matf *pD = &m_td;
 
-	for(int i = m_mlp.size() - 1; i > -1; --i){
+	for(int i = (int)m_mlp.size() - 1; i > -1; --i){
 		ct::mlpf& mlp = m_mlp[i];
 
 		mlp.backward(*pD);
@@ -374,7 +374,7 @@ void cifar_train::pass(int batch, bool use_gpu)
 	conv2::mat2vec(m_mlp.front().DltA0, m_conv.back().szK.t(), vm);
 	pvm = &vm;
 
-	for(int i = m_conv.size() - 1; i > -1; --i){
+	for(int i = (int)m_conv.size() - 1; i > -1; --i){
 		conv2::convnn<float>& cnv = m_conv[i];
 
 		cnv.backward(*pvm, i == 0);
@@ -604,7 +604,7 @@ QVector< int > cifar_train::predict(const QVector< TData >& data, bool use_gpu)
 
 		m_cifar->convToXy2(data, i, i + cnt, X);
 
-		forward(X, y, false, 0.95, use_gpu);
+		forward(X, y, false, 0.95f, use_gpu);
 
 		for(int j = 0; j < y.rows; ++j){
 			pred[i + j] = y.argmax(j, 1);
@@ -618,7 +618,7 @@ QVector< int > cifar_train::predict(const QVector< TData >& data, bool use_gpu)
 ct::Matf cifar_train::cnvW(int index, bool use_gpu)
 {
 	if(index >= m_cnvlayers.size())
-		index = m_cnvlayers.size() - 1;
+		index = (int)m_cnvlayers.size() - 1;
 
 	if(!use_gpu){
 		return m_conv[index].W;
@@ -642,7 +642,7 @@ ct::Matf cifar_train::cnvW(int index, bool use_gpu)
 ct::Size &cifar_train::szW(int index)
 {
 	if(index >= m_cnvlayers.size())
-		index = m_cnvlayers.size() - 1;
+		index = (int)m_cnvlayers.size() - 1;
 
 	return m_conv[index].szW;
 }
@@ -650,7 +650,7 @@ ct::Size &cifar_train::szW(int index)
 int cifar_train::Kernels(int index)
 {
 	if(index >= m_cnvlayers.size())
-		index = m_cnvlayers.size() - 1;
+		index = (int)m_cnvlayers.size() - 1;
 
 	return m_conv[index].K;
 }
@@ -658,7 +658,7 @@ int cifar_train::Kernels(int index)
 int cifar_train::channels(int index)
 {
 	if(index >= m_cnvlayers.size())
-		index = m_cnvlayers.size() - 1;
+		index = (int)m_cnvlayers.size() - 1;
 
 	return m_conv[index].channels;
 }
@@ -736,15 +736,15 @@ void cifar_train::saveToFile(const QString &fn, bool gpu)
 
 	int tmp;
 
-	tmp = m_cnvlayers.size();
+	tmp = (int)m_cnvlayers.size();
 	fs.write((char*)&tmp, sizeof(tmp));
 	fs.write((char*)&m_cnvlayers[0], m_cnvlayers.size() * sizeof(decltype(m_cnvlayers)::value_type));
 
-	tmp = m_cnvweights.size();
+	tmp = (int)m_cnvweights.size();
 	fs.write((char*)&tmp, sizeof(tmp));
 	fs.write((char*)&m_cnvweights[0], m_cnvweights.size() * sizeof(decltype(m_cnvweights)::size_type));
 
-	tmp = m_layers.size();
+	tmp = (int)m_layers.size();
 	fs.write((char*)&tmp, sizeof(tmp));
 	fs.write((char*)&m_layers[0], m_layers.size() * sizeof(decltype(m_layers)::size_type));
 

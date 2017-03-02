@@ -45,7 +45,7 @@ public:
 			init(W.size(), szA0, use_pool);
 	}
 
-	void init(size_t count_weight, const ct::Size& _szA0, int use_pool){
+	void init(size_t count_weight, const ct::Size& _szA0, bool use_pool){
 		W.resize(count_weight);
 		B.resize(count_weight);
 
@@ -151,14 +151,14 @@ public:
 		}
 	}
 
-	void back2conv(const tvmat& A1, const tvmat& dA2, int first, int last, tvmat& dA1, ct::etypefunction func){
+	void back2conv(const tvmat& A1, const tvmat& dA2, int first, tvmat& dA1, ct::etypefunction func){
 		dA1.resize(A1.size());
 		for(size_t i = 0; i < A1.size(); i++){
 			apply_back(A1[i], dA2[i + first], dA1[i], func);
 		}
 	}
 
-	void back2conv(const tvmat& A1, const std::vector< convnn >& dA2, int first, int last, tvmat& dA1, ct::etypefunction func){
+	void back2conv(const tvmat& A1, const std::vector< convnn >& dA2, int first, tvmat& dA1, ct::etypefunction func){
 		dA1.resize(A1.size());
 		for(size_t i = 0; i < A1.size(); i++){
 			apply_back(A1[i], dA2[i + first].DltA0, dA1[i], func);
@@ -173,7 +173,7 @@ public:
 			ct::upsample(Delta, szA2, szA1, Masks, dA2, first, last);
 			back2conv(A1, dA2, dA1, m_func);
 		}else{
-			back2conv(A1, Delta, first, last, dA1, m_func);
+			back2conv(A1, Delta, first, dA1, m_func);
 		}
 
 		ct::Size szW(weight_size, weight_size);
@@ -193,7 +193,7 @@ public:
 			convnn::upsample(Delta, szA2, szA1, Masks, dA2, first, last);
 			back2conv(A1, dA2, dA1, m_func);
 		}else{
-			back2conv(A1, Delta, first, last, dA1, m_func);
+			back2conv(A1, Delta, first, dA1, m_func);
 		}
 
 		ct::Size szW(weight_size, weight_size);
@@ -251,7 +251,7 @@ private:
 		}else{
 			A0.resize(A1.size());
 			first = 0;
-			last = A1.size();
+			last = (int)A1.size();
 		}
 
 		for(size_t i = first, j = 0; i < last; ++i, ++j){

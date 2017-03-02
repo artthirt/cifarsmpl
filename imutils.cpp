@@ -6,7 +6,7 @@ void search_minmax(const QVector< ct::Matf > &Ws, float& vmin, float &vmax)
 {
 	vmax = -99999999.f, vmin = 999999999.f;
 
-	for(size_t j = 0; j < Ws.size(); ++j){
+	for(int j = 0; j < Ws.size(); ++j){
 		float m1 = Ws[j].max();
 		float m2 = Ws[j].min();
 

@@ -15,11 +15,11 @@ int main(int argc, char *argv[])
 	dir.cd("../");
 	QDir::current().setCurrent(dir.canonicalPath());
 
-#if 0
+#if 1
 	test_agg tagg;
 //	tagg.test_hconcat();
 	tagg.test_im2col();
-	tagg.test_conv();
+//	tagg.test_conv();
 
 	return 0;
 #endif

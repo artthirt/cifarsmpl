@@ -168,7 +168,7 @@ bool AdamOptimizer::pass(const std::vector<GpuMat> &gradW,
 	m_iteration++;
 	float sb1 = (1. / (1. - pow(m_betha1, m_iteration)));
 	float sb2 = (1. / (1. - pow(m_betha2, m_iteration)));
-	float eps = 10e-8;
+	float eps = (float)(10e-8);
 
 	for(size_t i = 0; i < gradW.size(); ++i){
 

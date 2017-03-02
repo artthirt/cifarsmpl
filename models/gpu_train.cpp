@@ -226,7 +226,7 @@ void gpu_train::pass()
 
 	gpumat::GpuMat *pD = &m_td;
 
-	for(int i = m_mlp.size() - 1; i > -1; --i){
+	for(int i = (int)m_mlp.size() - 1; i > -1; --i){
 		gpumat::mlp& mlp = m_mlp[i];
 
 		mlp.backward(*pD);
@@ -240,7 +240,7 @@ void gpu_train::pass()
 template< typename T >
 inline void write_vector(std::fstream& fs, const std::vector<T> &vec)
 {
-	int tmp = vec.size();
+	int tmp = (int)vec.size();
 	fs.write((char*)&tmp, sizeof(tmp));
 	if(tmp){
 		const char* d = reinterpret_cast<const char*>(vec.data());

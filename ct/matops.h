@@ -417,7 +417,7 @@ inline Mat_<T> sigmoid(const Mat_<T>& m)
 	//#pragma omp parallel for
 #pragma omp parallel for
 	for(int i = 0; i < m.total(); i++){
-		res_val[i] = 1. / (1. + std::exp(-m_val[i]));
+		res_val[i] = (T)(1. / (1. + std::exp(-m_val[i])));
 	}
 	return res;
 }
@@ -434,7 +434,7 @@ void v_sigmoid(Mat_<T>& m)
 	//#pragma omp parallel for
 #pragma omp parallel for
 	for(int i = 0; i < m.total(); i++){
-		m_val[i] = 1. / (1. + std::exp(-m_val[i]));
+		m_val[i] = (T)(1. / (1. + std::exp(-m_val[i])));
 	}
 }
 
@@ -517,7 +517,7 @@ inline Mat_<T> tanh(const Mat_<T>& m)
 #pragma omp parallel for
 	for(int i = 0; i < m.total(); i++){
 		T e = std::exp(2 * m_val[i]);
-		res_val[i] = (e - 1.) / (e + 1.);
+		res_val[i] = (T)((e - 1.) / (e + 1.));
 	}
 	return res;
 }
@@ -534,7 +534,7 @@ void v_tanh(Mat_<T>& m)
 #pragma omp parallel for
 	for(int i = 0; i < m.total(); i++){
 		T e = std::exp(2 * m_val[i]);
-		m_val[i] = (e - 1.) / (e + 1.);
+		m_val[i] = (T)((e - 1.) / (e + 1.));
 	}
 }
 

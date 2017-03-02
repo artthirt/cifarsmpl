@@ -402,10 +402,10 @@ inline T apply_func(T val, ct::etypefunction func)
 		case ct::RELU:
 			return std::max(val, T(0));
 		case ct::SIGMOID:
-			return 1. / (1. + std::exp(-val));
+			return (T)(1. / (1. + std::exp(-val)));
 		case ct::TANH:{
 			T e = std::exp(2 * val);
-			return (e - 1.)/(e + 1.);
+			return (T)((e - 1.)/(e + 1.));
 		}
 		default:
 			throw new std::invalid_argument("this function not applied");
@@ -692,7 +692,7 @@ bool upsample(const std::vector< ct::Mat_<T> > &A1,
 	}else{
 		A0.resize(A1.size());
 		first = 0;
-		last = A1.size();
+		last = (int)A1.size();
 	}
 
 	for(size_t i = first, j = 0; i < last; ++i, ++j){
@@ -753,7 +753,7 @@ void hsplit(const ct::Mat_<T>& res, size_t cols, std::vector< ct::Mat_<T> >& lis
 	list.resize(cols);
 
 	for(size_t i = 0; i < cols; ++i){
-		list[i].setSize(res.rows, len);
+		list[i].setSize(res.rows, (int)len);
 	}
 
 	T *dR = res.ptr();

@@ -191,7 +191,7 @@ void vec2mat(const std::vector< ct::Mat_<T> >& vec, ct::Mat_<T>& mat)
 	if(vec.empty() || vec[0].empty())
 		return;
 
-	int rows = vec.size();
+	int rows = (int)vec.size();
 	int cols = vec[0].total();
 
 	mat.setSize(rows, cols);

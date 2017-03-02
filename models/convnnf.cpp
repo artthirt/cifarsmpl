@@ -20,12 +20,12 @@ void ConvNN::setAlpha(float alpha)
 
 int ConvNN::outputFeatures() const
 {
-	return m_conv.back()[0].W.size() * m_conv.back()[0].szOut().area() * m_conv.back().size();
+	return (int)(m_conv.back()[0].W.size() * m_conv.back()[0].szOut().area() * m_conv.back().size());
 }
 
 int ConvNN::outputMatrices() const
 {
-	return m_conv.back()[0].W.size() * m_conv.back().size();
+	return (int)(m_conv.back()[0].W.size() * m_conv.back().size());
 }
 
 void ConvNN::init()
@@ -43,7 +43,7 @@ void ConvNN::init()
 
 		bool pool = true;
 		if(m_cnvpooling.size())
-			pool = m_cnvpooling[i];
+			pool = (bool)m_cnvpooling[i];
 
 		for(size_t j = 0; j < m_conv[i].size(); ++j){
 			convnnf& cnv = m_conv[i][j];
@@ -112,11 +112,11 @@ void ConvNN::backward(const ct::Matf &X)
 	if(m_cnvlayers.empty() || m_cnvweights.empty())
 		throw new std::invalid_argument("empty arguments");
 
-	int cols = m_conv.back().size() * m_conv.back()[0].W.size();
+	int cols = (int)(m_conv.back().size() * m_conv.back()[0].W.size());
 
 	ct::hsplit(X, cols, m_features);
 
-	for(int i = m_conv.size() - 1; i > -1; i--){
+	for(int i = (int)m_conv.size() - 1; i > -1; i--){
 		std::vector< convnnf >& lrs = m_conv[i];
 
 //			qDebug("LR[%d]-----", i);
@@ -129,9 +129,9 @@ void ConvNN::backward(const ct::Matf &X)
 			kidx += cnv.W.size();
 
 			if(i == m_conv.size() - 1)
-				cnv.backward(m_features, kfirst, kidx, i == 0);
+				cnv.backward(m_features, (int)kfirst, (int)kidx, i == 0);
 			else
-				cnv.backward(m_conv[i + 1], kfirst, kidx, i == 0);
+				cnv.backward(m_conv[i + 1], (int)kfirst, (int)kidx, i == 0);
 		}
 //			qDebug("----");
 	}

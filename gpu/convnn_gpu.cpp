@@ -20,7 +20,7 @@ void convnn::setWeightSize(int ws, bool use_pool)
 {
 	weight_size = ws;
 	if(W.size())
-		init(W.size(), szA0, use_pool);
+		init((int)W.size(), szA0, use_pool);
 }
 
 void convnn::init(int count_weight, const ct::Size &_szA0, int use_pool)
@@ -210,7 +210,7 @@ void convnn::upsample(const std::vector<convnn> &A1, ct::Size &szA1, const ct::S
 	}else{
 		A0.resize(A1.size());
 		first = 0;
-		last = A1.size();
+		last = (int)A1.size();
 	}
 
 	for(size_t i = first, j = 0; i < last; ++i, ++j){
@@ -308,12 +308,12 @@ void ConvNN::setAlpha(float alpha)
 
 int ConvNN::outputFeatures() const
 {
-	return m_conv.back()[0].W.size() * m_conv.back()[0].szOut().area() * m_conv.back().size();
+	return (int)(m_conv.back()[0].W.size() * m_conv.back()[0].szOut().area() * m_conv.back().size());
 }
 
 int ConvNN::outputMatrices() const
 {
-	return m_conv.back()[0].W.size() * m_conv.back().size();
+	return (int)(m_conv.back()[0].W.size() * m_conv.back().size());
 }
 
 void ConvNN::init()
@@ -394,11 +394,11 @@ void ConvNN::backward(const GpuMat &X)
 	if(m_cnvlayers.empty() || m_cnvweights.empty())
 		throw new std::invalid_argument("empty arguments");
 
-	int cols = m_conv.back().size() * m_conv.back()[0].W.size();
+	int cols = (int)(m_conv.back().size() * m_conv.back()[0].W.size());
 
 	hsplit(X, cols, m_features);
 
-	for(int i = m_conv.size() - 1; i > -1; i--){
+	for(int i = (int)m_conv.size() - 1; i > -1; i--){
 		std::vector< convnn >& lrs = m_conv[i];
 
 //			qDebug("LR[%d]-----", i);
@@ -412,9 +412,9 @@ void ConvNN::backward(const GpuMat &X)
 			kidx += cnv.W.size();
 
 			if(i == m_conv.size() - 1)
-				cnv.backward(m_features, gpumat::RELU, kfirst, kidx, i == 0);
+				cnv.backward(m_features, gpumat::RELU, (int)kfirst, (int)kidx, i == 0);
 			else
-				cnv.backward(m_conv[i + 1], gpumat::RELU, kfirst, kidx, i == 0);
+				cnv.backward(m_conv[i + 1], gpumat::RELU, (int)kfirst, (int)kidx, i == 0);
 		}
 //			qDebug("----");
 	}
@@ -597,7 +597,7 @@ void upsample(const std::vector<GpuMat> &A1, ct::Size &szA1, const ct::Size &szA
 	}else{
 		A0.resize(A1.size());
 		first = 0;
-		last = A1.size();
+		last = (int)A1.size();
 	}
 
 //#pragma omp parallel for

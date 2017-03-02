@@ -39,8 +39,8 @@ void mlp::init(int input, int output, int type){
 			::init<double>(B, n);
 			break;
 		case GPU_FLOAT:
-			::init<float>(W, n);
-			::init<float>(B, n);
+			::init<float>(W, (float)n);
+			::init<float>(B, (float)n);
 			break;
 	}
 

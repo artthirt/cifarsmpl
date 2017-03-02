@@ -167,7 +167,6 @@ void cifar_reader::convToXy(const QVector<TData> &data, int first, int last, std
 		y->setSize(size, 1);
 		y->fill(0);
 		float *dy = y->ptr();
-		int i = 0;
 		for(int i = first, j = 0; i < last; ++i, ++j){
 			dy[j * y->cols + 0] = data[i].lb;
 		}
@@ -195,7 +194,6 @@ void cifar_reader::convToXy2(const QVector<TData> &data, int first, int last, st
 		y->setSize(size, 1);
 		y->fill(0);
 		float *dy = y->ptr();
-		int i = 0;
 		for(int i = first, j = 0; i < last; ++i, ++j){
 			dy[j * y->cols + 0] = data[i].lb;
 		}
@@ -415,7 +413,7 @@ uint cifar_reader::getTest(uint beg, uint batch, std::vector<ct::Matf> &Xs, ct::
 
 	float *dy = y.ptr();
 
-	for(uint i = 0; i < m_current_test.size(); ++i){
+	for(int i = 0; i < m_current_test.size(); ++i){
 		TData &data = m_current_test[i];
 
 		ct::image2mats(data.data, WidthIM, HeightIM, i, Xs[0], Xs[1], Xs[2]/*, Xs[3]*/);
@@ -439,7 +437,7 @@ uint cifar_reader::getTest2(uint beg, uint batch, std::vector<ct::Matf> &X, ct::
 
 	float *dy = y.ptr();
 
-	for(uint i = 0; i < m_current_test.size(); ++i){
+	for(int i = 0; i < m_current_test.size(); ++i){
 		TData &data = m_current_test[i];
 
 		ct::image2mat(data.data, WidthIM, HeightIM, X[i]);
@@ -459,7 +457,7 @@ uint cifar_reader::getTest(uint batch, std::vector<ct::Matf> &Xs, ct::Matf &y)
 	std::uniform_int_distribution<int> urnd(0, countBin);
 
 	m_current_test.resize(batch);
-	for(int i = 0; i < batch; ++i){
+	for(uint i = 0; i < batch; ++i){
 		int off = urnd(ct::generator);
 		readCifar1(m_current_test_object, m_current_test[i], off);
 	}
@@ -475,7 +473,7 @@ uint cifar_reader::getTest(uint batch, std::vector<ct::Matf> &Xs, ct::Matf &y)
 
 	float *dy = y.ptr();
 
-	for(uint i = 0; i < m_current_test.size(); ++i){
+	for(int i = 0; i < m_current_test.size(); ++i){
 		TData &data = m_current_test[i];
 
 		ct::image2mats(data.data, WidthIM, HeightIM, i, Xs[0], Xs[1], Xs[2]/*, Xs[3]*/);
@@ -497,7 +495,7 @@ uint cifar_reader::getTest2(uint batch, std::vector<ct::Matf> &Xs, ct::Matf &y)
 	std::map<int, bool > exists;
 
 	m_current_test.resize(batch);
-	for(int i = 0; i < batch; ++i){
+	for(uint i = 0; i < batch; ++i){
 		int off = 0;
 		do{
 			off = urnd(ct::generator);
@@ -515,7 +513,7 @@ uint cifar_reader::getTest2(uint batch, std::vector<ct::Matf> &Xs, ct::Matf &y)
 
 	float *dy = y.ptr();
 
-	for(uint i = 0; i < m_current_test.size(); ++i){
+	for(int i = 0; i < m_current_test.size(); ++i){
 		TData &data = m_current_test[i];
 
 		ct::image2mat(data.data, WidthIM, HeightIM, Xs[i]/*, Xs[3]*/);
@@ -645,6 +643,7 @@ inline ushort getLb(ULab lb, int source)
 		case cifar_reader::CIFAR100:
 			return lb.sh;
 	}
+	return 0;
 }
 
 }

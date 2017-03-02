@@ -1,6 +1,7 @@
 #include "test_agg.h"
 
 #include <iostream>
+#include <assert.h>
 
 #include "custom_types.h"
 #include "gpumat.h"
@@ -13,6 +14,8 @@
 
 #include "cifar_reader.h"
 #include "mlp.h"
+
+#include "convnn2_gpu.h"
 
 #include "showmatrices.h"
 
@@ -36,6 +39,7 @@ void saveimage2file(const ct::Mat_<T>& X, const ct::Size &szA, int channels, con
 	fs.close();
 }
 
+/////////////////////
 /////////////////////
 
 class TestCnv{
@@ -88,8 +92,8 @@ public:
 			optim.init(mlp);
 		}
 
-		mlp[0].setDropout(dropout, 0.9);
-		mlp[1].setDropout(dropout, 0.9);
+		mlp[0].setDropout(dropout, 0.9f);
+		mlp[1].setDropout(dropout, 0.9f);
 
 		mlp[0].forward(&X1, ct::RELU);
 		mlp[1].forward(&mlp[0].A1, ct::RELU);
@@ -152,12 +156,16 @@ private:
 };
 
 /////////////////////
+/////////////////////
 
 test_agg::test_agg()
 {
 
 }
 
+/**
+ * @brief test_agg::test_hconcat
+ */
 void test_agg::test_hconcat()
 {
 	ct::Matf mat(160, 400);
@@ -181,6 +189,9 @@ void test_agg::test_hconcat()
 	std::cout << "Output matrix\n" << gout.print() << std::endl;
 }
 
+/**
+ * @brief test_agg::test_im2col
+ */
 void test_agg::test_im2col()
 {
 	ct::Size szA0(14, 14), szW(5, 5), szOut, szOut2;
@@ -220,6 +231,39 @@ void test_agg::test_im2col()
 
 	conv2::upsample(Y, Mask, szOut2, szOut, Z2);
 	ct::save_mat(Z2, "Z2.txt");
+
+	///////////////////
+
+	gpumat::GpuMat g_X, g_Res;
+
+	gpumat::convert_to_gpu(X, g_X);
+
+	gpumat::conv2::im2cols(g_X, szA0, channels, szW, 1, g_Res, szOut);
+
+	ct::Matf Res2, y;
+
+	gpumat::convert_to_mat(g_Res, Res2);
+
+	ct::save_mat(Res2, "Res_g.txt");
+
+	y = Res - Res2;
+	y = ct::elemwiseSqr(y);
+	assert(y.sum() == 0);
+
+	std::vector< gpumat::GpuMat > vX, vRes;
+	vX.push_back(g_X);
+	vX.push_back(g_X);
+
+	gpumat::conv2::im2cols(vX, szA0, channels, szW, 1, vRes, szOut);
+
+	for(size_t i = 0; i < vRes.size(); ++i){
+		gpumat::convert_to_mat(vRes[i], Res2);
+
+		y = Res - Res2;
+		y = ct::elemwiseSqr(y);
+		assert(y.sum() == 0);
+		ct::save_mat(Res2, "vRes_g.txt");
+	}
 }
 
 void test_agg::test_conv()
