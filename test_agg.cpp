@@ -266,17 +266,23 @@ void test_agg::test_im2col()
 	}
 
 	gpumat::GpuMat g_Z, g_W, g_Y, g_Mask;
+	std::vector< gpumat::GpuMat > g_vZ, g_vY, g_vMask;
 
 	gpumat::convert_to_gpu(W, g_W);
 
-	gpumat::matmul(g_Res, g_W, g_Z);
-
-	gpumat::conv2::subsample(g_Z, szOut, g_Y, g_Mask, szOut2);
+//	gpumat::matmul(g_Res, g_W, g_Z);
+	g_vZ.resize(vRes.size());
+	g_vY.resize(vRes.size());
+	g_vMask.resize(vRes.size());
+	for(size_t i = 0; i < vRes.size(); ++i){
+		gpumat::matmul(vRes[i], g_W, g_vZ[i]);
+	}
+	gpumat::conv2::subsample(g_vZ, szOut, g_vY, g_vMask, szOut2);
 
 	ct::Matf Y2, Mask2;
 
-	gpumat::convert_to_mat(g_Y, Y2);
-	gpumat::convert_to_mat(g_Mask, Mask2);
+	gpumat::convert_to_mat(g_vY[0], Y2);
+	gpumat::convert_to_mat(g_vMask[0], Mask2);
 
 	ct::save_mat(Y2, "Y2.txt");
 	ct::save_mat(Mask2, "Mask2.txt");
