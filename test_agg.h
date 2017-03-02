@@ -10,6 +10,7 @@ public:
 	void test_hconcat();
 	void test_im2col();
 	void test_conv();
+	void test_conv_gpu();
 };
 
 #endif // TEST_AGG_H

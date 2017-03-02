@@ -27,6 +27,8 @@ public:
 
 	void setDropout(bool val, double p = 0.95);
 
+	bool isInit() const;
+
 	void init(int input, int output, int type);
 
 	inline void apply_func(const GpuMat& Z, GpuMat& A, etypefunction func);

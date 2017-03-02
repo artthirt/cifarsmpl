@@ -5,7 +5,9 @@ using namespace gpumat::conv2;
 
 convnn_gpu::convnn_gpu()
 {
-
+	m_use_pool = false;
+	pX = nullptr;
+	stride = 1;
 }
 
 void convnn_gpu::setAlpha(double val)
@@ -209,7 +211,7 @@ void convnn_gpu::backward(const std::vector<gpumat::GpuMat> &D, bool last_level)
 		//ct::Mat_<T> Wf;
 		//flipW(W, szW, channels, Wf);
 
-		Dc.reserve(D.size());
+		Dc.resize(D.size());
 		for(size_t i = 0; i < D.size(); ++i){
 			gpumat::GpuMat& Dci = Dc[i];
 			gpumat::matmulT2(dSub[i], W[0], Dci);

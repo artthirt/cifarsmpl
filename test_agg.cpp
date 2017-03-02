@@ -16,6 +16,7 @@
 #include "mlp.h"
 
 #include "convnn2_gpu.h"
+#include "gpu_mlp.h"
 
 #include "showmatrices.h"
 
@@ -69,19 +70,7 @@ public:
 
 		cnv1.forward(&Xs, ct::RELU);
 
-//		Xout.resize(cnv1.A2.size());
-//		for(size_t i = 0; i < cnv1.A2.size(); ++i){
-//			Xout[i] = cnv1.A2[i].t();
-//			Xout[i].set_dims(1, cnv1.A2[i].total());
-//		}
-
 		cnv2.forward(&cnv1.A2, ct::RELU);
-
-//		Xout2.resize(cnv2.A2.size());
-//		for(size_t i = 0; i < cnv2.A2.size(); ++i){
-//			Xout2[i] = cnv2.A2[i].t();
-//			Xout2[i].set_dims(1, cnv2.A2[i].total());
-//		}
 
 		conv2::vec2mat(cnv2.A2, X1);
 
@@ -112,16 +101,7 @@ public:
 		D.clear();
 		conv2::mat2vec(mlp[0].DltA0, cnv2.szK.t(), D);
 
-//		for(size_t i = 0; i < Xout2.size(); ++i){
-//			D[i] = D[i].t();
-//		}
-
 		cnv2.backward(D);
-
-//		for(size_t i = 0; i < Xout2.size(); ++i){
-//			cnv2.Dlt[i].set_dims(cnv1.szK.t());
-//			cnv2.Dlt[i] = cnv2.Dlt[i].t();
-//		}
 
 		cnv1.backward(cnv2.Dlt, true);
 	}
@@ -153,6 +133,111 @@ public:
 private:
 	std::vector< ct::Matf > Xout, Xout2, D;
 	ct::Matf X1;
+};
+
+/////////////////////
+/////////////////////
+
+class TestCnv_gpu{
+public:
+	TestCnv_gpu(){
+		mlp.resize(3);
+		int K1 = 25;
+		int K2 = 15;
+
+		szA0 = ct::Size(cifar_reader::WidthIM, cifar_reader::HeightIM);
+		szW = ct::Size(5, 5);
+
+		cnv1.init(szA0, 3, 1, K1, szW);
+		cnv2.init(cnv1.szA2, K1, 1, K2, szW);
+
+	}
+
+	gpumat::conv2::convnn_gpu cnv1, cnv2;
+	gpumat::MlpOptim optim;
+	std::vector< gpumat::mlp > mlp;
+
+	ct::Size szA0, szW;
+
+	std::vector< gpumat::GpuMat > Xout, Xout2;
+
+	void forward(const std::vector< gpumat::GpuMat > &Xs, gpumat::GpuMat **yp, bool dropout = true)
+	{
+		cnv1.forward(&Xs, gpumat::RELU);
+
+		cnv2.forward(&cnv1.A2, gpumat::RELU);
+
+		gpumat::conv2::vec2mat(cnv2.A2, X1);
+
+		if(!mlp[0].isInit()){
+			mlp[0].init(X1.cols, 700, gpumat::GPU_FLOAT);
+			mlp[1].init(700, 600, gpumat::GPU_FLOAT);
+			mlp[2].init(600, 10, gpumat::GPU_FLOAT);
+			optim.init(mlp);
+		}
+
+		mlp[0].setDropout(dropout, 0.9f);
+		mlp[1].setDropout(dropout, 0.9f);
+
+		mlp[0].forward(&X1, gpumat::RELU);
+		mlp[1].forward(&mlp[0].A1, gpumat::RELU);
+		mlp[2].forward(&mlp[1].A1, gpumat::SOFTMAX);
+
+		*yp = &mlp[2].A1;
+	}
+
+	void backward(const gpumat::GpuMat& dy)
+	{
+		mlp[2].backward(dy);
+		mlp[1].backward(mlp[2].DltA0);
+		mlp[0].backward(mlp[1].DltA0);
+
+		optim.pass(mlp);
+		gpumat::conv2::mat2vec(mlp[0].DltA0, cnv2.szK, D);
+
+		cnv2.backward(D);
+
+		cnv1.backward(cnv2.Dlt, true);
+	}
+
+	void test(const std::vector< gpumat::GpuMat > &Xs, const ct::Matf& yind, double &l2, double &acc){
+		ct::Matf redf, ypf;
+
+		gpumat::GpuMat *yp;
+		forward(Xs, &yp, false);
+
+		gpumat::convert_to_gpu(yind, g_yind);
+
+		gpumat::subIndOne(*yp, g_yind, dy);
+
+		gpumat::elemwiseSqr(dy, dy2);
+		gpumat::reduce(dy2, red);
+		gpumat::convert_to_mat(red, redf);
+		l2 = redf.at(0, 0) / dy2.rows;
+
+		gpumat::convert_to_mat(*yp, ypf);
+
+		int count = 0;
+		for(int i = 0; i < ypf.rows; ++i){
+			int idp = ypf.argmax(i, 1);
+			int idy = yind.at(i, 0);
+//			ct::Vec2i vec = m_statistics[idy];
+			if(idy == idp){
+				count++;
+//				vec[0]++;
+			}
+//			vec[1]++;
+//			m_statistics[idy] = vec;
+		}
+		acc = (double)1. * count / yind.rows;
+
+	}
+
+private:
+	std::vector< gpumat::GpuMat > D;
+	gpumat::GpuMat X1, g_yind;
+
+	gpumat::GpuMat dy, dy2, red;
 };
 
 /////////////////////
@@ -292,8 +377,8 @@ void test_agg::test_im2col()
 void test_agg::test_conv()
 {
 	cifar_reader rd;
-	rd.openDir("../../../data/cifar-10-batches-bin");
-	//rd.openDir("D:/Down/smpl/data/cifar-10-batches-bin");
+	//rd.openDir("../../../data/cifar-10-batches-bin");
+	rd.openDir("D:/Down/smpl/data/cifar-10-batches-bin");
 	if(!rd.isBinDataExists())
 		return;
 
@@ -339,4 +424,88 @@ void test_agg::test_conv()
 			qDebug("test  (batch=500) -> l2=%f,\tacc=%f", l2, acc);
 		}
 	}
+}
+
+void conv_vec_to_gpu(const std::vector< ct::Matf >& Xs, std::vector< gpumat::GpuMat >& g_Xs)
+{
+	g_Xs.resize(Xs.size());
+	for(int i = 0; i < Xs.size(); ++i){
+		gpumat::convert_to_gpu(Xs[i], g_Xs[i]);
+	}
+}
+
+void test_agg::test_conv_gpu()
+{
+	cifar_reader rd;
+	//rd.openDir("../../../data/cifar-10-batches-bin");
+	rd.openDir("D:/Down/smpl/data/cifar-10-batches-bin");
+	if(!rd.isBinDataExists())
+		return;
+
+	std::vector< ct::Matf > Xs;
+	std::vector< gpumat::GpuMat > g_Xs, g_XsTest;
+	ct::Matf y, yp;
+	gpumat::GpuMat g_y, g_yTest;
+
+	gpumat::GpuMat g_dy;
+
+	ShowMatrices sh;
+
+	ct::generator.seed(time(0));
+
+	TestCnv_gpu tcnv;
+
+	for(int i = 0; i < 15000; ++i){
+
+		rd.getTrain2(70, Xs, y);
+
+		gpumat::convert_to_gpu(y, g_y);
+
+		conv_vec_to_gpu(Xs, g_Xs);
+
+		gpumat::GpuMat *pyp;
+
+		tcnv.forward(g_Xs, &pyp);
+
+		gpumat::subIndOne(*pyp, g_y, g_dy);
+
+		if((i % 10) == 0){
+			ct::Matf W1, W2;
+			gpumat::convert_to_mat(tcnv.cnv1.W[0], W1);
+			gpumat::convert_to_mat(tcnv.cnv2.W[0], W2);
+			sh.saveMat("cnv1.bmp", W1, tcnv.cnv1.szW, tcnv.cnv1.K, tcnv.cnv1.channels);
+			sh.saveMat("cnv2.bmp", W2, tcnv.cnv2.szW, tcnv.cnv2.K, tcnv.cnv2.channels);
+
+			ct::Matf dy;
+			gpumat::convert_to_mat(g_dy, dy);
+			ct::Matf dy2 = ct::elemwiseSqr(dy);
+			double sy2 = (double)dy2.sum()/dy2.rows;
+			qDebug("pass %d: l2 = %f", i, sy2);
+		}
+
+		tcnv.backward(g_dy);
+
+		if((i % 30) == 0){
+			rd.getTrain2(500, Xs, y);
+			double l2, acc;
+
+			conv_vec_to_gpu(Xs, g_XsTest);
+			//gpumat::convert_to_gpu(y, g_yTest);
+
+			tcnv.test(g_XsTest, y, l2, acc);
+			qDebug("train (batch=500) -> l2=%f,\tacc=%f", l2, acc);
+
+			l2 = 0; acc = 0;
+			Xs.clear();
+			y.fill(0);
+			rd.getTest2(500, Xs, y);
+
+			conv_vec_to_gpu(Xs, g_XsTest);
+			gpumat::convert_to_gpu(y, g_yTest);
+
+			tcnv.test(g_XsTest, y, l2, acc);
+			qDebug("test  (batch=500) -> l2=%f,\tacc=%f", l2, acc);
+		}
+	}
+
 }

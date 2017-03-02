@@ -27,6 +27,11 @@ void mlp::setDropout(bool val, double p){
 	m_prob = p;
 }
 
+bool mlp::isInit() const
+{
+	return m_init;
+}
+
 void mlp::init(int input, int output, int type){
 	double n = 1./sqrt(input);
 
