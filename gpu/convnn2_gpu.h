@@ -127,6 +127,26 @@ void back_deriv(const std::vector< gpumat::GpuMat >& Delta,
 				int stride,
 				std::vector< gpumat::GpuMat >& X);
 
+/**
+ * @brief subsample
+ * @param X
+ * @param szA
+ * @param Y
+ * @param Mask
+ * @param szO
+ */
+void subsample(const GpuMat& X, const ct::Size& szA, GpuMat& Y, GpuMat& Mask, ct::Size& szO);
+
+/**
+ * @brief subsample
+ * @param X
+ * @param szA
+ * @param Y
+ * @param Mask
+ * @param szO
+ */
+void subsample(const std::vector< GpuMat >& X, const ct::Size& szA, std::vector< GpuMat >& Y, std::vector< GpuMat >& Mask, ct::Size& szO);
+
 }
 
 }

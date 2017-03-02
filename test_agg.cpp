@@ -264,6 +264,23 @@ void test_agg::test_im2col()
 		assert(y.sum() == 0);
 		ct::save_mat(Res2, "vRes_g.txt");
 	}
+
+	gpumat::GpuMat g_Z, g_W, g_Y, g_Mask;
+
+	gpumat::convert_to_gpu(W, g_W);
+
+	gpumat::matmul(g_Res, g_W, g_Z);
+
+	gpumat::conv2::subsample(g_Z, szOut, g_Y, g_Mask, szOut2);
+
+	ct::Matf Y2, Mask2;
+
+	gpumat::convert_to_mat(g_Y, Y2);
+	gpumat::convert_to_mat(g_Mask, Mask2);
+
+	ct::save_mat(Y2, "Y2.txt");
+	ct::save_mat(Mask2, "Mask2.txt");
+
 }
 
 void test_agg::test_conv()

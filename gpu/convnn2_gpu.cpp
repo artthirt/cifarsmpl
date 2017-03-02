@@ -135,6 +135,20 @@ void cuda_back_deriv_vec(const std::vector< gpumat::GpuMat > &Delta,
 				int stride,
 				std::vector< gpumat::GpuMat > &X);
 
+extern "C"
+void cuda_subsample2(const gpumat::GpuMat &X,
+					const ct::Size &szA,
+					gpumat::GpuMat &Y,
+					gpumat::GpuMat &Mask,
+					ct::Size &szO);
+
+extern "C"
+void cuda_subsample2_vec(const std::vector< gpumat::GpuMat > &X,
+					const ct::Size &szA,
+					std::vector< gpumat::GpuMat > &Y,
+					std::vector< gpumat::GpuMat > &Mask,
+					ct::Size &szO);
+
 ///////////////////////////////
 
 void gpumat::conv2::im2cols(const gpumat::GpuMat &X, const ct::Size &szA0, int channels, const ct::Size &szW,
@@ -207,4 +221,49 @@ void gpumat::conv2::back_deriv(const std::vector<gpumat::GpuMat> &Delta, const c
 
 	cuda_back_deriv_vec(Delta, szOut, szA0, channels, szW, stride, X);
 
+}
+
+void gpumat::conv2::subsample(const gpumat::GpuMat &X,
+							  const ct::Size &szA,
+							  gpumat::GpuMat &Y,
+							  gpumat::GpuMat &Mask,
+							  ct::Size &szO)
+{
+	if(X.empty() || X.rows != szA.area())
+		throw new std::invalid_argument("subsample: empty parameters");
+
+	szO.width = szA.width / 2;
+	szO.height = szA.height / 2;
+	int K = X.cols;
+
+	Y.resize(szO.area(), K, X.type);
+	Mask.resize(X.rows, X.cols, X.type);
+	Mask.zeros();
+
+	cuda_subsample2(X, szA, Y, Mask, szO);
+}
+
+void gpumat::conv2::subsample(const std::vector<gpumat::GpuMat> &X,
+							  const ct::Size &szA,
+							  std::vector<gpumat::GpuMat> &Y,
+							  std::vector<gpumat::GpuMat> &Mask,
+							  ct::Size &szO)
+{
+	if(X.empty() || X[0].rows != szA.area())
+		throw new std::invalid_argument("subsample: empty parameters");
+
+	szO.width = szA.width / 2;
+	szO.height = szA.height / 2;
+	int K = X[0].cols;
+
+	Y.resize(X.size());
+	Mask.resize(X.size());
+
+	for(size_t i = 0; i < X.size(); ++i){
+		Y[i].resize(szO.area(), K, X[i].type);
+		Mask[i].resize(X[i].rows, X[i].cols, X[i].type);
+		Mask[i].zeros();
+	}
+
+	cuda_subsample2_vec(X, szA, Y, Mask, szO);
 }

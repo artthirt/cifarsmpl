@@ -90,8 +90,8 @@ __device__ void _back_deriv(const Mtx& Delta,
 
 	if(col < all){
 
-		int c = all / szOutArea;
-		int offset = all - c * szOutArea;
+		int c = col / szOutArea;
+		int offset = col - c * szOutArea;
 
 		int y = offset / szOut.width;
 		int x = offset - y * szOut.width;
@@ -143,6 +143,82 @@ __global__ void back_deriv_vec(SmallMtxArray Delta,
 
 	if(row < Delta.count){
 		_back_deriv<T>(Delta.mtx[row], szOut, szA0, channels, szW, stride, X.mtx[row]);
+	}
+}
+
+template< typename T >
+__device__ void _subsample(const Mtx &X,
+						   int K,
+						   const ct::Size& szA,
+						   Mtx Y,
+						   Mtx Mask,
+						   const ct::Size& szO)
+{
+	int col = threadIdx.x + blockIdx.x * blockDim.x;
+
+	int szOutArea = szO.width * szO.height;
+	int all = szOutArea * K;
+
+	const int stride = 2;
+
+	if(col < all){
+		int k = col / szOutArea;
+		int offset = col - k * szOutArea;
+
+		int y = offset / szO.width;
+		int x = offset - y * szO.width;
+
+		T *dX = (T*)X.data + k;
+		T* dM = (T*)Mask.data + k;
+		T *dY = (T*)Y.data + k;
+
+		int y0 = y * stride;
+		int x0 = x * stride;
+
+		T mmax = dX[(y0 * szA.width + x0) * X.cols];
+		int xm = x0, ym = y0;
+
+		for(int a = 0; a < stride; ++a){
+			for(int b = 0; b < stride; ++b){
+				if(y0 + a < szA.height && x0 + b < szA.width){
+					T val = dX[((y0 + a) * szA.width + (x0 + b)) * X.cols];
+					if(val > mmax){
+						mmax = val;
+						xm = x0 + b;
+						ym = y0 + a;
+					}
+				}
+			}
+		}
+
+		dY[(y * szO.width + x) * Y.cols] = mmax;
+		dM[(ym * szA.width + xm) * Mask.cols] = (T)1.;
+	}
+}
+
+template< typename T >
+__global__ void subsample(Mtx X,
+						  int K,
+						  ct::Size szA,
+						  Mtx Y,
+						  Mtx Mask,
+						  ct::Size szO)
+{
+	_subsample<T>(X, K, szA, Y, Mask, szO);
+}
+
+template< typename T >
+__global__ void subsample_vec(SmallMtxArray X,
+						  int K,
+						  ct::Size szA,
+						  SmallMtxArray Y,
+						  SmallMtxArray Mask,
+						  ct::Size szO)
+{
+	int row = threadIdx.y + blockDim.y * blockIdx.y;
+
+	if(row < X.count){
+		_subsample<T>(X.mtx[row], K, szA, Y.mtx[row], Mask.mtx[row], szO);
 	}
 }
 
@@ -235,7 +311,7 @@ void cuda_back_deriv_vec(const std::vector< gpumat::GpuMat > &Delta,
 				std::vector< gpumat::GpuMat > &X)
 {
 	int x1 = szOut.area() * channels / BLOCKSIZE + 1;
-	int x2 = Delta.size();
+	int x2 = Delta.size() / BLOCKSIZE + 1;
 
 	dim3 dimGrid(x1, x2), dimBlock(BLOCKSIZE, BLOCKSIZE);
 
@@ -247,6 +323,52 @@ void cuda_back_deriv_vec(const std::vector< gpumat::GpuMat > &Delta,
 			break;
 		case GPU_FLOAT:
 			internal::back_deriv_vec<float> <<<dimGrid, dimBlock>>>(sDelta, szOut, szA0, channels, szW, stride, sX);
+			break;
+	}
+}
+
+extern "C"
+void cuda_subsample2(const gpumat::GpuMat &X,
+							  const ct::Size &szA,
+							  gpumat::GpuMat &Y,
+							  gpumat::GpuMat &Mask,
+							  ct::Size &szO)
+{
+	int K = X.cols;
+	int x1 = szO.area() * K / BLOCKSIZE + 1;
+	int x2 = 1;
+
+	dim3 dimGrid(x1, x2), dimBlock(BLOCKSIZE, 1);
+
+	switch (X.type) {
+		case GPU_DOUBLE:
+			internal::subsample<double> <<<dimGrid, dimBlock>>>(X, K, szA, Y, Mask, szO);
+			break;
+		case GPU_FLOAT:
+			internal::subsample<float> <<<dimGrid, dimBlock>>>(X, K, szA, Y, Mask, szO);
+			break;
+	}
+}
+
+extern "C"
+void cuda_subsample2_vec(const std::vector< gpumat::GpuMat > &X,
+					const ct::Size &szA,
+					std::vector< gpumat::GpuMat > &Y,
+					std::vector< gpumat::GpuMat > &Mask,
+					ct::Size &szO)
+{
+	int K = X[0].cols;
+	int x1 = szO.area() * K / BLOCKSIZE + 1;
+	int x2 = X.size() / BLOCKSIZE + 1;
+
+	dim3 dimGrid(x1, x2), dimBlock(BLOCKSIZE, BLOCKSIZE);
+
+	switch (X[0].type) {
+		case GPU_DOUBLE:
+			internal::subsample_vec<double> <<<dimGrid, dimBlock>>>(X, K, szA, Y, Mask, szO);
+			break;
+		case GPU_FLOAT:
+			internal::subsample_vec<float> <<<dimGrid, dimBlock>>>(X, K, szA, Y, Mask, szO);
 			break;
 	}
 }
