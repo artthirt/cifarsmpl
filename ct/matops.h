@@ -1130,7 +1130,7 @@ void matmulT1(const Mat_<T>& At, const Mat_<T>& B, Mat_<T>& C)
 		return;
 	int r = At.cols;
 	int c = B.cols;
-	if(C.rows != r && C.cols != c)
+	if(C.rows != r || C.cols != c)
 		C.setSize(r, c);
 
 	T* valr = &(*C.val)[0];
@@ -1166,7 +1166,7 @@ void matmulT2(const Mat_<T>& A, const Mat_<T>& Bt, Mat_<T>& C)
 		return;
 	int r = A.rows;
 	int c = Bt.rows;
-	if(C.rows != r && C.cols != c)
+	if(C.rows != r || C.cols != c)
 		C.setSize(r, c);
 
 	T* valr = &(*C.val)[0];
