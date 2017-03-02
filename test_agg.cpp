@@ -351,7 +351,7 @@ void test_agg::test_im2col()
 	}
 
 	gpumat::GpuMat g_Z, g_W, g_Y, g_Mask;
-	std::vector< gpumat::GpuMat > g_vZ, g_vY, g_vMask;
+	std::vector< gpumat::GpuMat > g_vZ, g_vY, g_vMask, g_vX2;
 
 	gpumat::convert_to_gpu(W, g_W);
 
@@ -372,6 +372,12 @@ void test_agg::test_im2col()
 	ct::save_mat(Y2, "Y2.txt");
 	ct::save_mat(Mask2, "Mask2.txt");
 
+	for(int i = 0; i < 10; i++){
+		gpumat::conv2::upsample(g_vY, 3, g_vMask, szOut2, szOut, g_vZ);
+		gpumat::conv2::back_deriv(g_vZ, szOut, szA0, channels, szW, 1, g_vX2);
+	}
+	gpumat::convert_to_mat(g_vX2[0], Y2);
+	ct::save_mat(Y2, "g_Deriv.txt");
 }
 
 void test_agg::test_conv()
@@ -469,6 +475,8 @@ void test_agg::test_conv_gpu()
 
 		gpumat::subIndOne(*pyp, g_y, g_dy);
 
+		tcnv.backward(g_dy);
+
 		if((i % 10) == 0){
 			ct::Matf W1, W2;
 			gpumat::convert_to_mat(tcnv.cnv1.W[0], W1);
@@ -482,8 +490,6 @@ void test_agg::test_conv_gpu()
 			double sy2 = (double)dy2.sum()/dy2.rows;
 			qDebug("pass %d: l2 = %f", i, sy2);
 		}
-
-		tcnv.backward(g_dy);
 
 		if((i % 30) == 0){
 			rd.getTrain2(500, Xs, y);
