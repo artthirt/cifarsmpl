@@ -1,4 +1,5 @@
 #include "cifar_train.h"
+#include <algorithm>
 
 #include <QMap>
 ////////////////////
@@ -6,10 +7,11 @@
 const int channels = 3;
 
 template< typename T >
-void translate(int x, int y, int w, int h, T *X)
+void translate(int x, int y, int w, int h, T *X, std::vector<T> &d)
 {
-	std::vector<T>d;
-	d.resize(w * h, 0);
+	if(d.size() != w * h)
+		d.resize(w * h);
+	std::fill(d.begin(), d.end(), -1);
 
 #pragma omp parallel for
 	for(int i = 0; i < h; i++){
@@ -29,29 +31,79 @@ void translate(int x, int y, int w, int h, T *X)
 }
 
 template< typename T >
-void rotate_data(int w, int h, T angle, T *X)
+void rotate_data(int w, int h, T angle, T *X, std::vector<T> &d)
 {
-	T cw = w / 2;
-	T ch = h / 2;
+	int cw = w / 2;
+	int ch = h / 2;
 
-	std::vector<T> d;
-	d.resize(w * h, 0);
+	if(d.size() != w * h)
+		d.resize(w * h);
+
+	std::fill(d.begin(), d.end(), -1);
+
+	T delta = 0.4 * angle * angle;
 
 	for(int y = 0; y < h; y++){
 		for(int x = 0; x < w; x++){
+			T c = X[y * w + x];
 			T x1 = x - cw;
 			T y1 = y - ch;
 
-			T nx = x1 * cos(angle) + y1 * sin(angle);
-			T ny = -x1 * sin(angle) + y1 * cos(angle);
-			nx += cw; ny += ch;
-			int ix = nx, iy = ny;
-			if(ix >= 0 && ix < w && iy >= 0 && iy < h){
-				T c = X[y * w + x];
-				d[iy * w + ix] = c;
+			int nx0 = (x1 * cos(angle) + y1 * sin(angle));
+			int ny0 = (-x1 * sin(angle) + y1 * cos(angle));
+			int nx1 = (x1 * cos(angle + delta) + y1 * sin(angle + delta));
+			int ny1 = (-x1 * sin(angle + delta) + y1 * cos(angle + delta));
+			int nx2 = (x1 * cos(angle - delta) + y1 * sin(angle - delta));
+			int ny2 = (-x1 * sin(angle - delta) + y1 * cos(angle - delta));
+			nx0 += cw; ny0 += ch;
+			nx1 += cw; ny1 += ch;
+			nx2 += cw; ny2 += ch;
+			int ix0 = nx0, iy0 = ny0;
+			int ix1 = nx1, iy1 = ny1;
+			int ix2 = nx2, iy2 = ny2;
+			if(ix0 >= 0 && ix0 < w && iy0 >= 0 && iy0 < h){
+				d[iy0 * w + ix0] = c;
 			}
+			if(ix1 >= 0 && ix1 < w && iy1 >= 0 && iy1 < h){
+				d[iy1 * w + ix1] = c;
+			}
+			if(ix2 >= 0 && ix2 < w && iy2 >= 0 && iy2 < h){
+				d[iy2 * w + ix2] = c;
+			}
+//			if(ix + 1 >= 0 && ix + 1 < w && iy >= 0 && iy < h){
+//				d[iy * w + ix + 1] = c;
+//			}
+//			if(ix - 1 >= 0 && ix - 1 < w && iy >= 0 && iy < h){
+//				d[iy * w + ix - 1] = c;
+//			}
+//			if(ix >= 0 && ix < w && iy + 1 >= 0 && iy + 1 < h){
+//				d[(iy + 1) * w + ix] = c;
+//			}
+//			if(ix >= 0 && ix < w && iy - 1 >= 0 && iy - 1 < h){
+//				d[(iy - 1) * w + ix] = c;
+//			}
 		}
 	}
+//	for(int y = 1; y < h - 1; y++){
+//		for(int x = 1; x < w - 1; x++){
+//			T c = d[y * w + x];
+//			if(c < -0.999999){
+//				T c0 = d[(y + 1) * w + (x)];
+//				T c1 = d[(y) * w + (x + 1)];
+//				T c2 = d[(y - 1) * w + (x)];
+//				T c3 = d[(y) * w + (x - 1)];
+
+//				T c4 = d[(y - 1) * w + (x - 1)];
+//				T c5 = d[(y + 1) * w + (x + 1)];
+//				T c6 = d[(y - 1) * w + (x + 1)];
+//				T c7 = d[(y - 1) * w + (x + 1)];
+
+//				c = (/*c0 + c1 + c2 + c3 + */c4 + c5 + c6 + c7)/4.;
+//				d[y * w + x] = c;
+//			}
+//		}
+//	}
+
 	for(size_t i = 0; i < d.size(); i++){
 		X[i] = d[i];
 	}
@@ -214,22 +266,63 @@ void cifar_train::randValues(size_t count, std::vector<ct::Vec3f> &vals, float o
 	}
 }
 
-void cifar_train::randX(ct::Matf &X, std::vector<ct::Vec3f> &vals)
+#include <QImage>
+
+void saveIm(float* dx1, float *dx2, float *dx3, int width, int height)
 {
-	if(X.empty() || X.rows != vals.size())
+	QImage im(width, height, QImage::Format_ARGB32);
+
+	for(int y = 0; y < height; ++y){
+		QRgb *sc = (QRgb*)im.scanLine(y);
+		for(int x = 0; x < width; ++x){
+			float c1 = dx1[y * width + x];
+			float c2 = dx2[y * width + x];
+			float c3 = dx3[y * width + x];
+			c1 = 255. * (c1 - (-1.))/2.;
+			c2 = 255. * (c2 - (-1.))/2.;
+			c3 = 255. * (c3 - (-1.))/2.;
+			uchar uc1 = c1;
+			uchar uc2 = c2;
+			uchar uc3 = c3;
+			sc[x] = qRgb(uc1, uc2, uc3);
+		}
+	}
+	im.save("tmp.bmp");
+}
+
+void cifar_train::randX(std::vector< ct::Matf > &X, std::vector<ct::Vec3f> &vals)
+{
+	if(X.empty() || X.size() != vals.size())
 		return;
 #if 1
 
+	int area = cifar_reader::WidthIM * cifar_reader::HeightIM;
+
 #pragma omp parallel for
-	for(int i = 0; i < X.rows; i++){
-		float *Xi = &X.at(i, 0);
+	for(int i = 0; i < X.size(); i++){
+		float *dX = X[i].ptr();
+
+		float *dX1 = &dX[0 * area];
+		float *dX2 = &dX[1 * area];
+		float *dX3 = &dX[2 * area];
 
 		float x = vals[i][0];
 		float y = vals[i][1];
-		float ang = vals[i][2];
+		float ang = 0.05;//vals[i][2];
 
-		rotate_data<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, ang, Xi);
-		translate<float>(x, y, cifar_reader::WidthIM, cifar_reader::HeightIM, Xi);
+		std::vector< float > d;
+
+		if(ang != 0){
+			rotate_data<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, ang, dX1, d);
+			rotate_data<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, ang, dX2, d);
+			rotate_data<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, ang, dX3, d);
+		}
+
+		translate<float>(x, y, cifar_reader::WidthIM, cifar_reader::HeightIM, dX1, d);
+		translate<float>(x, y, cifar_reader::WidthIM, cifar_reader::HeightIM, dX2, d);
+		translate<float>(x, y, cifar_reader::WidthIM, cifar_reader::HeightIM, dX3, d);
+
+//		saveIm(dX1, dX2, dX3, cifar_reader::WidthIM, cifar_reader::HeightIM);
 	}
 #endif
 }
@@ -248,9 +341,7 @@ void cifar_train::pass(int batch, bool use_gpu)
 	if(m_use_rand_data){
 		randValues(y.rows, m_vals, m_rand_data[0], m_rand_data[1]);
 
-//		for(size_t i = 0; i < Xs.size(); ++i){
-//			randX(Xs[i], m_vals);
-//		}
+		randX(Xs, m_vals);
 	}
 
 	if(use_gpu && m_gpu_train.isInit()){

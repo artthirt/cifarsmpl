@@ -31,7 +31,7 @@ public:
 	void init();
 
 	void forward(const std::vector< ct::Matf >& X, ct::Matf& a_out,
-				 bool use_drop = false, float p = 0.92, bool use_gpu = false);
+				 bool use_drop = false, float p = 0.95, bool use_gpu = false);
 
 	void setRandData(float offset, float angle);
 
@@ -99,7 +99,7 @@ private:
 	void setDropout(float p, int layers);
 	void clearDropout();
 	void randValues(size_t count, std::vector< ct::Vec3f >& vals, float offset, float angle);
-	void randX(ct::Matf &X, std::vector< ct::Vec3f >& vals);
+	void randX(std::vector<ct::Matf> &X, std::vector< ct::Vec3f >& vals);
 
 	void getEstimate(const std::vector< ct::Matf > &Xs, ct::Matf &y,
 					 uint &right, double &l2, bool use_gpu);
