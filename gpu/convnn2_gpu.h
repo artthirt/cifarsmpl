@@ -32,8 +32,8 @@ public:
 	std::vector< gpumat::GpuMat > Mask;		/// masks for bakward pass (created in forward pass)
 	gpumat::AdamOptimizer m_optim;
 
-	gpumat::GpuMat gW;						/// gradient for weights
-	gpumat::GpuMat gB;						/// gradient for biases
+	std::vector< gpumat::GpuMat > gW;		/// gradient for weights
+	std::vector< gpumat::GpuMat > gB;		/// gradient for biases
 
 	convnn_gpu();
 
@@ -68,6 +68,9 @@ private:
 	bool m_use_pool;
 	gpumat::etypefunction m_func;
 
+	std::vector< gpumat::GpuMat > dSub;
+	std::vector< gpumat::GpuMat > Dc;		///
+	std::vector< gpumat::GpuMat > DA1;		///
 };
 
 /**
@@ -146,6 +149,12 @@ void subsample(const GpuMat& X, const ct::Size& szA, GpuMat& Y, GpuMat& Mask, ct
  * @param szO
  */
 void subsample(const std::vector< GpuMat >& X, const ct::Size& szA, std::vector< GpuMat >& Y, std::vector< GpuMat >& Mask, ct::Size& szO);
+
+void upsample(const GpuMat& Y, const GpuMat& Mask, const ct::Size& szO,
+			  const ct::Size& szA, GpuMat& X);
+
+void upsample(const std::vector< GpuMat >& Y, const std::vector< GpuMat >& Mask, const ct::Size& szO,
+			  const ct::Size& szA, std::vector< GpuMat >& X);
 
 /**
  * @brief vec2mat

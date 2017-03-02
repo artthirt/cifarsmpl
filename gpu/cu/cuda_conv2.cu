@@ -223,6 +223,74 @@ __global__ void subsample_vec(SmallMtxArray X,
 }
 
 template< typename T >
+__device__ void _upsample(const Mtx &Y,
+						 const Mtx &Mask,
+						 int K,
+						 const ct::Size &szO,
+						 const ct::Size &szA,
+						 Mtx X)
+{
+	int col = threadIdx.x + blockIdx.x * blockDim.x;
+
+	int szOutArea = szO.width * szO.height;
+	int all = szOutArea * K;
+
+	const int stride = 2;
+
+	if(col < all){
+		int k = col / szOutArea;
+		int offset = col - k * szOutArea;
+
+		int y = offset / szO.width;
+		int x = offset - y * szO.width;
+
+		T *dX = (T*)X.data + k;
+		T* dM = (T*)Mask.data + k;
+		T *dY = (T*)Y.data + k;
+
+		int y0 = y * stride;
+		int x0 = x * stride;
+
+		T val = dY[(y * szO.width + x) * Y.cols];
+
+		for(int a = 0; a < stride; ++a){
+			for(int b = 0; b < stride; ++b){
+				if(y0 + a < szA.height && x0 + b < szA.width){
+					T m = dM[((y0 + a) * szA.width + (x0 + b)) * Mask.cols];
+					dX[((y0 + a) * szA.width + (x0 + b)) * X.cols] = val * m;
+				}
+			}
+		}
+	}
+}
+
+template< typename T >
+__global__ void upsample(Mtx Y,
+						 Mtx Mask,
+						 int K,
+						 ct::Size szO,
+						 ct::Size szA,
+						 Mtx X)
+{
+	_upsample<T>(Y, Mask, K, szO, szA, X);
+}
+
+template< typename T >
+__global__ void upsample_vec(SmallMtxArray Y,
+							 SmallMtxArray Mask,
+							 int K,
+							 ct::Size szO,
+							 ct::Size szA,
+							 SmallMtxArray X)
+{
+	int row = threadIdx.y + blockDim.y * blockIdx.y;
+
+	if(row < X.count){
+		_upsample<T>(Y.mtx[row], Mask.mtx[row], K, szO, szA, X.mtx[row]);
+	}
+}
+
+template< typename T >
 __global__ void vec2mat(SmallMtxArray vec, Mtx mat)
 {
 	int col = threadIdx.x + blockDim.x * blockIdx.x;
@@ -400,6 +468,47 @@ void cuda_subsample2_vec(const std::vector< gpumat::GpuMat > &X,
 			break;
 	}
 }
+
+extern "C"
+void cuda_upsample2(const gpumat::GpuMat &Y, const gpumat::GpuMat &Mask, const ct::Size &szO,
+			  const ct::Size &szA, gpumat::GpuMat &X)
+{
+	int K = X.cols;
+	int x1 = szO.area() * K / BLOCKSIZE + 1;
+	int x2 = 1;
+
+	dim3 dimGrid(x1, x2), dimBlock(BLOCKSIZE, 1);
+
+	switch (X.type) {
+		case GPU_DOUBLE:
+			internal::upsample<double> <<<dimGrid, dimBlock>>>(Y, Mask, K, szO, szA, X);
+			break;
+		case GPU_FLOAT:
+			internal::upsample<float> <<<dimGrid, dimBlock>>>(Y, Mask, K, szO, szA, X);
+			break;
+	}
+}
+
+extern "C"
+void cuda_upsample2vec(const std::vector<gpumat::GpuMat> &Y, const std::vector<gpumat::GpuMat> &Mask,
+			  const ct::Size &szO, const ct::Size &szA, std::vector<gpumat::GpuMat> &X)
+{
+	int K = X[0].cols;
+	int x1 = szO.area() * K / BLOCKSIZE + 1;
+	int x2 = X.size() / BLOCKSIZE + 1;
+
+	dim3 dimGrid(x1, x2), dimBlock(BLOCKSIZE, BLOCKSIZE);
+
+	switch (X[0].type) {
+		case GPU_DOUBLE:
+			internal::upsample_vec<double> <<<dimGrid, dimBlock>>>(Y, Mask, K, szO, szA, X);
+			break;
+		case GPU_FLOAT:
+			internal::upsample_vec<float> <<<dimGrid, dimBlock>>>(Y, Mask, K, szO, szA, X);
+			break;
+	}
+}
+
 
 extern "C"
 void cuda_vec2mat(const std::vector< GpuMat >& vec, GpuMat& mat)
