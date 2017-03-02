@@ -222,9 +222,37 @@ __global__ void subsample_vec(SmallMtxArray X,
 	}
 }
 
+template< typename T >
+__global__ void vec2mat(SmallMtxArray vec, Mtx mat)
+{
+	int col = threadIdx.x + blockDim.x * blockIdx.x;
+	int row = threadIdx.y + blockDim.y * blockIdx.y;
+
+	if(row < mat.rows && col < mat.cols){
+		T* dV = (T*)vec.mtx[row].data;
+		T* dM = (T*)mat.data;
+
+		dM[row * mat.cols + col] = dV[col];
+	}
 }
 
+template< typename T >
+__global__ void mat2vec(Mtx mat, SmallMtxArray vec)
+{
+	int col = threadIdx.x + blockDim.x * blockIdx.x;
+	int row = threadIdx.y + blockDim.y * blockIdx.y;
+
+	if(row < mat.rows && col < mat.cols){
+		T* dV = (T*)vec.mtx[row].data;
+		T* dM = (T*)mat.data;
+
+		dV[col] = dM[row * mat.cols + col];
+	}
 }
+
+}	/// @endnamespace internal
+
+}	/// @endnamespace gpumat
 
 extern "C"
 void cuda_im2cols(const gpumat::GpuMat &X,
@@ -369,6 +397,48 @@ void cuda_subsample2_vec(const std::vector< gpumat::GpuMat > &X,
 			break;
 		case GPU_FLOAT:
 			internal::subsample_vec<float> <<<dimGrid, dimBlock>>>(X, K, szA, Y, Mask, szO);
+			break;
+	}
+}
+
+extern "C"
+void cuda_vec2mat(const std::vector< GpuMat >& vec, GpuMat& mat)
+{
+	int rows = (int)vec.size();
+	int cols = vec[0].total();
+
+	int x1 = cols / BLOCKSIZE + 1;
+	int x2 = rows / BLOCKSIZE + 1;
+
+	dim3 dimGrid(x1, x2), dimBlock(BLOCKSIZE, BLOCKSIZE);
+
+	switch (vec[0].type) {
+		case GPU_DOUBLE:
+			internal::vec2mat<double> <<<dimGrid, dimBlock>>>(vec, mat);
+			break;
+		case GPU_FLOAT:
+			internal::vec2mat<float> <<<dimGrid, dimBlock>>>(vec, mat);
+			break;
+	}
+}
+
+extern "C"
+void cuda_mat2vec(const GpuMat& mat, std::vector< GpuMat >& vec)
+{
+	int rows = mat.rows;
+	int cols = mat.cols;
+
+	int x1 = cols / BLOCKSIZE + 1;
+	int x2 = rows / BLOCKSIZE + 1;
+
+	dim3 dimGrid(x1, x2), dimBlock(BLOCKSIZE, BLOCKSIZE);
+
+	switch (vec[0].type) {
+		case GPU_DOUBLE:
+			internal::mat2vec<double> <<<dimGrid, dimBlock>>>(mat, vec);
+			break;
+		case GPU_FLOAT:
+			internal::mat2vec<float> <<<dimGrid, dimBlock>>>(mat, vec);
 			break;
 	}
 }

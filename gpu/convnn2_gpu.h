@@ -147,6 +147,22 @@ void subsample(const GpuMat& X, const ct::Size& szA, GpuMat& Y, GpuMat& Mask, ct
  */
 void subsample(const std::vector< GpuMat >& X, const ct::Size& szA, std::vector< GpuMat >& Y, std::vector< GpuMat >& Mask, ct::Size& szO);
 
+/**
+ * @brief vec2mat
+ * @param vec
+ * @param mat
+ */
+void vec2mat(const std::vector< GpuMat >& vec, GpuMat& mat);
+
+/**
+ * @brief mat2vec
+ * @param mat
+ * @param szOut
+ * @param vec
+ */
+void mat2vec(const GpuMat& mat, const ct::Size& szOut, std::vector< GpuMat >& vec);
+
+
 }
 
 }

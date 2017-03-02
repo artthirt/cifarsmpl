@@ -149,6 +149,12 @@ void cuda_subsample2_vec(const std::vector< gpumat::GpuMat > &X,
 					std::vector< gpumat::GpuMat > &Mask,
 					ct::Size &szO);
 
+extern "C"
+void cuda_vec2mat(const std::vector< gpumat::GpuMat >& vec, gpumat::GpuMat& mat);
+
+extern "C"
+void cuda_mat2vec(const gpumat::GpuMat& mat, std::vector< gpumat::GpuMat >& vec);
+
 ///////////////////////////////
 
 void gpumat::conv2::im2cols(const gpumat::GpuMat &X, const ct::Size &szA0, int channels, const ct::Size &szW,
@@ -266,4 +272,33 @@ void gpumat::conv2::subsample(const std::vector<gpumat::GpuMat> &X,
 	}
 
 	cuda_subsample2_vec(X, szA, Y, Mask, szO);
+}
+
+void gpumat::conv2::vec2mat(const std::vector<gpumat::GpuMat> &vec, gpumat::GpuMat &mat)
+{
+	if(vec.empty() || vec[0].empty())
+		throw new std::invalid_argument("vec2mat: empty parameters");
+
+	int rows = (int)vec.size();
+	int cols = vec[0].total();
+
+	mat.resize(rows, cols, vec[0].type);
+
+	cuda_vec2mat(vec, mat);
+}
+
+void gpumat::conv2::mat2vec(const gpumat::GpuMat &mat, const ct::Size &szOut, std::vector<gpumat::GpuMat> &vec)
+{
+	if(mat.empty())
+		throw new std::invalid_argument("mat2vec: empty parameters");
+
+	int rows = mat.rows;
+
+	vec.resize(rows);
+
+	for(size_t i = 0; i < vec.size(); ++i){
+		vec[i].resize(szOut.height, szOut.width, mat.type);
+	}
+
+	cuda_mat2vec(mat, vec);
 }
