@@ -308,7 +308,7 @@ void cifar_train::randX(std::vector< ct::Matf > &X, std::vector<ct::Vec3f> &vals
 
 		float x = vals[i][0];
 		float y = vals[i][1];
-		float ang = 0.05;//vals[i][2];
+		float ang = vals[i][2];
 
 		std::vector< float > d;
 

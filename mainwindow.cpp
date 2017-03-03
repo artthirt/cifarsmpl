@@ -26,7 +26,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	std::vector< int > cnv_w;
 	std::vector< char > cnv_p;
 
-	cnv.push_back(20);
+	cnv.push_back(40);
 	cnv.push_back(40);
 //	cnv.push_back(2);
 //	cnv.push_back(1);
@@ -48,7 +48,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	m_train.setMlpLayers(mlp);
 
 	m_train.setUseRandData(true);
-	m_train.setRandData(3, 2);
+	m_train.setRandData(2, 1);
 
 	m_train.init();
 
