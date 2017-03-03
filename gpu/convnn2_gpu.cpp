@@ -322,11 +322,12 @@ void gpumat::conv2::im2cols(const std::vector<gpumat::GpuMat> &X, const ct::Size
 
 	int rows = szOut.area();
 	int cols = szW.area() * channels;
+	int type = X[0].type;
 
 	Res.resize(X.size());
 
 	for(size_t i = 0; i < Res.size(); ++i){
-		Res[i].resize(rows, cols, X[i].type);
+		Res[i].resize(rows, cols, type);
 	}
 
 	cuda_im2cols_vec(X, szA0, channels, szW, stride, Res, szOut);
@@ -357,8 +358,11 @@ void gpumat::conv2::back_deriv(const std::vector<gpumat::GpuMat> &Delta, const c
 
 	X.resize(Delta.size());
 
+	int type = Delta[0].type;
+	int area = channels * szA0.area();
+
 	for(size_t i = 0; i < X.size(); ++i){
-		X[i].resize(1, channels * szA0.area(), Delta[i].type);
+		X[i].resize(1, area, type);
 		X[i].zeros();
 	}
 
@@ -459,8 +463,11 @@ void gpumat::conv2::upsample(const std::vector<gpumat::GpuMat> &Y, int K, const 
 
 	X.resize(Y.size());
 
+	int type = Y[0].type;
+	int area = szA.area();
+
 	for(size_t i = 0; i < X.size(); ++i){
-		X[i].resize(szA.area(), K, Y[0].type);
+		X[i].resize(area, K, type);
 	}
 
 	cuda_upsample2vec(Y, Mask, szO, szA, X);

@@ -89,7 +89,6 @@ __device__ void _back_deriv(const Mtx& Delta,
 	int all = szOutArea * channels;
 
 	if(col < all){
-
 		int c = col / szOutArea;
 		int offset = col - c * szOutArea;
 
@@ -98,23 +97,21 @@ __device__ void _back_deriv(const Mtx& Delta,
 
 		int x0 = x * stride;
 		int y0 = y * stride;
-		int row2 = x * szOut.width + col;
+		int row2 = y * szOut.width + x;
 
-		int szA0area = szA0.width * szA0.height;
 		int szWarea = szW.width * szW.height;
 
 		T *dX = (T*)X.data;
 		T *dR = (T*)Delta.data;
-//		for(int c = 0; c < channels; ++c){
-		T *dXi = &dX[c * szA0area];
 
 		for(int a = 0; a < szW.height; ++a){
 			for(int b = 0; b < szW.width; ++b){
 				int col2 = c * szWarea + (a * szW.width + b);
-				dXi[(y0 + a) * szA0.width + (x0 + b)] += dR[row2 * Delta.cols + col2];
+				if(y0 + a < szA0.height && x0 + b < szA0.width){
+					dX[(y0 + a) * szA0.width + (x0 + b)] += dR[row2 * Delta.cols + col2];
+				}
 			}
 		}
-//		}
 	}
 }
 
@@ -141,7 +138,7 @@ __global__ void back_deriv_vec(SmallMtxArray Delta,
 {
 	int row = threadIdx.y + blockDim.y * blockIdx.y;
 
-	if(row < Delta.count){
+	if(row < X.count){
 		_back_deriv<T>(Delta.mtx[row], szOut, szA0, channels, szW, stride, X.mtx[row]);
 	}
 }
@@ -407,18 +404,16 @@ void cuda_back_deriv_vec(const std::vector< gpumat::GpuMat > &Delta,
 				std::vector< gpumat::GpuMat > &X)
 {
 	int x1 = szOut.area() * channels / BLOCKSIZE + 1;
-	int x2 = Delta.size() / BLOCKSIZE + 1;
+	int x2 = X.size() / BLOCKSIZE + 1;
 
 	dim3 dimGrid(x1, x2), dimBlock(BLOCKSIZE, BLOCKSIZE);
 
-	internal::SmallMtxArray sDelta(Delta), sX(X);
-
 	switch (Delta[0].type) {
 		case GPU_DOUBLE:
-			internal::back_deriv_vec<double> <<<dimGrid, dimBlock>>>(sDelta, szOut, szA0, channels, szW, stride, sX);
+			internal::back_deriv_vec<double> <<<dimGrid, dimBlock>>>(Delta, szOut, szA0, channels, szW, stride, X);
 			break;
 		case GPU_FLOAT:
-			internal::back_deriv_vec<float> <<<dimGrid, dimBlock>>>(sDelta, szOut, szA0, channels, szW, stride, sX);
+			internal::back_deriv_vec<float> <<<dimGrid, dimBlock>>>(Delta, szOut, szA0, channels, szW, stride, X);
 			break;
 	}
 }

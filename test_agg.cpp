@@ -383,8 +383,8 @@ void test_agg::test_im2col()
 void test_agg::test_conv()
 {
 	cifar_reader rd;
-	//rd.openDir("../../../data/cifar-10-batches-bin");
-	rd.openDir("D:/Down/smpl/data/cifar-10-batches-bin");
+	rd.openDir("../../../data/cifar-10-batches-bin");
+	//rd.openDir("D:/Down/smpl/data/cifar-10-batches-bin");
 	if(!rd.isBinDataExists())
 		return;
 
@@ -443,8 +443,8 @@ void conv_vec_to_gpu(const std::vector< ct::Matf >& Xs, std::vector< gpumat::Gpu
 void test_agg::test_conv_gpu()
 {
 	cifar_reader rd;
-	//rd.openDir("../../../data/cifar-10-batches-bin");
-	rd.openDir("D:/Down/smpl/data/cifar-10-batches-bin");
+	rd.openDir("../../../data/cifar-10-batches-bin");
+	//rd.openDir("D:/Down/smpl/data/cifar-10-batches-bin");
 	if(!rd.isBinDataExists())
 		return;
 
