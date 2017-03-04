@@ -145,13 +145,12 @@ void subsample(const ct::Mat_<T>& X, const ct::Size& szA, ct::Mat_<T>& Y, ct::Ma
 }
 
 template< typename T >
-void upsample(const ct::Mat_<T>& Y, const ct::Mat_<T>& Mask, const ct::Size& szO,
+void upsample(const ct::Mat_<T>& Y, int K, const ct::Mat_<T>& Mask, const ct::Size& szO,
 			  const ct::Size& szA, ct::Mat_<T>& X)
 {
-	if(Y.empty() || Mask.empty() || Y.rows != szO.area())
+	if(Y.empty() || Mask.empty() || Y.total() != szO.area() * K)
 		return;
 
-	int K = Y.cols;
 	X.setSize(szA.area(), K);
 
 	int stride = 2;
@@ -167,7 +166,7 @@ void upsample(const ct::Mat_<T>& Y, const ct::Mat_<T>& Mask, const ct::Size& szO
 			for(int x = 0; x < szO.width; ++x){
 				int x0 = x * stride;
 
-				T val = dY[(y * szO.width + x) * Y.cols];
+				T val = dY[(y * szO.width + x) * K];
 
 #ifdef __GNUC__
 #pragma omp simd
@@ -457,8 +456,8 @@ public:
 		if(m_use_pool){
 			for(size_t i = 0; i < D.size(); ++i){
 				ct::Mat_<T> Di = D[i];
-				Di.set_dims(szA2.area(), K);
-				upsample(Di, Mask[i], szA2, szA1, dSub[i]);
+				//Di.set_dims(szA2.area(), K);
+				upsample(Di, K, Mask[i], szA2, szA1, dSub[i]);
 			}
 			backcnv(dSub, dSub);
 		}else{

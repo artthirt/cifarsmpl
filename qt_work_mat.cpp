@@ -27,7 +27,7 @@ void qt_work_mat::q_save_mat(const ct::Matf &mat, const QString &filename)
 			float val = dM[i * mat.cols + j];
 			if(!tmp.isEmpty())
 				tmp += " ";
-			tmp += QString::number(val, 'f', 4);
+			tmp += QString::number(val, 'f', 8);
 		}
 		tmp += "\n";
 		fs.write(tmp.toLatin1());

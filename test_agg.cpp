@@ -142,8 +142,8 @@ class TestCnv_gpu{
 public:
 	TestCnv_gpu(){
 		mlp.resize(3);
-		int K1 = 25;
-		int K2 = 15;
+		int K1 = 15;
+		int K2 = 35;
 
 		szA0 = ct::Size(cifar_reader::WidthIM, cifar_reader::HeightIM);
 		szW = ct::Size(5, 5);
@@ -176,8 +176,8 @@ public:
 			optim.init(mlp);
 		}
 
-		mlp[0].setDropout(dropout, 0.9f);
-		mlp[1].setDropout(dropout, 0.9f);
+		mlp[0].setDropout(dropout, 0.98f);
+		mlp[1].setDropout(dropout, 0.98f);
 
 		mlp[0].forward(&X1, gpumat::RELU);
 		mlp[1].forward(&mlp[0].A1, gpumat::RELU);
@@ -314,7 +314,7 @@ void test_agg::test_im2col()
 	ct::save_mat(Y, "Y.txt");
 	ct::save_mat(Mask, "Mask.txt");
 
-	conv2::upsample(Y, Mask, szOut2, szOut, Z2);
+	conv2::upsample(Y, channels, Mask, szOut2, szOut, Z2);
 	ct::save_mat(Z2, "Z2.txt");
 
 	///////////////////
@@ -363,6 +363,7 @@ void test_agg::test_im2col()
 		gpumat::matmul(vRes[i], g_W, g_vZ[i]);
 	}
 	gpumat::conv2::subsample(g_vZ, szOut, g_vY, g_vMask, szOut2);
+	ct::Size szK = g_vY[0].sz();
 
 	ct::Matf Y2, Mask2;
 
@@ -372,12 +373,25 @@ void test_agg::test_im2col()
 	ct::save_mat(Y2, "Y2.txt");
 	ct::save_mat(Mask2, "Mask2.txt");
 
+	gpumat::conv2::upsample(g_vY, K, g_vMask, szOut2, szOut, g_vZ);
+	gpumat::convert_to_mat(g_vZ[0], Y2);
+	ct::save_mat(Y2, "gZ2.txt");
+
 	for(int i = 0; i < 10; i++){
-		gpumat::conv2::upsample(g_vY, 3, g_vMask, szOut2, szOut, g_vZ);
+		gpumat::conv2::upsample(g_vY, K, g_vMask, szOut2, szOut, g_vZ);
 		gpumat::conv2::back_deriv(g_vZ, szOut, szA0, channels, szW, 1, g_vX2);
 	}
 	gpumat::convert_to_mat(g_vX2[0], Y2);
 	ct::save_mat(Y2, "g_Deriv.txt");
+
+	gpumat::conv2::vec2mat(g_vY, g_Y);
+	gpumat::convert_to_mat(g_Y, Y2);
+	ct::save_mat(Y2, "vec2mat.txt");
+
+	gpumat::conv2::mat2vec(g_Y, szK, g_vY);
+	gpumat::convert_to_mat(g_vY[0], Y2);
+	ct::save_mat(Y2, "mat2vec.txt");
+
 }
 
 void test_agg::test_conv()
@@ -451,22 +465,22 @@ void test_agg::test_conv_gpu()
 	std::vector< ct::Matf > Xs;
 	std::vector< gpumat::GpuMat > g_Xs, g_XsTest;
 	ct::Matf y, yp;
-	gpumat::GpuMat g_y, g_yTest;
+	gpumat::GpuMat g_y, g_yTest, g_tmp, g_red;
 
 	gpumat::GpuMat g_dy;
 
 	ShowMatrices sh;
 
-	ct::generator.seed(time(0));
+	ct::generator.seed(1);
 
 	TestCnv_gpu tcnv;
+//	rd.getTrain2(70, Xs, y);
 
 	for(int i = 0; i < 15000; ++i){
 
 		rd.getTrain2(70, Xs, y);
 
 		gpumat::convert_to_gpu(y, g_y);
-
 		conv_vec_to_gpu(Xs, g_Xs);
 
 		gpumat::GpuMat *pyp;
@@ -478,20 +492,24 @@ void test_agg::test_conv_gpu()
 		tcnv.backward(g_dy);
 
 		if((i % 10) == 0){
-			ct::Matf W1, W2;
-			gpumat::convert_to_mat(tcnv.cnv1.W[0], W1);
-			gpumat::convert_to_mat(tcnv.cnv2.W[0], W2);
-			sh.saveMat("cnv1.bmp", W1, tcnv.cnv1.szW, tcnv.cnv1.K, tcnv.cnv1.channels);
-			sh.saveMat("cnv2.bmp", W2, tcnv.cnv2.szW, tcnv.cnv2.K, tcnv.cnv2.channels);
-
 			ct::Matf dy;
-			gpumat::convert_to_mat(g_dy, dy);
-			ct::Matf dy2 = ct::elemwiseSqr(dy);
-			double sy2 = (double)dy2.sum()/dy2.rows;
+			gpumat::elemwiseSqr(g_dy, g_tmp);
+			gpumat::reduce(g_tmp, g_red);
+			gpumat::convert_to_mat(g_red, dy);
+			double sy2 = (double)dy.sum()/g_tmp.rows;
 			qDebug("pass %d: l2 = %f", i, sy2);
 		}
+//		continue;
 
 		if((i % 30) == 0){
+			{
+				ct::Matf W1, W2;
+				gpumat::convert_to_mat(tcnv.cnv1.W[0], W1);
+				gpumat::convert_to_mat(tcnv.cnv2.W[0], W2);
+				sh.saveMat("cnv1.bmp", W1, tcnv.cnv1.szW, tcnv.cnv1.K, tcnv.cnv1.channels);
+				sh.saveMat("cnv2.bmp", W2, tcnv.cnv2.szW, tcnv.cnv2.K, tcnv.cnv2.channels);
+			}
+
 			rd.getTrain2(500, Xs, y);
 			double l2, acc;
 
@@ -502,7 +520,6 @@ void test_agg::test_conv_gpu()
 			qDebug("train (batch=500) -> l2=%f,\tacc=%f", l2, acc);
 
 			l2 = 0; acc = 0;
-			Xs.clear();
 			y.fill(0);
 			rd.getTest2(500, Xs, y);
 
@@ -514,4 +531,47 @@ void test_agg::test_conv_gpu()
 		}
 	}
 
+}
+
+template< typename T >
+void check_zero(const ct::Mat_<T>& mat)
+{
+	ct::Mat_<T> tmp2;
+	tmp2 = ct::elemwiseSqr(mat);
+	assert(tmp2.sum() < 1e-6);
+}
+
+void test_agg::test_file()
+{
+	ct::Matf A0, Xc, W, B, A1, A2, tmp1, tmp2, tmp3, D, dSub1, dSub2, Mask;
+	ct::Size szOut;
+
+	qt_work_mat::q_load_mat("testPx26.txt", A0);
+	qt_work_mat::q_load_mat("testXc26.txt", Xc);
+	qt_work_mat::q_load_mat("testA126.txt", A1);
+	qt_work_mat::q_load_mat("testA226.txt", A2);
+	qt_work_mat::q_load_mat("testW.txt", W);
+	qt_work_mat::q_load_mat("testB.txt", B);
+	qt_work_mat::q_load_mat("testMask.txt", Mask);
+
+	qt_work_mat::q_load_mat("testD26.txt", D);
+	qt_work_mat::q_load_mat("testDSub26.txt", dSub1);
+	qt_work_mat::q_load_mat("testDSub2_26.txt", dSub2);
+
+	conv2::im2col(A0, ct::Size(32, 32), 3, ct::Size(5, 5), 1, tmp1, szOut);
+	check_zero(tmp1 - Xc);
+
+	tmp2 = Xc * W;
+	tmp2.biasPlus(B);
+	ct::v_relu(tmp2);
+	check_zero(tmp2 - A1);
+
+	conv2::subsample(tmp2, ct::Size(28, 28), tmp1, tmp3, szOut);
+	check_zero(tmp1 - A2);
+	check_zero(tmp3 - Mask);
+
+	conv2::upsample(D, 15, Mask, ct::Size(14, 14), ct::Size(28, 28), tmp1);
+	check_zero(tmp1 - dSub1);
+	ct::elemwiseMult(tmp1, ct::derivRelu(A1));
+	check_zero(tmp1 - dSub2);
 }

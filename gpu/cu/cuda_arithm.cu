@@ -144,7 +144,7 @@ __global__ void matmul(Mtx A, Mtx B, Mtx C)
 	T* DB = (T*)B.data;
 	T* DC = (T*)C.data;
 
-	float sC = 0;
+	T sC = 0;
 
 	if(row < A.rows && col < B.cols){
 		for(int i = 0; i < B.rows; i++){
@@ -170,7 +170,7 @@ __global__ void matmulT1(Mtx At, Mtx B, Mtx C)
 	T* DB = (T*)B.data;
 	T* DC = (T*)C.data;
 
-	float sC = 0;
+	T sC = 0;
 
 //	s += val1[j * At.cols + i]/*at(i, j)*/ * val2[j * B.cols + k];
 	if(row < At.cols && col < B.cols){
@@ -198,7 +198,7 @@ __global__ void matmulT2(Mtx A, Mtx Bt, Mtx C)
 	T* DB = (T*)Bt.data;
 	T* DC = (T*)C.data;
 
-	float sC = 0;
+	T sC = 0;
 
 //	s += val1[i * A.cols + j]/*at(i, j)*/ * val2[k * Bt.cols + j]/*at(j, k)*/;
 	if(row < A.rows && col < C.cols){

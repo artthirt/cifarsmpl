@@ -1,7 +1,23 @@
 #include "convnn2_gpu.h"
 #include "nn.h"
 
+#include "qt_work_mat.h"
+
 using namespace gpumat::conv2;
+
+//////////////////////////
+
+void save_vec(const std::vector< gpumat::GpuMat >& Dlt)
+{
+	for(size_t i = 0; i < Dlt.size(); ++i){
+		std::stringstream ss;
+		ss << "data/" << i << ".txt";
+		gpumat::save_gmat(Dlt[i], ss.str());
+	}
+}
+
+
+//////////////////////////
 
 convnn_gpu::convnn_gpu()
 {
@@ -60,14 +76,21 @@ void convnn_gpu::init(const ct::Size &_szA0, int _channels, int stride, int _K, 
 	W.resize(1);
 	B.resize(1);
 
+	gW.resize(1);
+	gB.resize(1);
+
 	float n = (float)1./szW.area();
+
 	for(size_t i = 0; i < W.size(); ++i){
-		ct::Matf Wi(rows, cols), Bi(1, K);
+		ct::Matf Wi(rows, cols), Bi(K, 1);
 		Wi.randn(0, n);
 		gpumat::convert_to_gpu(Wi, W[i]);
 		Bi.randn(0, n);
 		gpumat::convert_to_gpu(Bi, B[i]);
 	}
+
+	gW[0].resize(W[0]);
+	gB[0].resize(B[0]);
 
 	m_optim.init(W, B);
 }
@@ -118,43 +141,44 @@ void convnn_gpu::forward(const std::vector<gpumat::GpuMat> *_pX, gpumat::etypefu
 	}else{
 		szK = A1[0].sz();
 	}
+
+#if 0
+	if(channels == 3){
+		qt_work_mat::q_save_mat((*pX)[26], "testPx26.txt");
+		qt_work_mat::q_save_mat(Xc[26], "testXc26.txt");
+		qt_work_mat::q_save_mat(A1[26], "testA126.txt");
+		qt_work_mat::q_save_mat(A2[26], "testA226.txt");
+		qt_work_mat::q_save_mat(W[0], "testW.txt");
+		qt_work_mat::q_save_mat(B[0], "testB.txt");
+		qt_work_mat::q_save_mat(Mask[26], "testMask.txt");
+	}
+#endif
 }
 
 void convnn_gpu::backcnv(const std::vector<gpumat::GpuMat> &D, std::vector<gpumat::GpuMat> &DS)
 {
 	DA1.resize(A1.size());
+	for(size_t i = 0; i < D.size(); ++i){
+		switch (m_func) {
+			case ct::RELU:
+				gpumat::deriv_reLu(A1[i], DA1[i]);
+				break;
+			case ct::SIGMOID:
+				gpumat::deriv_sigmoid(A1[i], DA1[i]);
+				break;
+			case ct::TANH:
+				gpumat::deriv_tanh(A1[i], DA1[i]);
+				break;
+			default:
+				break;
+		}
+	}
 	if(D.data() != DS.data()){
 		for(size_t i = 0; i < D.size(); ++i){
-			switch (m_func) {
-				case ct::RELU:
-					gpumat::deriv_reLu(A1[i], DA1[i]);
-					break;
-				case ct::SIGMOID:
-					gpumat::deriv_sigmoid(A1[i], DA1[i]);
-					break;
-				case ct::TANH:
-					gpumat::deriv_tanh(A1[i], DA1[i]);
-					break;
-				default:
-					break;
-			}
 			gpumat::elemwiseMult(D[i], DA1[i], DS[i]);
 		}
 	}else{
 		for(size_t i = 0; i < D.size(); ++i){
-			switch (m_func) {
-				case ct::RELU:
-					gpumat::deriv_reLu(A1[i], DA1[i]);
-					break;
-				case ct::SIGMOID:
-					gpumat::deriv_sigmoid(A1[i], DA1[i]);
-					break;
-				case ct::TANH:
-					gpumat::deriv_tanh(A1[i], DA1[i]);
-					break;
-				default:
-					break;
-			}
 			gpumat::elemwiseMult(DS[i], DA1[i]);
 		}
 	}
@@ -166,59 +190,77 @@ void convnn_gpu::backward(const std::vector<gpumat::GpuMat> &D, bool last_level)
 		throw new std::invalid_argument("vector D not complies saved parameters");
 	}
 
-	dSub.resize(D.size());
+	dSub2.resize(D.size());
 
 	if(m_use_pool){
+		dSub.resize(D.size());
 		gpumat::conv2::upsample(D, K, Mask, szA2, szA1, dSub);
-		backcnv(dSub, dSub);
+		backcnv(dSub, dSub2);
+
+//		save_vec(dSub);
+
 	}else{
-		backcnv(D, dSub);
+		backcnv(D, dSub2);
 	}
+
+#if 0
+	if(channels == 3){
+		qt_work_mat::q_save_mat(D[26], "testD26.txt");
+		qt_work_mat::q_save_mat(dSub[26], "testDSub26.txt");
+		qt_work_mat::q_save_mat(dSub2[26], "testDSub2_26.txt");
+		//save_vec(dSub2);
+	}
+#endif
 
 	vgW.resize(D.size());
 	vgB.resize(D.size());
 	for(size_t i = 0; i < D.size(); ++i){
-		gpumat::GpuMat& Xci = Xc[i];
-		gpumat::GpuMat& dSubi = dSub[i];
-		gpumat::GpuMat& Wi = vgW[i];
-		gpumat::GpuMat& vgBi = vgB[i];
-		gpumat::matmulT1(Xci, dSubi, Wi);
+		gpumat::GpuMat& Xci		= Xc[i];
+		gpumat::GpuMat& dSubi	= dSub2[i];
+		gpumat::GpuMat& Wi		= vgW[i];
+		gpumat::GpuMat& vgBi	= vgB[i];
+		gpumat::matmulT1_shared(Xci, dSubi, Wi);
 
-//		gB.swap_dims();
-		sumRows(dSubi, vgBi, 1.f / dSubi.rows);
-//		gB.swap_dims();
-
-//		vgBi = (ct::sumRows(dSubi)) * (1.f/dSubi.rows);
-		//Wi *= (1.f/dSubi.total());
-		//vgBi.swap_dims();
+		gpumat::mulval(Wi, (double)1. / dSubi.rows);
+//		gpumat::save_gmat(Xci, "Xgi.txt");
+//		gpumat::save_gmat(dSubi, "Dgi.txt");
+//		gpumat::save_gmat(Wi, "Wgi.txt");
+		vgBi.swap_dims();
+		sumRows(dSubi, vgBi, (double)1. / dSubi.rows);
+		vgBi.swap_dims();
 	}
-	gW.resize(1);
-	gB.resize(1);
-	gW[0].resize(W[0]);
+//	gpumat::save_gmat(vgW[0], "Wg1.txt");
+//	gpumat::save_gmat(vgW[1], "Wg2.txt");
+//	gpumat::save_gmat(vgW[2], "Wg3.txt");
+
 	gW[0].zeros();
-	gB[0].resize(B[0]);
 	gB[0].zeros();
 	for(size_t i = 0; i < D.size(); ++i){
 		gpumat::add(gW[0], vgW[i]);
 		gpumat::add(gB[0], vgB[i]);
 	}
-	gpumat::mulval(gW[0], 1./(D.size()));
-	gpumat::mulval(gB[0], 1./(D.size()));
+	gpumat::mulval(gW[0], (double)1./(D.size()));
+	gpumat::mulval(gB[0], (double)1./(D.size()));
 
+
+#if 0
+	if(channels == 3){
+		save_vec(vgW);
+		gpumat::save_gmat(gW[0], "Wg.txt");
+	}
+#endif
 	if(!last_level){
 		Dlt.resize(D.size());
-
-		//ct::Mat_<T> Wf;
-		//flipW(W, szW, channels, Wf);
 
 		Dc.resize(D.size());
 		for(size_t i = 0; i < D.size(); ++i){
 			gpumat::GpuMat& Dci = Dc[i];
-			gpumat::matmulT2(dSub[i], W[0], Dci);
-			//ct::Size sz = (*pX)[i].size();
-			//Dlt[i].set_dims(sz);
+			gpumat::matmulT2(dSub2[i], W[0], Dci);
 		}
 		back_deriv(Dc, szA1, szA0, channels, szW, stride, Dlt);
+		//gpumat::save_gmat(dSub[0], "dSub.txt");
+		//gpumat::save_gmat(Dlt[0], "Dltgi.txt");
+		//gpumat::save_gmat(Dc[0], "Dc.txt");
 	}
 
 	m_optim.pass(gW, gB, W, B);
@@ -282,7 +324,7 @@ extern "C"
 void cuda_vec2mat(const std::vector< gpumat::GpuMat >& vec, gpumat::GpuMat& mat);
 
 extern "C"
-void cuda_mat2vec(const gpumat::GpuMat& mat, std::vector< gpumat::GpuMat >& vec);
+void cuda_mat2vec(const gpumat::GpuMat& mat, const ct::Size& sz, std::vector< gpumat::GpuMat >& vec);
 
 extern "C"
 void cuda_upsample2(const gpumat::GpuMat &Y, const gpumat::GpuMat &Mask, const ct::Size &szO,
@@ -441,7 +483,7 @@ void gpumat::conv2::mat2vec(const gpumat::GpuMat &mat, const ct::Size &szOut, st
 		vec[i].resize(szOut.height, szOut.width, mat.type);
 	}
 
-	cuda_mat2vec(mat, vec);
+	cuda_mat2vec(mat, szOut, vec);
 }
 
 void gpumat::conv2::upsample(const gpumat::GpuMat &Y, int K, const gpumat::GpuMat &Mask, const ct::Size &szO,

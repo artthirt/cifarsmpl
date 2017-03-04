@@ -43,14 +43,12 @@ __device__ void _im2cols(const Mtx& X, const ct::Size& szA0, int channels, const
 
 		T *dX = (T*)X.data;
 		T *dR = (T*)Res.data;
-		for(int c = 0; c < channels; ++c){
-			T *dXi = &dX[c * szA0area];
+		T *dXi = &dX[c * szA0area];
 
-			for(int a = 0; a < szW.height; ++a){
-				for(int b = 0; b < szW.width; ++b){
-					int col2 = c * szWarea + (a * szW.width + b);
-					dR[row2 * Res.cols + col2] = dXi[(y0 + a) * szA0.width + (x0 + b)];
-				}
+		for(int a = 0; a < szW.height; ++a){
+			for(int b = 0; b < szW.width; ++b){
+				int col2 = c * szWarea + (a * szW.width + b);
+				dR[row2 * Res.cols + col2] = dXi[(y0 + a) * szA0.width + (x0 + b)];
 			}
 		}
 	}
@@ -99,17 +97,17 @@ __device__ void _back_deriv(const Mtx& Delta,
 		int y0 = y * stride;
 		int row2 = y * szOut.width + x;
 
+		int szA0area = szA0.width * szA0.height;
 		int szWarea = szW.width * szW.height;
 
 		T *dX = (T*)X.data;
 		T *dR = (T*)Delta.data;
+		T *dXi = &dX[c * szA0area];
 
 		for(int a = 0; a < szW.height; ++a){
 			for(int b = 0; b < szW.width; ++b){
 				int col2 = c * szWarea + (a * szW.width + b);
-				if(y0 + a < szA0.height && x0 + b < szA0.width){
-					dX[(y0 + a) * szA0.width + (x0 + b)] += dR[row2 * Delta.cols + col2];
-				}
+				dXi[(y0 + a) * szA0.width + (x0 + b)] += dR[row2 * Delta.cols + col2];
 			}
 		}
 	}
@@ -232,7 +230,7 @@ __device__ void _upsample(const Mtx &Y,
 	int szOutArea = szO.width * szO.height;
 	int all = szOutArea * K;
 
-	const int stride = 2;
+	int stride = 2;
 
 	if(col < all){
 		int k = col / szOutArea;
@@ -241,14 +239,14 @@ __device__ void _upsample(const Mtx &Y,
 		int y = offset / szO.width;
 		int x = offset - y * szO.width;
 
-		T *dX = (T*)X.data + k;
-		T* dM = (T*)Mask.data + k;
-		T *dY = (T*)Y.data + k;
+		T *dX = (T*)(X.data) + k;
+		T* dM = (T*)(Mask.data) + k;
+		T *dY = (T*)(Y.data) + k;
 
 		int y0 = y * stride;
 		int x0 = x * stride;
 
-		T val = dY[(y * szO.width + x) * Y.cols];
+		T val = dY[(y * szO.width + x) * K];
 
 		for(int a = 0; a < stride; ++a){
 			for(int b = 0; b < stride; ++b){
@@ -302,7 +300,7 @@ __global__ void vec2mat(SmallMtxArray vec, Mtx mat)
 }
 
 template< typename T >
-__global__ void mat2vec(Mtx mat, SmallMtxArray vec)
+__global__ void mat2vec(Mtx mat, ct::Size sz, SmallMtxArray vec)
 {
 	int col = threadIdx.x + blockDim.x * blockIdx.x;
 	int row = threadIdx.y + blockDim.y * blockIdx.y;
@@ -311,7 +309,10 @@ __global__ void mat2vec(Mtx mat, SmallMtxArray vec)
 		T* dV = (T*)vec.mtx[row].data;
 		T* dM = (T*)mat.data;
 
-		dV[col] = dM[row * mat.cols + col];
+		int y = col/sz.width;
+		int x = col - y * sz.width;
+
+		dV[y * sz.width + x] = dM[row * mat.cols + col];
 	}
 }
 
@@ -508,8 +509,8 @@ void cuda_upsample2vec(const std::vector<gpumat::GpuMat> &Y, const std::vector<g
 extern "C"
 void cuda_vec2mat(const std::vector< GpuMat >& vec, GpuMat& mat)
 {
-	int rows = (int)vec.size();
-	int cols = vec[0].total();
+	int rows = mat.rows;
+	int cols = mat.cols;
 
 	int x1 = cols / BLOCKSIZE + 1;
 	int x2 = rows / BLOCKSIZE + 1;
@@ -527,7 +528,7 @@ void cuda_vec2mat(const std::vector< GpuMat >& vec, GpuMat& mat)
 }
 
 extern "C"
-void cuda_mat2vec(const GpuMat& mat, std::vector< GpuMat >& vec)
+void cuda_mat2vec(const GpuMat& mat, const ct::Size& sz, std::vector< GpuMat >& vec)
 {
 	int rows = mat.rows;
 	int cols = mat.cols;
@@ -539,10 +540,10 @@ void cuda_mat2vec(const GpuMat& mat, std::vector< GpuMat >& vec)
 
 	switch (vec[0].type) {
 		case GPU_DOUBLE:
-			internal::mat2vec<double> <<<dimGrid, dimBlock>>>(mat, vec);
+			internal::mat2vec<double> <<<dimGrid, dimBlock>>>(mat, sz, vec);
 			break;
 		case GPU_FLOAT:
-			internal::mat2vec<float> <<<dimGrid, dimBlock>>>(mat, vec);
+			internal::mat2vec<float> <<<dimGrid, dimBlock>>>(mat, sz, vec);
 			break;
 	}
 }
