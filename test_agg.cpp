@@ -141,9 +141,9 @@ private:
 class TestCnv_gpu{
 public:
 	TestCnv_gpu(){
-		mlp.resize(3);
-		int K1 = 15;
-		int K2 = 35;
+		mlp.resize(4);
+		int K1 = 64;
+		int K2 = 16;
 
 		szA0 = ct::Size(cifar_reader::WidthIM, cifar_reader::HeightIM);
 		szW = ct::Size(5, 5);
@@ -161,6 +161,12 @@ public:
 
 	std::vector< gpumat::GpuMat > Xout, Xout2;
 
+	void setAlpha(double val){
+		cnv1.setAlpha(val);
+		cnv2.setAlpha(val);
+		optim.setAlpha(val);
+	}
+
 	void forward(const std::vector< gpumat::GpuMat > &Xs, gpumat::GpuMat **yp, bool dropout = true)
 	{
 		cnv1.forward(&Xs, gpumat::RELU);
@@ -170,25 +176,29 @@ public:
 		gpumat::conv2::vec2mat(cnv2.A2, X1);
 
 		if(!mlp[0].isInit()){
-			mlp[0].init(X1.cols, 700, gpumat::GPU_FLOAT);
-			mlp[1].init(700, 600, gpumat::GPU_FLOAT);
-			mlp[2].init(600, 10, gpumat::GPU_FLOAT);
+			mlp[0].init(X1.cols, 512, gpumat::GPU_FLOAT);
+			mlp[1].init(512, 512, gpumat::GPU_FLOAT);
+			mlp[2].init(512, 256, gpumat::GPU_FLOAT);
+			mlp[3].init(256, 10, gpumat::GPU_FLOAT);
 			optim.init(mlp);
 		}
 
-		mlp[0].setDropout(dropout, 0.98f);
-		mlp[1].setDropout(dropout, 0.98f);
+		mlp[0].setDropout(dropout, 0.85f);
+		mlp[1].setDropout(dropout, 0.85f);
+		mlp[2].setDropout(dropout, 0.85f);
 
 		mlp[0].forward(&X1, gpumat::RELU);
 		mlp[1].forward(&mlp[0].A1, gpumat::RELU);
-		mlp[2].forward(&mlp[1].A1, gpumat::SOFTMAX);
+		mlp[2].forward(&mlp[1].A1, gpumat::RELU);
+		mlp[3].forward(&mlp[2].A1, gpumat::SOFTMAX);
 
-		*yp = &mlp[2].A1;
+		*yp = &mlp[3].A1;
 	}
 
 	void backward(const gpumat::GpuMat& dy)
 	{
-		mlp[2].backward(dy);
+		mlp[3].backward(dy);
+		mlp[2].backward(mlp[3].DltA0);
 		mlp[1].backward(mlp[2].DltA0);
 		mlp[0].backward(mlp[1].DltA0);
 
@@ -476,14 +486,18 @@ void test_agg::test_conv_gpu()
 	TestCnv_gpu tcnv;
 //	rd.getTrain2(70, Xs, y);
 
-	for(int i = 0; i < 15000; ++i){
+	for(int i = 0; i < 25000; ++i){
 
-		rd.getTrain2(70, Xs, y);
+		rd.getTrain2(100, Xs, y);
 
 		gpumat::convert_to_gpu(y, g_y);
 		conv_vec_to_gpu(Xs, g_Xs);
 
 		gpumat::GpuMat *pyp;
+
+		if(i > 10000){
+			tcnv.setAlpha(0.0001);
+		}
 
 		tcnv.forward(g_Xs, &pyp);
 
@@ -501,7 +515,7 @@ void test_agg::test_conv_gpu()
 		}
 //		continue;
 
-		if((i % 30) == 0){
+		if((i % 50) == 0){
 			{
 				ct::Matf W1, W2;
 				gpumat::convert_to_mat(tcnv.cnv1.W[0], W1);

@@ -41,7 +41,7 @@ void ShowMatrices::saveMat(const QString &name, const ct::Matf &mat, const ct::S
 	m_K = K;
 	m_channels = channels;
 	mat.copyTo(m_mat);
-	save2Image(name, 900, 900);
+	save2Image(name, 2048, 2048);
 }
 
 void ShowMatrices::save2Image(const QString &name, int width, int height)
@@ -94,7 +94,7 @@ void ShowMatrices::paint_cast(QPainter &painter, int width, int height, int offs
 			painter.setPen(Qt::black);
 			draw_W(painter, m, x, y, wd, m1, m2);
 		}else{
-			if(0/*m_channels == 3*/){
+			if(m_channels == 3){
 				ct::Matf R, G, B;
 				R = m.getRows(0 * m_sz.area(), m_sz.area());
 				G = m.getRows(1 * m_sz.area(), m_sz.area());
