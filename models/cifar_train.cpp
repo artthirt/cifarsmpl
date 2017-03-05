@@ -200,7 +200,7 @@ void cifar_train::forward(const std::vector< ct::Matf > &X, ct::Matf &a_out,
 		return;
 
 	if(use_gpu && m_gpu_train.isInit()){
-//		m_gpu_train.forward(X, a_out, use_drop, p);
+		m_gpu_train.forward(X, a_out, use_drop, p);
 		return;
 	}
 
@@ -345,7 +345,7 @@ void cifar_train::pass(int batch, bool use_gpu)
 	}
 
 	if(use_gpu && m_gpu_train.isInit()){
-//		m_gpu_train.pass(Xs, y);
+		m_gpu_train.pass(Xs, y);
 		return;
 	}
 
@@ -410,21 +410,10 @@ void cifar_train::getEstimate(const std::vector<ct::Matf> &Xs, ct::Matf &y,
 
 void getSlice(const std::vector<ct::Matf> &Xs, int first, int last, std::vector<ct::Matf> &Xsi)
 {
-	Xsi.resize(Xs.size());
+	Xsi.resize(last - first);
 
-	for(size_t i = 0; i < Xs.size(); ++i){
-		const ct::Matf& mat = Xs[i];
-		ct::Matf &mati = Xsi[i];
-		mati.setSize(last - first, mat.cols);
-		float *dM = mat.ptr();
-		float *dMi = mati.ptr();
-#pragma omp parallel for
-		for(int l = 0; l < mati.rows; ++l){
-			int j = first + l;
-			for(int k = 0; k < mati.cols; ++k){
-				dMi[l * mati.cols + k] = dM[j * mat.cols + k];
-			}
-		}
+	for(size_t i = 0; i < Xsi.size(); ++i){
+		Xsi[i] = Xs[first + i];
 	}
 }
 
@@ -582,7 +571,7 @@ uint cifar_train::iteration_gpu() const
 uint cifar_train::inputToMlp(bool use_gpu) const
 {
 	if(use_gpu)
-		return 0;
+		return m_gpu_train.outputFeatures();
 	else
 		return m_conv.back().outputFeatures();
 }

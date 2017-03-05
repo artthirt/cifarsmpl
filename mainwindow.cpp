@@ -172,8 +172,8 @@ void MainWindow::on_pb_pass_clicked(bool checked)
 void MainWindow::on_chb_gpu_clicked(bool checked)
 {
 	if(checked && m_cifar.isBinDataExists()){
-//		m_train.init_gpu();
-//		ui->pte_logs->appendPlainText(QString("GPU: count of input to MLP %1").arg(m_train.inputToMlp(true)));
+		m_train.init_gpu();
+		ui->pte_logs->appendPlainText(QString("GPU: count of input to MLP %1").arg(m_train.inputToMlp(true)));
 	}
 }
 

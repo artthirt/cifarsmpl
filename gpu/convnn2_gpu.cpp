@@ -266,6 +266,18 @@ void convnn_gpu::backward(const std::vector<gpumat::GpuMat> &D, bool last_level)
 	m_optim.pass(gW, gB, W, B);
 }
 
+void convnn_gpu::write(std::fstream &fs)
+{
+	gpumat::write_fs(fs, W[0]);
+	gpumat::write_fs(fs, B[0]);
+}
+
+void convnn_gpu::read(std::fstream &fs)
+{
+	gpumat::read_fs(fs, W[0]);
+	gpumat::read_fs(fs, B[0]);
+}
+
 ///////////////////////////////
 ///////////////////////////////
 ///////////////////////////////

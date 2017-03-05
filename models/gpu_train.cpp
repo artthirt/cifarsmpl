@@ -63,6 +63,10 @@ void gpu_train::setAlphaCnv(double alpha)
 	////////////////////
 	/// need realization
 	////////////////////
+
+	for(size_t i = 0; i < m_conv.size(); ++i){
+		m_conv[i].setAlpha(alpha);
+	}
 }
 
 void gpu_train::init()
@@ -79,7 +83,18 @@ void gpu_train::init()
 		////////////////////
 		/// need realization
 		////////////////////
-		return;
+		m_conv.resize(m_cnvlayers.size());
+
+		int input = ::channels;
+		ct::Size sz = m_szA0;
+		for(size_t i = 0; i < m_conv.size(); ++i){
+			gpumat::conv2::convnn_gpu& cnv = m_conv[i];
+			ct::Size szW(m_cnvweights[i], m_cnvweights[i]);
+			bool pool = m_cnvpooling.size() > i? m_cnvpooling[i] : true;
+			cnv.init(sz, input, 1, m_cnvlayers[i], szW, pool);
+			input = m_cnvlayers[i];
+			sz = cnv.szOut();
+		}
 	}
 
 	//// 2
@@ -87,7 +102,7 @@ void gpu_train::init()
 	{
 		m_mlp.resize(m_layers.size());
 
-		int input = 0;
+		int input = m_conv.back().outputFeatures();
 
 		qDebug("MLP: input features = %d", input);
 
@@ -179,6 +194,20 @@ void gpu_train::forward(const std::vector<gpumat::GpuMat> &X,
 ////////////////////
 /// need realization
 ////////////////////
+	if(use_drop)
+		setDropout(p, 4);
+	else
+		clearDropout();
+
+	std::vector< gpumat::GpuMat > *pvX = (std::vector< gpumat::GpuMat >*)&X;
+
+	for(int i = 0; i < m_conv.size(); ++i){
+		gpumat::conv2::convnn_gpu& cnv = m_conv[i];
+		cnv.forward(pvX, gpumat::RELU);
+		pvX = &cnv.A2;
+	}
+
+	gpumat::conv2::vec2mat(m_conv.back().A2, m_Xout);
 
 	gpumat::GpuMat *pA = &m_Xout;
 
@@ -234,6 +263,18 @@ void gpu_train::pass()
 		pD = &mlp.DltA0;
 	}
 
+	gpumat::conv2::mat2vec(m_mlp[0].DltA0, m_conv.back().szK, m_splitD);
+
+	std::vector< gpumat::GpuMat >* pX = &m_splitD;
+
+	for(int i = m_conv.size() - 1; i > -1; --i){
+		gpumat::conv2::convnn_gpu& cnv = m_conv[i];
+
+		cnv.backward(*pX, i == 0);
+
+		pX = &cnv.Dlt;
+	}
+
 	m_optim.pass(m_mlp);
 }
 
@@ -284,6 +325,10 @@ bool gpu_train::loadFromFile(const std::string &fn)
 	////////////////////
 	/// need realization
 	////////////////////
+	for(size_t i = 0; i < m_conv.size(); ++i){
+		gpumat::conv2::convnn_gpu& cnv = m_conv[i];
+		cnv.read(fs);
+	}
 
 	for(size_t i = 0; i < m_mlp.size(); ++i){
 		m_mlp[i].read(fs);
@@ -313,11 +358,22 @@ void gpu_train::saveToFile(const std::string &fn)
 	/// need realization
 	////////////////////
 
+	for(size_t i = 0; i < m_conv.size(); ++i){
+		gpumat::conv2::convnn_gpu& cnv = m_conv[i];
+		cnv.write(fs);
+	}
+
 	for(size_t i = 0; i < m_mlp.size(); ++i){
 		m_mlp[i].write(fs);
 	}
 
-//	qt_work_mat::q_save_mat(m_mlp.back().W, "W0back.txt");
+	//	qt_work_mat::q_save_mat(m_mlp.back().W, "W0back.txt");
+}
+
+uint gpu_train::outputFeatures() const
+{
+	const gpumat::conv2::convnn_gpu& cnv = m_conv.back();
+	return cnv.outputFeatures();
 }
 
 void gpu_train::setDropout(float p, int layers)

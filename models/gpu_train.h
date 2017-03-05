@@ -4,6 +4,7 @@
 #include "custom_types.h"
 #include "gpu_mlp.h"
 #include "convnn_gpu.h"
+#include "convnn2_gpu.h"
 
 class gpu_train
 {
@@ -37,6 +38,8 @@ public:
 	bool loadFromFile(const std::string& fn);
 	void saveToFile(const std::string& fn);
 
+	uint outputFeatures() const;
+
 private:
 	std::vector< int > m_layers;
 	std::vector< int > m_cnvlayers;
@@ -45,6 +48,7 @@ private:
 	ct::Size m_szA0;
 	bool m_init;
 
+	std::vector< gpumat::conv2::convnn_gpu > m_conv;
 	std::vector< gpumat::mlp > m_mlp;
 	gpumat::MlpOptim m_optim;
 

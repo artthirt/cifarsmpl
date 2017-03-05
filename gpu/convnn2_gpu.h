@@ -64,6 +64,9 @@ public:
 
 	void backward(const std::vector< gpumat::GpuMat >& D, bool last_level = false);
 
+	void write(std::fstream& fs);
+	void read(std::fstream& fs);
+
 private:
 	bool m_use_pool;
 	gpumat::etypefunction m_func;
