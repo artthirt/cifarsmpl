@@ -15,6 +15,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	m_batch = 50;
 	m_delimiter = 50;
 	m_delay = 5;
+	m_wid = 0;
 
 	connect(&m_timer, SIGNAL(timeout()), this, SLOT(onTimeout()));
 	m_timer.start(m_delay);
@@ -146,7 +147,11 @@ void MainWindow::update_prediction()
 
 	ui->wcifar->updatePredictfromIndex(pr);
 
-	ui->wdgW->setMat(m_train.cnvW(m_wid), m_train.szW(m_wid), m_train.Kernels(m_wid), m_train.channels(m_wid));
+	bool b = ui->chb_gpu->isChecked();
+	ui->wdgW->setMat(m_train.cnvW(m_wid, b),
+					 m_train.szW(m_wid, b),
+					 m_train.Kernels(m_wid, b),
+					 m_train.channels(m_wid, b));
 }
 
 void MainWindow::update_statistics()
@@ -252,12 +257,9 @@ void MainWindow::on_sb_wid_valueChanged(int arg1)
 {
 	m_wid = arg1;
 
-	if(ui->chb_gpu->isChecked()){
-		ui->wdgW->setMat(m_train.cnvW(m_wid, true),
-						 m_train.szW(m_wid, true),
-						 m_train.Kernels(m_wid, true),
-						 m_train.channels(m_wid, true));
-	}else{
-		ui->wdgW->setMat(m_train.cnvW(m_wid), m_train.szW(m_wid), m_train.Kernels(m_wid), m_train.channels(m_wid));
-	}
+	bool b = ui->chb_gpu->isChecked();
+	ui->wdgW->setMat(m_train.cnvW(m_wid, b),
+					 m_train.szW(m_wid, b),
+					 m_train.Kernels(m_wid, b),
+					 m_train.channels(m_wid, b));
 }

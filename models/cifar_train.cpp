@@ -615,6 +615,7 @@ ct::Matf cifar_train::cnvW(int index, bool use_gpu)
 		gpumat::GpuMat& gW = m_gpu_train.conv()[index].W[0];
 		ct::Matf W;
 		gpumat::convert_to_mat(gW, W);
+		return W;
 //		res.resize(m_gpu_train.cnv(index).size());
 //		std::vector< std::vector< gpumat::convnn > > &cnv = m_gpu_train.cnv(index);
 
