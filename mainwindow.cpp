@@ -252,5 +252,12 @@ void MainWindow::on_sb_wid_valueChanged(int arg1)
 {
 	m_wid = arg1;
 
-	ui->wdgW->setMat(m_train.cnvW(m_wid), m_train.szW(m_wid), m_train.Kernels(m_wid), m_train.channels(m_wid));
+	if(ui->chb_gpu->isChecked()){
+		ui->wdgW->setMat(m_train.cnvW(m_wid, true),
+						 m_train.szW(m_wid, true),
+						 m_train.Kernels(m_wid, true),
+						 m_train.channels(m_wid, true));
+	}else{
+		ui->wdgW->setMat(m_train.cnvW(m_wid), m_train.szW(m_wid), m_train.Kernels(m_wid), m_train.channels(m_wid));
+	}
 }

@@ -40,6 +40,8 @@ public:
 
 	uint outputFeatures() const;
 
+	std::vector<gpumat::conv2::convnn_gpu> &conv();
+
 private:
 	std::vector< int > m_layers;
 	std::vector< int > m_cnvlayers;

@@ -376,6 +376,11 @@ uint gpu_train::outputFeatures() const
 	return cnv.outputFeatures();
 }
 
+std::vector<gpumat::conv2::convnn_gpu> &gpu_train::conv()
+{
+	return m_conv;
+}
+
 void gpu_train::setDropout(float p, int layers)
 {
 	for(int i = 0; i < std::min(layers, (int)m_mlp.size() - 1); ++i){

@@ -612,6 +612,9 @@ ct::Matf cifar_train::cnvW(int index, bool use_gpu)
 	if(!use_gpu){
 		return m_conv[index].W;
 	}else{
+		gpumat::GpuMat& gW = m_gpu_train.conv()[index].W[0];
+		ct::Matf W;
+		gpumat::convert_to_mat(gW, W);
 //		res.resize(m_gpu_train.cnv(index).size());
 //		std::vector< std::vector< gpumat::convnn > > &cnv = m_gpu_train.cnv(index);
 
@@ -628,27 +631,33 @@ ct::Matf cifar_train::cnvW(int index, bool use_gpu)
 	return ct::Matf();
 }
 
-ct::Size &cifar_train::szW(int index)
+ct::Size &cifar_train::szW(int index, bool use_gpu)
 {
 	if(index >= m_cnvlayers.size())
 		index = (int)m_cnvlayers.size() - 1;
 
+	if(use_gpu)
+		return m_gpu_train.conv()[index].szW;
 	return m_conv[index].szW;
 }
 
-int cifar_train::Kernels(int index)
+int cifar_train::Kernels(int index, bool use_gpu)
 {
 	if(index >= m_cnvlayers.size())
 		index = (int)m_cnvlayers.size() - 1;
 
+	if(use_gpu)
+		return m_gpu_train.conv()[index].K;
 	return m_conv[index].K;
 }
 
-int cifar_train::channels(int index)
+int cifar_train::channels(int index, bool use_gpu)
 {
 	if(index >= m_cnvlayers.size())
 		index = (int)m_cnvlayers.size() - 1;
 
+	if(use_gpu)
+		return m_gpu_train.conv()[index].channels;
 	return m_conv[index].channels;
 }
 
