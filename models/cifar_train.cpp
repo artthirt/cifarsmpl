@@ -41,7 +41,7 @@ void rotate_data(int w, int h, T angle, T *X, std::vector<T> &d)
 
 	std::fill(d.begin(), d.end(), -1);
 
-	T delta = 0.4 * angle * angle;
+//	T delta = 0.4 * angle * angle;
 
 	for(int y = 0; y < h; y++){
 		for(int x = 0; x < w; x++){
@@ -49,27 +49,27 @@ void rotate_data(int w, int h, T angle, T *X, std::vector<T> &d)
 			T x1 = x - cw;
 			T y1 = y - ch;
 
-			int nx0 = (x1 * cos(angle) + y1 * sin(angle));
-			int ny0 = (-x1 * sin(angle) + y1 * cos(angle));
-			int nx1 = (x1 * cos(angle + delta) + y1 * sin(angle + delta));
-			int ny1 = (-x1 * sin(angle + delta) + y1 * cos(angle + delta));
-			int nx2 = (x1 * cos(angle - delta) + y1 * sin(angle - delta));
-			int ny2 = (-x1 * sin(angle - delta) + y1 * cos(angle - delta));
+			int nx0 = std::round(x1 * cos(angle) + y1 * sin(angle));
+			int ny0 = std::round(-x1 * sin(angle) + y1 * cos(angle));
+//			int nx1 = (x1 * cos(angle + delta) + y1 * sin(angle + delta));
+//			int ny1 = (-x1 * sin(angle + delta) + y1 * cos(angle + delta));
+//			int nx2 = (x1 * cos(angle - delta) + y1 * sin(angle - delta));
+//			int ny2 = (-x1 * sin(angle - delta) + y1 * cos(angle - delta));
 			nx0 += cw; ny0 += ch;
-			nx1 += cw; ny1 += ch;
-			nx2 += cw; ny2 += ch;
+//			nx1 += cw; ny1 += ch;
+//			nx2 += cw; ny2 += ch;
 			int ix0 = nx0, iy0 = ny0;
-			int ix1 = nx1, iy1 = ny1;
-			int ix2 = nx2, iy2 = ny2;
+//			int ix1 = nx1, iy1 = ny1;
+//			int ix2 = nx2, iy2 = ny2;
 			if(ix0 >= 0 && ix0 < w && iy0 >= 0 && iy0 < h){
 				d[iy0 * w + ix0] = c;
 			}
-			if(ix1 >= 0 && ix1 < w && iy1 >= 0 && iy1 < h){
-				d[iy1 * w + ix1] = c;
-			}
-			if(ix2 >= 0 && ix2 < w && iy2 >= 0 && iy2 < h){
-				d[iy2 * w + ix2] = c;
-			}
+//			if(ix1 >= 0 && ix1 < w && iy1 >= 0 && iy1 < h){
+//				d[iy1 * w + ix1] = c;
+//			}
+//			if(ix2 >= 0 && ix2 < w && iy2 >= 0 && iy2 < h){
+//				d[iy2 * w + ix2] = c;
+//			}
 //			if(ix + 1 >= 0 && ix + 1 < w && iy >= 0 && iy < h){
 //				d[iy * w + ix + 1] = c;
 //			}
@@ -318,9 +318,9 @@ void cifar_train::randX(std::vector< ct::Matf > &X, std::vector<ct::Vec3f> &vals
 			rotate_data<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, ang, dX3, d);
 		}
 
-//		translate<float>(x, y, cifar_reader::WidthIM, cifar_reader::HeightIM, dX1, d);
-//		translate<float>(x, y, cifar_reader::WidthIM, cifar_reader::HeightIM, dX2, d);
-//		translate<float>(x, y, cifar_reader::WidthIM, cifar_reader::HeightIM, dX3, d);
+		translate<float>(x, y, cifar_reader::WidthIM, cifar_reader::HeightIM, dX1, d);
+		translate<float>(x, y, cifar_reader::WidthIM, cifar_reader::HeightIM, dX2, d);
+		translate<float>(x, y, cifar_reader::WidthIM, cifar_reader::HeightIM, dX3, d);
 
 //		saveIm(dX1, dX2, dX3, cifar_reader::WidthIM, cifar_reader::HeightIM);
 	}
