@@ -31,6 +31,13 @@ void convnn_gpu::setAlpha(double val)
 	m_optim.setAlpha(val);
 }
 
+std::vector<gpumat::GpuMat> &convnn_gpu::XOut()
+{
+	if(m_use_pool)
+		return A2;
+	return A1;
+}
+
 std::vector<gpumat::GpuMat> &convnn_gpu::XOut1()
 {
 	return A1;
@@ -39,6 +46,11 @@ std::vector<gpumat::GpuMat> &convnn_gpu::XOut1()
 std::vector<gpumat::GpuMat> &convnn_gpu::XOut2()
 {
 	return A2;
+}
+
+bool convnn_gpu::use_pool() const
+{
+	return m_use_pool;
 }
 
 int convnn_gpu::outputFeatures() const
@@ -398,7 +410,7 @@ void gpumat::conv2::back_deriv(const gpumat::GpuMat &Delta,
 	if(Delta.empty() || ! channels || !szA0.area() || !szW.area() || !stride)
 		throw new std::invalid_argument("im2cols: empty parameters");
 
-	X.resize(1, channels * szA0.area(), Delta.type);
+	X.resize(szA0.area(), channels, Delta.type);
 	X.zeros();
 
 	cuda_back_deriv(Delta, szOut, szA0, channels, szW, stride, X);
@@ -413,10 +425,9 @@ void gpumat::conv2::back_deriv(const std::vector<gpumat::GpuMat> &Delta, const c
 	X.resize(Delta.size());
 
 	int type = Delta[0].type;
-	int area = channels * szA0.area();
 
 	for(size_t i = 0; i < X.size(); ++i){
-		X[i].resize(1, area, type);
+		X[i].resize(szA0.area(), channels, type);
 		X[i].zeros();
 	}
 

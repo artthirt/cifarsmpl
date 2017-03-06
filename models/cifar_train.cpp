@@ -217,7 +217,7 @@ void cifar_train::forward(const std::vector< ct::Matf > &X, ct::Matf &a_out,
 		for(int i = 0; i < m_conv.size(); ++i){
 			conv2::convnn<float>& cnv = m_conv[i];
 			cnv.forward(pvX, ct::RELU);
-			pvX = &cnv.A2;
+			pvX = &cnv.XOut();
 		}
 
 		conv2::vec2mat(m_conv.back().A2, m_X_out);
@@ -318,9 +318,9 @@ void cifar_train::randX(std::vector< ct::Matf > &X, std::vector<ct::Vec3f> &vals
 			rotate_data<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, ang, dX3, d);
 		}
 
-		translate<float>(x, y, cifar_reader::WidthIM, cifar_reader::HeightIM, dX1, d);
-		translate<float>(x, y, cifar_reader::WidthIM, cifar_reader::HeightIM, dX2, d);
-		translate<float>(x, y, cifar_reader::WidthIM, cifar_reader::HeightIM, dX3, d);
+//		translate<float>(x, y, cifar_reader::WidthIM, cifar_reader::HeightIM, dX1, d);
+//		translate<float>(x, y, cifar_reader::WidthIM, cifar_reader::HeightIM, dX2, d);
+//		translate<float>(x, y, cifar_reader::WidthIM, cifar_reader::HeightIM, dX3, d);
 
 //		saveIm(dX1, dX2, dX3, cifar_reader::WidthIM, cifar_reader::HeightIM);
 	}

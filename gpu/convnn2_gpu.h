@@ -39,6 +39,7 @@ public:
 
 	void setAlpha(double val);
 
+	std::vector<gpumat::GpuMat> &XOut();
 	/**
 	 * @brief XOut1
 	 * out after convolution
@@ -51,6 +52,8 @@ public:
 	 * @return
 	 */
 	std::vector< gpumat::GpuMat >& XOut2();
+
+	bool use_pool() const;
 
 	int outputFeatures() const;
 

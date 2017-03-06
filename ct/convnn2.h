@@ -61,7 +61,7 @@ void back_deriv(const ct::Mat_<T>& Delta, const ct::Size& szOut, const ct::Size&
 	if(Delta.empty() || !channels)
 		return;
 
-	X.setSize(1, channels * szA0.area());
+	X.setSize(szA0.area(), channels);
 	X.fill(0);
 
 	T *dX = X.ptr();
@@ -292,6 +292,12 @@ public:
 		stride = 1;
 	}
 
+	std::vector< ct::Mat_<T> >& XOut(){
+		if(m_use_pool)
+			return A2;
+		return A1;
+	}
+
 	/**
 	 * @brief XOut1
 	 * out after convolution
@@ -307,6 +313,10 @@ public:
 	 */
 	std::vector< ct::Mat_<T> >& XOut2(){
 		return A2;
+	}
+
+	bool use_pool() const{
+		return m_use_pool;
 	}
 
 	int outputFeatures() const{
