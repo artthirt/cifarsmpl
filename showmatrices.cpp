@@ -81,6 +81,8 @@ void ShowMatrices::paint_cast(QPainter &painter, int width, int height, int offs
 	pen.setWidth(2);
 
 	for(int i = 0; i < m_K; ++i){
+		pen.setWidth(2);
+
 		ct::Matf m = m_mat.col(i);
 
 		if(m.total() != m_sz.area() * m_channels)
@@ -88,6 +90,8 @@ void ShowMatrices::paint_cast(QPainter &painter, int width, int height, int offs
 
 		float m1 = m.max();
 		float m2 = m.min();
+
+		int off_y = m_channels == 3? 1 : m_channels;
 
 		if(m_channels == 1){
 			m.set_dims(m_sz);
@@ -135,8 +139,13 @@ void ShowMatrices::paint_cast(QPainter &painter, int width, int height, int offs
 
 		x += wd * m_sz.width;
 		if(x + wd * m_sz.width > width){
-			y += wd * m_sz.height * m_channels;
+			y += wd * m_sz.height * off_y;
 			x = 0;
+
+			pen.setWidth(3);
+			pen.setColor(Qt::blue);
+			painter.setPen(pen);
+			painter.drawLine(0, y, width, y);
 		}
 	}
 }
