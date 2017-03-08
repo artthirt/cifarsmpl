@@ -52,9 +52,9 @@ private slots:
 
 	void on_pb_update_clicked();
 
-	void on_dsb_alpha_cnv_valueChanged(double arg1);
-
 	void on_sb_wid_valueChanged(int arg1);
+
+	void on_dsb_dropoutprob_valueChanged(double arg1);
 
 private:
 	Ui::MainWindow *ui;

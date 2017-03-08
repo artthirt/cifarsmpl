@@ -189,6 +189,7 @@ void MainWindow::on_chb_gpu_clicked(bool checked)
 void MainWindow::on_dsb_alpha_valueChanged(double arg1)
 {
 	m_train.setAlpha(arg1);
+	m_train.setAlphaCnv(arg1);
 }
 
 void MainWindow::on_actOpenDir_triggered()
@@ -252,11 +253,6 @@ void MainWindow::on_pb_update_clicked()
 	update_statistics();
 }
 
-void MainWindow::on_dsb_alpha_cnv_valueChanged(double arg1)
-{
-	m_train.setAlphaCnv(arg1);
-}
-
 void MainWindow::on_sb_wid_valueChanged(int arg1)
 {
 	m_wid = arg1;
@@ -266,4 +262,9 @@ void MainWindow::on_sb_wid_valueChanged(int arg1)
 					 m_train.szW(m_wid, b),
 					 m_train.Kernels(m_wid, b),
 					 m_train.channels(m_wid, b));
+}
+
+void MainWindow::on_dsb_dropoutprob_valueChanged(double arg1)
+{
+	m_train.setDropoutProb(arg1);
 }
