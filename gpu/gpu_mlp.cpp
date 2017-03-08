@@ -140,7 +140,7 @@ void mlp::forward(const GpuMat *mat, etypefunction func, bool save_A0)
 	pA0 = (GpuMat*)mat;
 	m_func = func;
 
-	if(m_is_dropout){
+	if(m_is_dropout && std::abs(m_prob - 1) > 1e-6){
 		apply_dropout(W, m_prob, WDropout, Dropout);
 		matmul(*pA0, WDropout, A1);
 	}else{
@@ -166,7 +166,7 @@ void mlp::backward(const GpuMat &Delta, bool last_layer)
 	matmulT1(*pA0, DA1, gW);
 	mulval(gW, 1. / m);
 
-	if(m_is_dropout){
+	if(m_is_dropout && std::abs(m_prob - 1) > 1e-6){
 		elemwiseMult(gW, Dropout);
 	}
 

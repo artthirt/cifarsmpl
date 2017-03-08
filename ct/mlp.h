@@ -168,7 +168,7 @@ public:
 		pA0 = (Mat_<T>*)mat;
 		m_func = func;
 
-		if(m_is_dropout){
+		if(m_is_dropout && std::abs(m_prob - 1) > 1e-6){
 			ct::dropout(W.rows, W.cols, m_prob, Dropout);
 			elemwiseMult(W, Dropout, WDropout);
 			Z = *pA0 * WDropout;
@@ -193,7 +193,7 @@ public:
 		matmulT1(*pA0, DA1, gW);
 		gW *= (T) 1. / m;
 
-		if(m_is_dropout){
+		if(m_is_dropout && std::abs(m_prob - 1) > 1e-6){
 			elemwiseMult(gW, Dropout);
 		}
 
