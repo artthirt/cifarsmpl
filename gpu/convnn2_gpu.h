@@ -94,6 +94,19 @@ void im2cols(const gpumat::GpuMat & X, const ct::Size& szA0, int channels, const
 			 int stride, gpumat::GpuMat & Res, ct::Size& szOut);
 
 /**
+ * @brief im2colsT
+ * @param X
+ * @param szA0
+ * @param channels
+ * @param szW
+ * @param stride
+ * @param Res
+ * @param szOut
+ */
+void im2colsT(const gpumat::GpuMat & X, const ct::Size& szA0, int channels, const ct::Size& szW,
+			 int stride, gpumat::GpuMat & Res, ct::Size& szOut);
+
+/**
  * @brief im2cols
  * @param X
  * @param szA0
@@ -104,6 +117,19 @@ void im2cols(const gpumat::GpuMat & X, const ct::Size& szA0, int channels, const
  * @param szOut
  */
 void im2cols(const std::vector< gpumat::GpuMat > & X, const ct::Size& szA0, int channels, const ct::Size& szW,
+			 int stride, std::vector< gpumat::GpuMat > & Res, ct::Size& szOut);
+
+/**
+ * @brief im2colsT
+ * @param X
+ * @param szA0
+ * @param channels
+ * @param szW
+ * @param stride
+ * @param Res
+ * @param szOut
+ */
+void im2colsT(const std::vector< gpumat::GpuMat > & X, const ct::Size& szA0, int channels, const ct::Size& szW,
 			 int stride, std::vector< gpumat::GpuMat > & Res, ct::Size& szOut);
 
 /**
@@ -130,6 +156,37 @@ void back_deriv(const gpumat::GpuMat& Delta, const ct::Size& szOut, const ct::Si
  * @param X
  */
 void back_deriv(const std::vector< gpumat::GpuMat >& Delta,
+				const ct::Size& szOut,
+				const ct::Size& szA0,
+				int channels,
+				const ct::Size& szW,
+				int stride,
+				std::vector< gpumat::GpuMat >& X);
+
+/**
+ * @brief back_derivT
+ * @param Delta
+ * @param szOut
+ * @param szA0
+ * @param channels
+ * @param szW
+ * @param stride
+ * @param X
+ */
+void back_derivT(const gpumat::GpuMat& Delta, const ct::Size& szOut, const ct::Size& szA0,
+				int channels, const ct::Size& szW, int stride, gpumat::GpuMat& X);
+
+/**
+ * @brief back_derivT
+ * @param Delta
+ * @param szOut
+ * @param szA0
+ * @param channels
+ * @param szW
+ * @param stride
+ * @param X
+ */
+void back_derivT(const std::vector< gpumat::GpuMat >& Delta,
 				const ct::Size& szOut,
 				const ct::Size& szA0,
 				int channels,

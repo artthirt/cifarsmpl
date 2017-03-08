@@ -142,8 +142,8 @@ class TestCnv_gpu{
 public:
 	TestCnv_gpu(){
 		mlp.resize(4);
-		int K1 = 64;
-		int K2 = 16;
+		int K1 = 25;
+		int K2 = 25;
 
 		szA0 = ct::Size(cifar_reader::WidthIM, cifar_reader::HeightIM);
 		szW = ct::Size(5, 5);
@@ -496,7 +496,7 @@ void test_agg::test_conv_gpu()
 
 	for(int i = 0; i < 25000; ++i){
 
-		rd.getTrain2(100, Xs, y);
+		rd.getTrain2(70, Xs, y);
 
 		gpumat::convert_to_gpu(y, g_y);
 		conv_vec_to_gpu(Xs, g_Xs);
@@ -532,24 +532,24 @@ void test_agg::test_conv_gpu()
 				sh.saveMat("cnv2.bmp", W2, tcnv.cnv2.szW, tcnv.cnv2.K, tcnv.cnv2.channels);
 			}
 
-			rd.getTrain2(500, Xs, y);
+			rd.getTrain2(200, Xs, y);
 			double l2, acc;
 
 			conv_vec_to_gpu(Xs, g_XsTest);
 			//gpumat::convert_to_gpu(y, g_yTest);
 
 			tcnv.test(g_XsTest, y, l2, acc);
-			qDebug("train (batch=500) -> l2=%f,\tacc=%f", l2, acc);
+			qDebug("train (batch=200) -> l2=%f,\tacc=%f", l2, acc);
 
 			l2 = 0; acc = 0;
 			y.fill(0);
-			rd.getTest2(500, Xs, y);
+			rd.getTest2(200, Xs, y);
 
 			conv_vec_to_gpu(Xs, g_XsTest);
 			gpumat::convert_to_gpu(y, g_yTest);
 
 			tcnv.test(g_XsTest, y, l2, acc);
-			qDebug("test  (batch=500) -> l2=%f,\tacc=%f", l2, acc);
+			qDebug("test  (batch=200) -> l2=%f,\tacc=%f", l2, acc);
 		}
 	}
 
