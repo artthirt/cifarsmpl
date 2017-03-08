@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
 	dir.setPath(progpath);
 	dir.cd("../");
 	QDir::current().setCurrent(dir.canonicalPath());
-#if 1
+#if 0
 	test_agg tagg;
 //	if(0)
 //		tagg.test_file();

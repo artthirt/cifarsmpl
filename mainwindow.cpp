@@ -27,8 +27,8 @@ MainWindow::MainWindow(QWidget *parent) :
 	std::vector< int > cnv_w;
 	std::vector< char > cnv_p;
 
-	cnv.push_back(64);
-	cnv.push_back(164);
+	cnv.push_back(32);
+	cnv.push_back(32);
 //	cnv.push_back(40);
 //	cnv.push_back(1);
 
@@ -40,10 +40,9 @@ MainWindow::MainWindow(QWidget *parent) :
 	cnv_p.push_back(true);
 	cnv_p.push_back(true);
 
-	mlp.push_back(1024);
-	mlp.push_back(1024);
+	mlp.push_back(750);
+	mlp.push_back(750);
 	mlp.push_back(850);
-	mlp.push_back(768);
 	mlp.push_back(600);
 	mlp.push_back(10);
 
