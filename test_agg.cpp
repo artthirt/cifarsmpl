@@ -70,10 +70,6 @@ public:
 
 		cnv1.forward(&Xs, ct::RELU);
 
-		for(size_t i = 0; i < cnv1.A2.size(); ++i){
-			cnv1.A2[i] = cnv1.A2[i].t();
-		}
-
 		cnv2.forward(&cnv1.A2, ct::RELU);
 
 		conv2::vec2mat(cnv2.A2, X1);
@@ -296,7 +292,7 @@ void test_agg::test_im2col()
 	ct::Size szA0(14, 14), szW(5, 5), szOut, szOut2;
 	int channels = 3;
 
-	ct::Matf X(1, szA0.area() * channels), Res, Z, Z2, Y, W, Mask;
+	ct::Matf X(channels, szA0.area()), Res, Res1, Z, Z2, Y, W, Mask;
 	for(int i = 0; i < X.total(); ++i){
 		X.ptr()[i] = i;
 	}
@@ -312,8 +308,10 @@ void test_agg::test_im2col()
 	saveimage2file(X, szA0, channels, "X.txt");
 
 	conv2::im2col(X, szA0, channels, szW, 1, Res, szOut);
+	conv2::im2colT(X.t(), szA0, channels, szW, 1, Res1, szOut);
 
 	ct::save_mat(Res, "Res.txt");
+	ct::save_mat(Res1, "Res1.txt");
 
 	Z = Res * W;
 	ct::save_mat(W.t(), "W.txt");
@@ -411,8 +409,11 @@ void test_agg::test_im2col()
 void test_agg::test_conv()
 {
 	cifar_reader rd;
+#ifdef _MSC_VER
+	rd.openDir("D:/Down/smpl/data/cifar-10-batches-bin");
+#else
 	rd.openDir("../../../data/cifar-10-batches-bin");
-	//rd.openDir("D:/Down/smpl/data/cifar-10-batches-bin");
+#endif
 	if(!rd.isBinDataExists())
 		return;
 
@@ -471,8 +472,11 @@ void conv_vec_to_gpu(const std::vector< ct::Matf >& Xs, std::vector< gpumat::Gpu
 void test_agg::test_conv_gpu()
 {
 	cifar_reader rd;
+#ifdef _MSC_VER
+	rd.openDir("D:/Down/smpl/data/cifar-10-batches-bin");
+#else
 	rd.openDir("../../../data/cifar-10-batches-bin");
-	//rd.openDir("D:/Down/smpl/data/cifar-10-batches-bin");
+#endif
 	if(!rd.isBinDataExists())
 		return;
 

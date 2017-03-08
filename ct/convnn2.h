@@ -27,7 +27,7 @@ void im2col(const ct::Mat_<T>& X, const ct::Size& szA0, int channels, const ct::
 
 	T *dX = X.ptr();
 	T *dR = Res.ptr();
-//#pragma omp parallel for
+#pragma omp parallel for
 	for(int c = 0; c < channels; ++c){
 		T *dXi = &dX[c * szA0.area()];
 
@@ -45,6 +45,51 @@ void im2col(const ct::Mat_<T>& X, const ct::Size& szA0, int channels, const ct::
 						int col = c * szW.area() + (a * szW.width + b);
 						if(y0 + a < szA0.height && x0 + b < szA0.width){
 							dR[row * Res.cols + col] = dXi[(y0 + a) * szA0.width + (x0 + b)];
+						}
+					}
+				}
+
+			}
+		}
+	}
+}
+
+template< typename T >
+void im2colT(const ct::Mat_<T>& X, const ct::Size& szA0, int channels, const ct::Size& szW,
+			int stride, ct::Mat_<T>& Res, ct::Size& szOut)
+{
+	if(X.empty() || !channels)
+		return;
+
+	szOut.width = (szA0.width - szW.width)/stride + 1;
+	szOut.height = (szA0.height - szW.height)/stride + 1;
+
+	int rows = szOut.area();
+	int cols = szW.area() * channels;
+
+	Res.setSize(rows, cols);
+
+	int colsX = channels;
+
+	T *dR = Res.ptr();
+#pragma omp parallel for
+	for(int c = 0; c < channels; ++c){
+		T *dXi = X.ptr() + c;
+
+		for(int y = 0; y < szOut.height; ++y){
+			int y0 = y * stride;
+			for(int x = 0; x < szOut.width; ++x){
+				int x0 = x * stride;
+				int row = y * szOut.width + x;
+
+#ifdef __GNUC__
+#pragma omp simd
+#endif
+				for(int a = 0; a < szW.height; ++a){
+					for(int b = 0; b < szW.width; ++b){
+						int col = c * szW.area() + (a * szW.width + b);
+						if(y0 + a < szA0.height && x0 + b < szA0.width){
+							dR[row * Res.cols + col] = dXi[((y0 + a) * szA0.width + (x0 + b)) * colsX];
 						}
 					}
 				}
@@ -83,6 +128,43 @@ void back_deriv(const ct::Mat_<T>& Delta, const ct::Size& szOut, const ct::Size&
 						int col = c * szW.area() + (a * szW.width + b);
 						if(y0 + a < szA0.height && x0 + b < szA0.width){
 							dXi[(y0 + a) * szA0.width + (x0 + b)] += dR[row * Delta.cols + col];
+						}
+					}
+				}
+
+			}
+		}
+	}
+}
+
+template< typename T >
+void back_derivT(const ct::Mat_<T>& Delta, const ct::Size& szOut, const ct::Size& szA0,
+				int channels, const ct::Size& szW, int stride, ct::Mat_<T>& X)
+{
+	if(Delta.empty() || !channels)
+		return;
+
+	X.setSize(szA0.area(), channels);
+	X.fill(0);
+
+	T *dR = Delta.ptr();
+	for(int c = 0; c < channels; ++c){
+		T *dXi = X.ptr() + c;
+		for(int y = 0; y < szOut.height; ++y){
+			int y0 = y * stride;
+			for(int x = 0; x < szOut.width; ++x){
+				int x0 = x * stride;
+				int row = y * szOut.width + x;
+
+#pragma omp parallel for
+				for(int a = 0; a < szW.height; ++a){
+#ifdef __GNUC__
+#pragma omp simd
+#endif
+					for(int b = 0; b < szW.width; ++b){
+						int col = c * szW.area() + (a * szW.width + b);
+						if(y0 + a < szA0.height && x0 + b < szA0.width){
+							dXi[((y0 + a) * szA0.width + (x0 + b)) * channels] += dR[row * Delta.cols + col];
 						}
 					}
 				}
@@ -374,12 +456,22 @@ public:
 		Xc.resize(pX->size());
 		A1.resize(pX->size());
 
-		for(size_t i = 0; i < Xc.size(); ++i){
-			ct::Mat_<T>& Xi = (*pX)[i];
-			ct::Size szOut;
+		if(((*pX)[0]).cols == channels){
+			for(size_t i = 0; i < Xc.size(); ++i){
+				ct::Mat_<T>& Xi = (*pX)[i];
+				ct::Size szOut;
 
-			im2col(Xi, szA0, channels, szW, stride, Xc[i], szOut);
+				im2colT(Xi, szA0, channels, szW, stride, Xc[i], szOut);
+			}
+		}else{
+			for(size_t i = 0; i < Xc.size(); ++i){
+				ct::Mat_<T>& Xi = (*pX)[i];
+				ct::Size szOut;
+
+				im2col(Xi, szA0, channels, szW, stride, Xc[i], szOut);
+			}
 		}
+
 
 		for(size_t i = 0; i < Xc.size(); ++i){
 			ct::Mat_<T>& Xi = Xc[i];
@@ -506,7 +598,7 @@ public:
 			for(size_t i = 0; i < D.size(); ++i){
 				ct::Mat_<T> Dc;
 				ct::matmulT2(dSub[i], W, Dc);
-				back_deriv(Dc.t(), szA1, szA0, channels, szW, stride, Dlt[i]);
+				back_derivT(Dc, szA1, szA0, channels, szW, stride, Dlt[i]);
 				//ct::Size sz = (*pX)[i].size();
 				//Dlt[i].set_dims(sz);
 			}
