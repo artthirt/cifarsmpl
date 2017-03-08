@@ -543,10 +543,10 @@ void cuda_im2colsT_vec(const std::vector< gpumat::GpuMat > &X,
 
 	switch (X[0].type) {
 		case GPU_DOUBLE:
-			internal::im2cols_vec<double> <<<dimGrid, dimBlock>>>(sX, szA0, channels, szW, stride, sRes, szOut);
+			internal::im2colsT_vec<double> <<<dimGrid, dimBlock>>>(sX, szA0, channels, szW, stride, sRes, szOut);
 			break;
 		case GPU_FLOAT:
-			internal::im2cols_vec<float> <<<dimGrid, dimBlock>>>(sX, szA0, channels, szW, stride, sRes, szOut);
+			internal::im2colsT_vec<float> <<<dimGrid, dimBlock>>>(sX, szA0, channels, szW, stride, sRes, szOut);
 			break;
 	}
 }

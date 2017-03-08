@@ -143,7 +143,7 @@ public:
 	TestCnv_gpu(){
 		mlp.resize(4);
 		int K1 = 25;
-		int K2 = 25;
+		int K2 = 35;
 
 		szA0 = ct::Size(cifar_reader::WidthIM, cifar_reader::HeightIM);
 		szW = ct::Size(5, 5);
@@ -532,7 +532,7 @@ void test_agg::test_conv_gpu()
 				sh.saveMat("cnv2.bmp", W2, tcnv.cnv2.szW, tcnv.cnv2.K, tcnv.cnv2.channels);
 			}
 
-			rd.getTrain2(200, Xs, y);
+			rd.getTrain2(300, Xs, y);
 			double l2, acc;
 
 			conv_vec_to_gpu(Xs, g_XsTest);
@@ -543,7 +543,7 @@ void test_agg::test_conv_gpu()
 
 			l2 = 0; acc = 0;
 			y.fill(0);
-			rd.getTest2(200, Xs, y);
+			rd.getTest2(300, Xs, y);
 
 			conv_vec_to_gpu(Xs, g_XsTest);
 			gpumat::convert_to_gpu(y, g_yTest);
