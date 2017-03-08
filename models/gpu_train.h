@@ -42,6 +42,9 @@ public:
 
 	std::vector<gpumat::conv2::convnn_gpu> &conv();
 
+	void setDropoutProb(double val);
+	double dropoutProb() const;
+
 private:
 	std::vector< int > m_layers;
 	std::vector< int > m_cnvlayers;
@@ -49,6 +52,7 @@ private:
 	std::vector< int > m_cnvweights;
 	ct::Size m_szA0;
 	bool m_init;
+	double m_dropoutProb;
 
 	std::vector< gpumat::conv2::convnn_gpu > m_conv;
 	std::vector< gpumat::mlp > m_mlp;

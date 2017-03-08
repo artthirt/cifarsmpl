@@ -43,6 +43,9 @@ void rotate_data(int w, int h, T angle, T *X, std::vector<T> &d)
 
 //	T delta = 0.4 * angle * angle;
 
+#ifdef __GNUC__
+#pragma omp simd
+#endif
 	for(int y = 0; y < h; y++){
 		for(int x = 0; x < w; x++){
 			T c = X[y * w + x];
@@ -109,6 +112,18 @@ void rotate_data(int w, int h, T angle, T *X, std::vector<T> &d)
 	}
 }
 
+template <typename T>
+void change_brightness(ct::Mat_<T>& mat, T val)
+{
+	T* dM = mat.ptr();
+#ifdef __GNUC__
+#pragma omp simd
+#endif
+	for(int i = 0; i < mat.total(); ++i){
+		dM[i] *= val;
+	}
+}
+
 /////////////////////
 
 cifar_train::cifar_train()
@@ -117,6 +132,7 @@ cifar_train::cifar_train()
 	m_init = false;
 	m_rand_data = ct::Vec3f(3, 3);
 	m_use_rand_data = false;
+	m_dropoutProb = 0.9;
 }
 
 void cifar_train::setCifar(cifar_reader *val)
@@ -238,10 +254,11 @@ void cifar_train::forward(const std::vector< ct::Matf > &X, ct::Matf &a_out,
 	}
 }
 
-void cifar_train::setRandData(float offset, float angle)
+void cifar_train::setRandData(float offset, float angle, float br)
 {
 	m_rand_data[0] = offset;
 	m_rand_data[1] = angle;
+	m_rand_data[2] = br;
 }
 
 void cifar_train::setUseRandData(bool val)
@@ -250,10 +267,11 @@ void cifar_train::setUseRandData(bool val)
 }
 
 
-void cifar_train::randValues(size_t count, std::vector<ct::Vec3f> &vals, float offset, float angle)
+void cifar_train::randValues(size_t count, std::vector<ct::Vec4f> &vals, float offset, float angle, float brightness)
 {
 	std::uniform_int_distribution<int> udtr(-offset, offset);
 	std::uniform_real_distribution<float> uar(-angle, angle);
+	std::normal_distribution<float> nbr(1, brightness);
 
 	vals.resize(count);
 
@@ -261,8 +279,9 @@ void cifar_train::randValues(size_t count, std::vector<ct::Vec3f> &vals, float o
 		int x = udtr(ct::generator);
 		int y = udtr(ct::generator);
 		float ang = uar(ct::generator);
+		float br = nbr(ct::generator);
 		ang = ct::angle2rad(ang);
-		vals[i] = ct::Vec3f(x, y, ang);
+		vals[i] = ct::Vec4f(x, y, ang, br);
 	}
 }
 
@@ -290,7 +309,7 @@ void saveIm(float* dx1, float *dx2, float *dx3, int width, int height)
 	im.save("tmp.bmp");
 }
 
-void cifar_train::randX(std::vector< ct::Matf > &X, std::vector<ct::Vec3f> &vals)
+void cifar_train::randX(std::vector< ct::Matf > &X, std::vector<ct::Vec4f> &vals)
 {
 	if(X.empty() || X.size() != vals.size())
 		return;
@@ -309,6 +328,7 @@ void cifar_train::randX(std::vector< ct::Matf > &X, std::vector<ct::Vec3f> &vals
 		float x = vals[i][0];
 		float y = vals[i][1];
 		float ang = vals[i][2];
+		float br = vals[i][3];
 
 		std::vector< float > d;
 
@@ -321,6 +341,8 @@ void cifar_train::randX(std::vector< ct::Matf > &X, std::vector<ct::Vec3f> &vals
 		translate<float>(x, y, cifar_reader::WidthIM, cifar_reader::HeightIM, dX1, d);
 		translate<float>(x, y, cifar_reader::WidthIM, cifar_reader::HeightIM, dX2, d);
 		translate<float>(x, y, cifar_reader::WidthIM, cifar_reader::HeightIM, dX3, d);
+
+		change_brightness(X[i], br);
 
 //		saveIm(dX1, dX2, dX3, cifar_reader::WidthIM, cifar_reader::HeightIM);
 	}
@@ -339,7 +361,7 @@ void cifar_train::pass(int batch, bool use_gpu)
 	m_cifar->getTrain2(batch, Xs, y);
 
 	if(m_use_rand_data){
-		randValues(y.rows, m_vals, m_rand_data[0], m_rand_data[1]);
+		randValues(y.rows, m_vals, m_rand_data[0], m_rand_data[1], m_rand_data[2]);
 
 		randX(Xs, m_vals);
 	}
@@ -351,7 +373,7 @@ void cifar_train::pass(int batch, bool use_gpu)
 
 	////**********************
 
-	forward(Xs, yp, true, 0.98f);
+	forward(Xs, yp, true, m_dropoutProb);
 
 	////**********************
 
@@ -763,6 +785,17 @@ void cifar_train::saveToFile(const QString &fn, bool gpu)
 ct::Vec2i cifar_train::statistics(int val) const
 {
 	return m_statistics[val];
+}
+
+void cifar_train::setDropoutProb(double val)
+{
+	m_dropoutProb = val;
+	m_gpu_train.setDropoutProb(val);
+}
+
+double cifar_train::dropoutProb() const
+{
+	return m_dropoutProb;
 }
 
 void cifar_train::setDropout(float p, int layers)

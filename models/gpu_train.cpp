@@ -25,6 +25,7 @@ void test_void(const gpumat::GpuMat& mat)
 gpu_train::gpu_train()
 {
 	m_init = false;
+	m_dropoutProb = 0.9;
 }
 
 void gpu_train::setConvLayers(const std::vector<int> &layers,
@@ -242,7 +243,7 @@ void gpu_train::pass(const std::vector<ct::Matf> &X, const ct::Matf &y)
 void gpu_train::pass()
 {
 	gpumat::GpuMat *yp;
-	forward(m_XsIn, &yp, true, 0.92);
+	forward(m_XsIn, &yp, true, m_dropoutProb);
 
 	////**********************
 
@@ -379,6 +380,16 @@ uint gpu_train::outputFeatures() const
 std::vector<gpumat::conv2::convnn_gpu> &gpu_train::conv()
 {
 	return m_conv;
+}
+
+void gpu_train::setDropoutProb(double val)
+{
+	m_dropoutProb = val;
+}
+
+double gpu_train::dropoutProb() const
+{
+	return m_dropoutProb;
 }
 
 void gpu_train::setDropout(float p, int layers)

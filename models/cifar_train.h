@@ -33,7 +33,7 @@ public:
 	void forward(const std::vector< ct::Matf >& X, ct::Matf& a_out,
 				 bool use_drop = false, float p = 0.95, bool use_gpu = false);
 
-	void setRandData(float offset, float angle);
+	void setRandData(float offset, float angle, float br);
 
 	void setUseRandData(bool val);
 
@@ -67,6 +67,9 @@ public:
 
 	ct::Vec2i statistics(int val) const;
 
+	void setDropoutProb(double val);
+	double dropoutProb() const;
+
 private:
 	cifar_reader* m_cifar;
 	std::vector< int > m_layers;
@@ -75,6 +78,7 @@ private:
 	std::vector< char > m_cnvpooling;
 	ct::Size m_szA0;
 	bool m_init;
+	double m_dropoutProb;
 
 	QMap< int, ct::Vec2i > m_statistics;
 
@@ -91,15 +95,15 @@ private:
 	std::vector< ct::mlpf > m_mlp;
 	ct::MlpOptim< float > m_optim;
 
-	std::vector< ct::Vec3f > m_vals;
+	std::vector< ct::Vec4f > m_vals;
 
 	bool m_use_rand_data;
-	ct::Vec2f m_rand_data;
+	ct::Vec3f m_rand_data;
 
 	void setDropout(float p, int layers);
 	void clearDropout();
-	void randValues(size_t count, std::vector< ct::Vec3f >& vals, float offset, float angle);
-	void randX(std::vector<ct::Matf> &X, std::vector< ct::Vec3f >& vals);
+	void randValues(size_t count, std::vector< ct::Vec4f >& vals, float offset, float angle, float brightness = 0.1);
+	void randX(std::vector<ct::Matf> &X, std::vector<ct::Vec4f> &vals);
 
 	void getEstimate(const std::vector< ct::Matf > &Xs, ct::Matf &y,
 					 uint &right, double &l2, bool use_gpu);

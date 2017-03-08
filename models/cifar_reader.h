@@ -156,6 +156,9 @@ inline void image2mat(const QByteArray& image, int w, int h,
 {
 	mat.setSize(1, w * h * 3);
 	T* dX = mat.ptr();
+#ifdef __GNUC__
+#pragma omp simd
+#endif
 	for(int i = 0; i < w * h * 3; ++i){
 		T val = (T)image.data()[i] / 255.;
 		dX[i] = 2. * val - 1.;
