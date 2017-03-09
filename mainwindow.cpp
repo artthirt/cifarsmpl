@@ -27,25 +27,22 @@ MainWindow::MainWindow(QWidget *parent) :
 	std::vector< int > cnv_w;
 	std::vector< char > cnv_p;
 
-	cnv.push_back(35);
+	cnv.push_back(25);
 	cnv.push_back(35);
 //	cnv.push_back(40);
 //	cnv.push_back(1);
 
 	cnv_w.push_back(5);
 	cnv_w.push_back(5);
-//	cnv_w.push_back(3);
+//	cnv_w.push_back(5);
 //	cnv_p.push_back(false);
 //	cnv_p.push_back(false);
 	cnv_p.push_back(true);
 	cnv_p.push_back(true);
 
 	mlp.push_back(512);
-	mlp.push_back(624);
-	mlp.push_back(712);
-	mlp.push_back(624);
 	mlp.push_back(512);
-	mlp.push_back(400);
+	mlp.push_back(512);
 	mlp.push_back(10);
 
 	m_train.setCifar(&m_cifar);
@@ -53,7 +50,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	m_train.setMlpLayers(mlp);
 
 	m_train.setUseRandData(true);
-	m_train.setRandData(3, 0, 0.01);
+	m_train.setRandData(0, 0, 0.01);
 	m_train.setDropoutProb(0.9);
 
 	m_train.init();

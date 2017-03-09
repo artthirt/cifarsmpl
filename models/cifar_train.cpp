@@ -38,12 +38,10 @@ void translate(int x, int y, int w, int h, T *X, std::vector<T> &d)
 #pragma omp parallel for
 	for(int i = 0; i < h; i++){
 		int newi = i + x;
-		if(newi >= 0 && newi < h){
-			for(int j = 0; j < w; j++){
-				int newj = j + y;
-				if(newj >= 0 && newj < w){
-					d[newi * w + newj] = X[i * w + j];
-				}
+		for(int j = 0; j < w; j++){
+			int newj = j + y;
+			if(newj >= 0 && newj < w){
+				d[newi * w + newj] = X[i * w + j];
 			}
 		}
 	}
@@ -291,19 +289,34 @@ void cifar_train::setUseRandData(bool val)
 
 void cifar_train::randValues(size_t count, std::vector<ct::Vec4f> &vals, float offset, float angle, float brightness)
 {
-	std::uniform_int_distribution<int> udtr(-offset, offset);
-	std::uniform_real_distribution<float> uar(-angle, angle);
-	std::normal_distribution<float> nbr(1, brightness);
-
 	vals.resize(count);
-
 	for(size_t i = 0; i < vals.size(); ++i){
-		int x = udtr(ct::generator);
-		int y = udtr(ct::generator);
-		float ang = uar(ct::generator);
-		float br = nbr(ct::generator);
-		ang = ct::angle2rad(ang);
-		vals[i] = ct::Vec4f(x, y, ang, br);
+		ct::Vec4f& v = vals[i];
+		v.zeros();
+	}
+
+	if(offset){
+		std::uniform_int_distribution<int> udtr(-offset, offset);
+		for(size_t i = 0; i < vals.size(); ++i){
+			int x = udtr(ct::generator);
+			int y = udtr(ct::generator);
+			vals[i][0] = x;
+			vals[i][1] = y;
+		}
+	}
+	if(angle){
+		std::uniform_real_distribution<float> uar(-angle, angle);
+		for(size_t i = 0; i < vals.size(); ++i){
+			float ang = uar(ct::generator);
+			vals[i][2] = ang;
+		}
+	}
+	if(brightness){
+		std::normal_distribution<float> nbr(1, brightness);
+		for(size_t i = 0; i < vals.size(); ++i){
+			float br = nbr(ct::generator);
+			vals[i][3] = br;
+		}
 	}
 }
 
@@ -370,11 +383,15 @@ void cifar_train::randX(std::vector< ct::Matf > &X, std::vector<ct::Vec4f> &vals
 //			rotate_data<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, ang, dX3, d);
 //		}
 
-		translate<float>(x, y, cifar_reader::WidthIM, cifar_reader::HeightIM, dX1, d);
-		translate<float>(x, y, cifar_reader::WidthIM, cifar_reader::HeightIM, dX2, d);
-		translate<float>(x, y, cifar_reader::WidthIM, cifar_reader::HeightIM, dX3, d);
+		if(x && y){
+			translate<float>(x, y, cifar_reader::WidthIM, cifar_reader::HeightIM, dX1, d);
+			translate<float>(x, y, cifar_reader::WidthIM, cifar_reader::HeightIM, dX2, d);
+			translate<float>(x, y, cifar_reader::WidthIM, cifar_reader::HeightIM, dX3, d);
+		}
 
-		change_brightness(X[i], br);
+		if(br){
+			change_brightness(X[i], br);
+		}
 
 //		saveIm(dX1, dX2, dX3, cifar_reader::WidthIM, cifar_reader::HeightIM);
 	}
