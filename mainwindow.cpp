@@ -29,14 +29,15 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	cnv.push_back(32);
 	cnv.push_back(64);
+	cnv.push_back(64);
 //	cnv.push_back(40);
 //	cnv.push_back(1);
 
 	cnv_w.push_back(5);
 	cnv_w.push_back(5);
-//	cnv_w.push_back(5);
+	cnv_w.push_back(5);
 //	cnv_p.push_back(false);
-//	cnv_p.push_back(false);
+	cnv_p.push_back(false);
 	cnv_p.push_back(true);
 	cnv_p.push_back(true);
 
