@@ -105,7 +105,7 @@ public:
 		D.clear();
 		conv2::mat2vec(mlp[0].DltA0, cnv2.szK, D);
 
-		cnv2.backward(D);
+		cnv2.backward(D); 
 
 		cnv1.backward(cnv2.Dlt, true);
 	}

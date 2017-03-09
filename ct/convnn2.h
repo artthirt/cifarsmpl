@@ -506,7 +506,7 @@ public:
 			for(size_t i = 0; i < D.size(); ++i){
 				ct::Mat_<T> Dc;
 				ct::matmulT2(dSub[i], W, Dc);
-				back_deriv(Dc, szA1, szA0, channels, szW, stride, Dlt[i]);
+				back_deriv(Dc.t(), szA1, szA0, channels, szW, stride, Dlt[i]);
 				//ct::Size sz = (*pX)[i].size();
 				//Dlt[i].set_dims(sz);
 			}

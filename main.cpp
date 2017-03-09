@@ -14,16 +14,15 @@ int main(int argc, char *argv[])
 	dir.setPath(progpath);
 	dir.cd("../");
 	QDir::current().setCurrent(dir.canonicalPath());
-
-#if 0
+#if 1
 	test_agg tagg;
-	if(0)
-		tagg.test_file();
-	else
-		tagg.test_conv_gpu();
+//	if(0)
+//		tagg.test_file();
+//	else
+//		tagg.test_conv_gpu();
 //	tagg.test_hconcat();
 //	tagg.test_im2col();
-//	tagg.test_conv();
+	tagg.test_conv();
 
 	return 0;
 #endif
