@@ -20,10 +20,9 @@ void flip(int w, int h, T *X, std::vector<T> &d)
 #pragma omp simd
 #endif
 	for(int i = 0; i < h; i++){
-		int newi = i;
 		for(int j = 0; j < w; j++){
 			int newj = w - j - 1;
-			d[newi * w + newj] = X[i * w + j];
+			d[i * w + newj] = X[i * w + j];
 		}
 	}
 	for(size_t i = 0; i < d.size(); i++){
@@ -368,10 +367,9 @@ void cifar_train::randX(std::vector< ct::Matf > &X, std::vector<ct::Vec4f> &vals
 	int max_threads = omp_get_num_procs();
 
 	omp_set_num_threads(max_threads * 2);
-	int num_thr = omp_get_num_threads();
 
 	std::vector< std::vector< float > > ds;
-	ds.resize(num_thr);
+	ds.resize(max_threads * 2);
 
 #pragma omp parallel for
 	for(int i = 0; i < (int)X.size(); i++){
