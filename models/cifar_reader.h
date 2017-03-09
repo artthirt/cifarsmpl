@@ -112,7 +112,7 @@ inline void image2mat(uchar* db, int w, int h, int row, ct::Mat_<T>& mat)
 	T* dmi = &dm[row * mat.cols];
 	for(int y = 0; y < h; ++y){
 		for(int x = 0; x < w; ++x){
-			dmi[y * w + x] = 2. * db[y * w + x] / 255. - 1.;
+			dmi[y * w + x] = db[y * w + x] / 255.;
 		}
 	}
 
@@ -128,7 +128,7 @@ inline void image2matGray(uchar* dbR, uchar* dbG, uchar* dbB, int w, int h, int 
 	for(int y = 0; y < h; ++y){
 		for(int x = 0; x < w; ++x){
 			T val = (T)(dbR[y * w + x] + dbG[y * w + x] + dbB[y * w + x]) / (255. * 3.);
-			dmi[y * w + x] = 2. * val - 1.;
+			dmi[y * w + x] = val;
 		}
 	}
 
@@ -161,7 +161,7 @@ inline void image2mat(const QByteArray& image, int w, int h,
 #endif
 	for(int i = 0; i < w * h * 3; ++i){
 		T val = (T)image.data()[i] / 255.;
-		dX[i] = 2. * val - 1.;
+		dX[i] = val;
 	}
 }
 
@@ -187,7 +187,7 @@ inline void image2mats(const QByteArray& image, int w, int h, int bpp, std::vect
 		uchar* db = (uchar*)image.data() + i * w * h;
 		for(int y = 0; y < h; ++y){
 			for(int x = 0; x < w; ++x){
-				dm[y * w + x] = 2. * db[y * w + x] / 255. - 1.;
+				dm[y * w + x] = db[y * w + x] / 255.;
 			}
 		}
 	}

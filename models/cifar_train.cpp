@@ -13,7 +13,7 @@ void flip(int w, int h, T *X, std::vector<T> &d)
 {
 	if((int)d.size() != w * h)
 		d.resize(w * h);
-	std::fill(d.begin(), d.end(), -1);
+	std::fill(d.begin(), d.end(), 0);
 
 //#pragma omp parallel for
 #ifdef __GNUC__
@@ -35,7 +35,7 @@ void translate(int x, int y, int w, int h, T *X, std::vector<T> &d)
 {
 	if((int)d.size() != w * h)
 		d.resize(w * h);
-	std::fill(d.begin(), d.end(), -1);
+	std::fill(d.begin(), d.end(), 0);
 
 //#pragma omp parallel for
 #ifdef __GNUC__
@@ -66,7 +66,7 @@ void rotate_data(int w, int h, T angle, T *X, std::vector<T> &d)
 	if(d.size() != w * h)
 		d.resize(w * h);
 
-	std::fill(d.begin(), d.end(), -1);
+	std::fill(d.begin(), d.end(), 0);
 
 //	T delta = 0.4 * angle * angle;
 
@@ -342,9 +342,9 @@ void saveIm(float* dx1, float *dx2, float *dx3, int width, int height)
 			float c1 = dx1[y * width + x];
 			float c2 = dx2[y * width + x];
 			float c3 = dx3[y * width + x];
-			c1 = 255. * (c1 - (-1.))/2.;
-			c2 = 255. * (c2 - (-1.))/2.;
-			c3 = 255. * (c3 - (-1.))/2.;
+			c1 = 255. * (c1);
+			c2 = 255. * (c2);
+			c3 = 255. * (c3);
 			uchar uc1 = c1;
 			uchar uc2 = c2;
 			uchar uc3 = c3;
