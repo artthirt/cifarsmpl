@@ -202,7 +202,7 @@ void gpu_train::forward(const std::vector<gpumat::GpuMat> &X,
 
 	std::vector< gpumat::GpuMat > *pvX = (std::vector< gpumat::GpuMat >*)&X;
 
-	for(int i = 0; i < m_conv.size(); ++i){
+	for(int i = 0; i < (int)m_conv.size(); ++i){
 		gpumat::conv2::convnn_gpu& cnv = m_conv[i];
 		cnv.forward(pvX, gpumat::RELU);
 		pvX = &cnv.XOut();

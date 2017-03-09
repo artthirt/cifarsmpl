@@ -73,7 +73,7 @@ __device__ void _im2colsT(const Mtx& X, const ct::Size& szA0, int channels, cons
 		int y0 = y * stride;
 		int row2 = y * szOut.width + x;
 
-		int szA0area = szA0.width * szA0.height;
+//		int szA0area = szA0.width * szA0.height;
 		int szWarea = szW.width * szW.height;
 
 		T *dR = (T*)Res.data;
@@ -192,7 +192,7 @@ __device__ void _back_derivT(const Mtx& Delta,
 		int y0 = y * stride;
 		int row2 = y * szOut.width + x;
 
-		int szA0area = szA0.width * szA0.height;
+//		int szA0area = szA0.width * szA0.height;
 		int szWarea = szW.width * szW.height;
 
 		T *dR = (T*)Delta.data;

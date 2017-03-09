@@ -7,9 +7,31 @@
 const int channels = 3;
 
 template< typename T >
+void flip(int w, int h, T *X, std::vector<T> &d)
+{
+	if((int)d.size() != w * h)
+		d.resize(w * h);
+	std::fill(d.begin(), d.end(), -1);
+
+#pragma omp parallel for
+	for(int i = 0; i < h; i++){
+		int newi = i;
+		if(newi >= 0 && newi < h){
+			for(int j = 0; j < w; j++){
+				int newj = w - j - 1;
+				d[newi * w + newj] = X[i * w + j];
+			}
+		}
+	}
+	for(size_t i = 0; i < d.size(); i++){
+		X[i] = d[i];
+	}
+}
+
+template< typename T >
 void translate(int x, int y, int w, int h, T *X, std::vector<T> &d)
 {
-	if(d.size() != w * h)
+	if((int)d.size() != w * h)
 		d.resize(w * h);
 	std::fill(d.begin(), d.end(), -1);
 
@@ -230,7 +252,7 @@ void cifar_train::forward(const std::vector< ct::Matf > &X, ct::Matf &a_out,
 
 		std::vector< ct::Matf > *pvX = (std::vector< ct::Matf >*)&X;
 
-		for(int i = 0; i < m_conv.size(); ++i){
+		for(size_t i = 0; i < m_conv.size(); ++i){
 			conv2::convnn<float>& cnv = m_conv[i];
 			cnv.forward(pvX, ct::RELU);
 			pvX = &cnv.XOut();
@@ -317,8 +339,10 @@ void cifar_train::randX(std::vector< ct::Matf > &X, std::vector<ct::Vec4f> &vals
 
 	int area = cifar_reader::WidthIM * cifar_reader::HeightIM;
 
+	std::binomial_distribution<int> ufl(1, 0.5);
+
 #pragma omp parallel for
-	for(int i = 0; i < X.size(); i++){
+	for(int i = 0; i < (int)X.size(); i++){
 		float *dX = X[i].ptr();
 
 		float *dX1 = &dX[0 * area];
@@ -327,16 +351,24 @@ void cifar_train::randX(std::vector< ct::Matf > &X, std::vector<ct::Vec4f> &vals
 
 		float x = vals[i][0];
 		float y = vals[i][1];
-		float ang = vals[i][2];
+//		float ang = vals[i][2];
 		float br = vals[i][3];
 
 		std::vector< float > d;
 
-		if(ang != 0){
-			rotate_data<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, ang, dX1, d);
-			rotate_data<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, ang, dX2, d);
-			rotate_data<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, ang, dX3, d);
+		int fl = ufl(ct::generator);
+
+		if(fl){
+			flip<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, dX1, d);
+			flip<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, dX2, d);
+			flip<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, dX3, d);
 		}
+
+//		if(ang != 0){
+//			rotate_data<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, ang, dX1, d);
+//			rotate_data<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, ang, dX2, d);
+//			rotate_data<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, ang, dX3, d);
+//		}
 
 		translate<float>(x, y, cifar_reader::WidthIM, cifar_reader::HeightIM, dX1, d);
 		translate<float>(x, y, cifar_reader::WidthIM, cifar_reader::HeightIM, dX2, d);
@@ -628,7 +660,7 @@ QVector< int > cifar_train::predict(const QVector< TData >& data, bool use_gpu)
 
 ct::Matf cifar_train::cnvW(int index, bool use_gpu)
 {
-	if(index >= m_cnvlayers.size())
+	if(index >= (int)m_cnvlayers.size())
 		index = (int)m_cnvlayers.size() - 1;
 
 	if(!use_gpu){
@@ -656,7 +688,7 @@ ct::Matf cifar_train::cnvW(int index, bool use_gpu)
 
 ct::Size &cifar_train::szW(int index, bool use_gpu)
 {
-	if(index >= m_cnvlayers.size())
+	if(index >= (int)m_cnvlayers.size())
 		index = (int)m_cnvlayers.size() - 1;
 
 	if(use_gpu)
@@ -666,7 +698,7 @@ ct::Size &cifar_train::szW(int index, bool use_gpu)
 
 int cifar_train::Kernels(int index, bool use_gpu)
 {
-	if(index >= m_cnvlayers.size())
+	if(index >= (int)m_cnvlayers.size())
 		index = (int)m_cnvlayers.size() - 1;
 
 	if(use_gpu)
@@ -676,7 +708,7 @@ int cifar_train::Kernels(int index, bool use_gpu)
 
 int cifar_train::channels(int index, bool use_gpu)
 {
-	if(index >= m_cnvlayers.size())
+	if(index >= (int)m_cnvlayers.size())
 		index = (int)m_cnvlayers.size() - 1;
 
 	if(use_gpu)

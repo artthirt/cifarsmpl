@@ -27,14 +27,14 @@ public:
 	cifar_reader();
 	~cifar_reader();
 
-	QVector<TData> &train(int batch, double percent);
+	QVector<TData> &train(uint batch, double percent);
 	QVector<TData> &test(int beg, int count);
 	uint count_test();
 
 	void convToXy(const QVector<TData> &data, int first, int last, std::vector< ct::Matf >& X, ct::Matf *y = nullptr);
 	void convToXy2(const QVector<TData> &data, int first, int last, std::vector< ct::Matf >& X, ct::Matf *y = nullptr);
 
-	bool getData(int file, int offset, TData& data);
+	bool getData(uint file, uint offset, TData& data);
 	bool getData(double percent, TData& data);
 	void getTrain(int batch, std::vector< ct::Matf >& X, ct::Matf &y);
 	void getTrain2(int batch, std::vector< ct::Matf >& X, ct::Matf &y);

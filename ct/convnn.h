@@ -254,7 +254,7 @@ private:
 			last = (int)A1.size();
 		}
 
-		for(size_t i = first, j = 0; i < last; ++i, ++j){
+		for(int i = first, j = 0; i < last; ++i, ++j){
 			if(!ct::upsample(A1[i].DltA0, szA1, szA0, Masks[j], A0[j]))
 				return false;
 		}

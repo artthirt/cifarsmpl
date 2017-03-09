@@ -464,7 +464,7 @@ void test_agg::test_conv()
 void conv_vec_to_gpu(const std::vector< ct::Matf >& Xs, std::vector< gpumat::GpuMat >& g_Xs)
 {
 	g_Xs.resize(Xs.size());
-	for(int i = 0; i < Xs.size(); ++i){
+	for(int i = 0; i < (int)Xs.size(); ++i){
 		gpumat::convert_to_gpu(Xs[i], g_Xs[i]);
 	}
 }

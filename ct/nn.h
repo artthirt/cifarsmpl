@@ -695,7 +695,7 @@ bool upsample(const std::vector< ct::Mat_<T> > &A1,
 		last = (int)A1.size();
 	}
 
-	for(size_t i = first, j = 0; i < last; ++i, ++j){
+	for(int i = first, j = 0; i < last; ++i, ++j){
 		if(!upsample(A1[i], szA1, szA0, Masks[j], A0[j]))
 			return false;
 	}
@@ -758,7 +758,7 @@ void hsplit(const ct::Mat_<T>& res, size_t cols, std::vector< ct::Mat_<T> >& lis
 
 	T *dR = res.ptr();
 #pragma omp parallel for
-	for(int i = 0; i < cols; ++i){
+	for(int i = 0; i < (int)cols; ++i){
 		T *dLi = list[i].ptr();
 #ifdef __GNUC__
 #pragma omp simd
@@ -872,7 +872,7 @@ void deriv_conv2D(const ct::Mat_<T> & A0,
 	gradB.resize(gradA1.size());
 
 #pragma omp parallel for
-	for(int i = 0; i < gradA1.size(); ++i){
+	for(int i = 0; i < (int)gradA1.size(); ++i){
 		deriv_conv2D(A0, gradA1[i], szA0, szA1, szW, stride, gradW[i], gradB[i]);
 	}
 }

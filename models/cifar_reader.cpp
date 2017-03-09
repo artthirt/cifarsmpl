@@ -83,13 +83,13 @@ cifar_reader::~cifar_reader()
 	saveSettings();
 }
 
-QVector<TData> &cifar_reader::train(int batch, double percent)
+QVector<TData> &cifar_reader::train(uint batch, double percent)
 {
 	m_current_data.clear();
 	if(batch == 0 || percent > 1)
 		return m_current_data;
 
-	int num = countFiles * percent;
+	uint num = countFiles * percent;
 	double offset = percent - (num * 1./countFiles);
 	offset *= maxCount;
 
@@ -206,7 +206,7 @@ void cifar_reader::convToXy2(const QVector<TData> &data, int first, int last, st
 	}
 }
 
-bool cifar_reader::getData(int file, int offset, TData &data)
+bool cifar_reader::getData(uint file, uint offset, TData &data)
 {
 	QString fn = m_directory + "/" + train_images_file[(int)file];
 
@@ -227,14 +227,14 @@ bool cifar_reader::getData(int file, int offset, TData &data)
 
 bool cifar_reader::getData(double percent, TData &data)
 {
-	int num = countFiles * percent;
+	uint num = countFiles * percent;
 	double offset = percent - (num * 1./countFiles);
 	offset *= maxCount;
 
 	QString fn = m_directory + "/" + train_images_file[(int)num];
 
 	if(m_current_file == num
-			&& m_current_offset == offset){
+			&& m_current_offset == (uint)offset){
 		return false;
 	}
 
@@ -348,14 +348,14 @@ void cifar_reader::getTrain2(int batch, std::vector<ct::Matf> &X, ct::Matf &y)
 
 bool cifar_reader::getDataIt(double percent, int batch, QVector< TData > &data)
 {
-	int num = countFiles * percent;
+	uint num = countFiles * percent;
 	double offset = percent - (num * 1./countFiles);
 	offset *= maxCount;
 
 	QString fn = m_directory + "/" + train_images_file[(int)num];
 
 	if(m_current_file == num
-			&& m_current_offset == offset){
+			&& m_current_offset == (uint)offset){
 		return false;
 	}
 
