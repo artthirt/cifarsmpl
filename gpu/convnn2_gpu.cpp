@@ -237,12 +237,12 @@ void convnn_gpu::backward(const std::vector<gpumat::GpuMat> &D, bool last_level)
 		gpumat::GpuMat& vgBi	= vgB[i];
 		gpumat::matmulT1_shared(Xci, dSubi, Wi);
 
-		gpumat::mulval(Wi, (double)1. / dSubi.rows);
+//		gpumat::mulval(Wi, (double)1. / dSubi.rows);
 //		gpumat::save_gmat(Xci, "Xgi.txt");
 //		gpumat::save_gmat(dSubi, "Dgi.txt");
 //		gpumat::save_gmat(Wi, "Wgi.txt");
 		vgBi.swap_dims();
-		sumRows(dSubi, vgBi, (double)1. / dSubi.rows);
+		sumRows(dSubi, vgBi, (double)1. /*/ dSubi.rows*/);
 		vgBi.swap_dims();
 	}
 //	gpumat::save_gmat(vgW[0], "Wg1.txt");
