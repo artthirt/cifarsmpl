@@ -1,6 +1,7 @@
 #ifndef CUSTOM_TYPES_H
 #define CUSTOM_TYPES_H
 
+#include <assert.h>
 #include <vector>
 #include <memory>
 #include <algorithm>
@@ -112,9 +113,11 @@ public:
 		std::fill((char*)val + 4 * sizeof(T), (char*)val + sizeof(val), 0);
 	}
 	T& operator[] (int index){
+		assert(index < count);
 		return val[index];
 	}
-	const T& operator[] (int index) const{
+	T& operator[] (int index) const{
+		assert(index < count);
 		return val[index];
 	}
 

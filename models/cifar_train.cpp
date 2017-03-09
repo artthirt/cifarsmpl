@@ -1,6 +1,8 @@
 #include "cifar_train.h"
 #include <algorithm>
 
+#include <omp.h>
+
 #include <QMap>
 ////////////////////
 
@@ -13,14 +15,15 @@ void flip(int w, int h, T *X, std::vector<T> &d)
 		d.resize(w * h);
 	std::fill(d.begin(), d.end(), -1);
 
-#pragma omp parallel for
+//#pragma omp parallel for
+#ifdef __GNUC__
+#pragma omp simd
+#endif
 	for(int i = 0; i < h; i++){
 		int newi = i;
-		if(newi >= 0 && newi < h){
-			for(int j = 0; j < w; j++){
-				int newj = w - j - 1;
-				d[newi * w + newj] = X[i * w + j];
-			}
+		for(int j = 0; j < w; j++){
+			int newj = w - j - 1;
+			d[newi * w + newj] = X[i * w + j];
 		}
 	}
 	for(size_t i = 0; i < d.size(); i++){
@@ -35,13 +38,18 @@ void translate(int x, int y, int w, int h, T *X, std::vector<T> &d)
 		d.resize(w * h);
 	std::fill(d.begin(), d.end(), -1);
 
-#pragma omp parallel for
+//#pragma omp parallel for
+#ifdef __GNUC__
+#pragma omp simd
+#endif
 	for(int i = 0; i < h; i++){
 		int newi = i + x;
-		for(int j = 0; j < w; j++){
-			int newj = j + y;
-			if(newj >= 0 && newj < w){
-				d[newi * w + newj] = X[i * w + j];
+		if(newi >= 0 && newi < h){
+			for(int j = 0; j < w; j++){
+				int newj = j + y;
+				if(newj >= 0 && newj < w){
+					d[newi * w + newj] = X[i * w + j];
+				}
 			}
 		}
 	}
@@ -300,10 +308,13 @@ void cifar_train::randValues(size_t count, std::vector<ct::Vec4f> &vals, float o
 		for(size_t i = 0; i < vals.size(); ++i){
 			int x = udtr(ct::generator);
 			int y = udtr(ct::generator);
-			vals[i][0] = x;
-			vals[i][1] = y;
+			ct::Vec4f& v = vals[i];
+			v[0] = x;
+			v[1] = y;
 		}
 	}
+	return;
+
 	if(angle){
 		std::uniform_real_distribution<float> uar(-angle, angle);
 		for(size_t i = 0; i < vals.size(); ++i){
@@ -354,6 +365,14 @@ void cifar_train::randX(std::vector< ct::Matf > &X, std::vector<ct::Vec4f> &vals
 
 	std::binomial_distribution<int> ufl(1, 0.5);
 
+	int max_threads = omp_get_num_procs();
+
+	omp_set_num_threads(max_threads * 2);
+	int num_thr = omp_get_num_threads();
+
+	std::vector< std::vector< float > > ds;
+	ds.resize(num_thr);
+
 #pragma omp parallel for
 	for(int i = 0; i < (int)X.size(); i++){
 		float *dX = X[i].ptr();
@@ -367,7 +386,9 @@ void cifar_train::randX(std::vector< ct::Matf > &X, std::vector<ct::Vec4f> &vals
 //		float ang = vals[i][2];
 		float br = vals[i][3];
 
-		std::vector< float > d;
+		int _num = omp_get_thread_num();
+
+		std::vector< float >& d = ds[_num];
 
 		int fl = ufl(ct::generator);
 
