@@ -74,10 +74,10 @@ private:
 	bool m_use_pool;
 	gpumat::etypefunction m_func;
 
-	std::vector< gpumat::GpuMat > dSub;
+//	std::vector< gpumat::GpuMat > dSub;
 	std::vector< gpumat::GpuMat > dSub2;
 	std::vector< gpumat::GpuMat > Dc;		///
-	std::vector< gpumat::GpuMat > DA1;		///
+//	std::vector< gpumat::GpuMat > DA1;		///
 };
 
 /**

@@ -263,7 +263,7 @@ void cifar_train::forward(const std::vector< ct::Matf > &X, ct::Matf &a_out,
 			pvX = &cnv.XOut();
 		}
 
-		conv2::vec2mat(m_conv.back().A2, m_X_out);
+		conv2::vec2mat(m_conv.back().XOut(), m_X_out);
 
 		ct::Matf *pX = &m_X_out;
 

@@ -173,29 +173,31 @@ void convnn_gpu::forward(const std::vector<gpumat::GpuMat> *_pX, gpumat::etypefu
 
 void convnn_gpu::backcnv(const std::vector<gpumat::GpuMat> &D, std::vector<gpumat::GpuMat> &DS)
 {
-	DA1.resize(A1.size());
+//	DA1.resize(A1.size());
+	/// A1 -> DA1
 	for(size_t i = 0; i < D.size(); ++i){
 		switch (m_func) {
 			case ct::RELU:
-				gpumat::deriv_reLu(A1[i], DA1[i]);
+				gpumat::deriv_reLu(A1[i]/*, DA1[i]*/);
 				break;
 			case ct::SIGMOID:
-				gpumat::deriv_sigmoid(A1[i], DA1[i]);
+				gpumat::deriv_sigmoid(A1[i]/*, DA1[i]*/);
 				break;
 			case ct::TANH:
-				gpumat::deriv_tanh(A1[i], DA1[i]);
+				gpumat::deriv_tanh(A1[i]/*, DA1[i]*/);
 				break;
 			default:
 				break;
 		}
 	}
+	/// D * DA1
 	if(D.data() != DS.data()){
 		for(size_t i = 0; i < D.size(); ++i){
-			gpumat::elemwiseMult(D[i], DA1[i], DS[i]);
+			gpumat::elemwiseMult(D[i], A1[i], DS[i]);
 		}
 	}else{
 		for(size_t i = 0; i < D.size(); ++i){
-			gpumat::elemwiseMult(DS[i], DA1[i]);
+			gpumat::elemwiseMult(DS[i], A1[i]);
 		}
 	}
 }
@@ -209,9 +211,9 @@ void convnn_gpu::backward(const std::vector<gpumat::GpuMat> &D, bool last_level)
 	dSub2.resize(D.size());
 
 	if(m_use_pool){
-		dSub.resize(D.size());
-		gpumat::conv2::upsample(D, K, Mask, szA2, szA1, dSub);
-		backcnv(dSub, dSub2);
+//		dSub.resize(D.size());
+		gpumat::conv2::upsample(D, K, Mask, szA2, szA1, dSub2);
+		backcnv(dSub2, dSub2);
 
 //		save_vec(dSub);
 

@@ -185,12 +185,14 @@ void matmulT2_shared(const GpuMat& A, const GpuMat& Bt, GpuMat& C);
  * @param C - out C = A * value
  */
 void mulval(const GpuMat& A, double value, GpuMat& C);
+
 /**
  * @brief mulval
  * @param A -> A *= value
  * @param value - mat 1x1
  */
 void mulval(GpuMat& A, double value);
+
 /**
  * @brief addval
  * @param A
@@ -198,12 +200,14 @@ void mulval(GpuMat& A, double value);
  * @param C - out C = A + value
  */
 void addval(const GpuMat& A, double value, GpuMat& C);
+
 /**
  * @brief addval
  * @param A
  * @param value - mat 1x1
  */
 void addval(GpuMat &A, double value);
+
 /**
  * @brief subval
  * @param A
@@ -211,6 +215,7 @@ void addval(GpuMat &A, double value);
  * @param C - out C = A - value
  */
 void subval(const GpuMat& A, double value, GpuMat& C);
+
 /**
  * @brief subval
  * @param A
@@ -218,24 +223,28 @@ void subval(const GpuMat& A, double value, GpuMat& C);
  * @param C - out C = value - C
  */
 void subval(double value, const GpuMat& A, GpuMat& C);
+
 /**
  * @brief subval
  * @param A - > A - value
  * @param value - mat 1x1
  */
 void subval(GpuMat& A, double value);
+
 /**
  * @brief subval
  * @param A -> value - A
  * @param value - mat 1x1
  */
 void subval(double value, GpuMat& A);
+
 /**
  * @brief biasPlus
  * @param A - out A[i] = A[i] + bias
  * @param bias
  */
 void biasPlus(GpuMat& A, const GpuMat& bias);
+
 /**
  * @brief elemiseMul
  * @param A
@@ -243,12 +252,14 @@ void biasPlus(GpuMat& A, const GpuMat& bias);
  * @param C - out C = A .* B
  */
 void elemwiseMult(const GpuMat& A, const GpuMat& B, GpuMat& C);
+
 /**
  * @brief elemiseMul
  * @param A = A.* B
  * @param B
  */
 void elemwiseMult(GpuMat& A, const GpuMat& B);
+
 /**
  * @brief elemiseDiv
  * @param A
@@ -256,6 +267,7 @@ void elemwiseMult(GpuMat& A, const GpuMat& B);
  * @param C - out C = A ./ B
  */
 void elemwiseDiv(const GpuMat& A, const GpuMat& B, GpuMat& C);
+
 /**
  * @brief elemiseSqrt
  * @param A
@@ -263,6 +275,7 @@ void elemwiseDiv(const GpuMat& A, const GpuMat& B, GpuMat& C);
  * @param C - out C = sqrt(A)
  */
 void elemwiseSqrt(const GpuMat& A, GpuMat& C);
+
 /**
  * @brief elemiseSqr
  * @param A
@@ -270,78 +283,106 @@ void elemwiseSqrt(const GpuMat& A, GpuMat& C);
  * @param C - out C = sqrt(A)
  */
 void elemwiseSqr(const GpuMat& A, GpuMat& C);
+
 /**
  * @brief sumRows
  * @param A
  * @param C - out C[i] = val * sum(A[i, j]) (j = [1, cols])
  */
 void sumRows(const GpuMat& A, GpuMat& C, double val = 1.);
+
 /**
  * @brief sumRows
  * @param A
  * @param C - out C[i] = val * sum(A[i, j]) (j = [1, cols])
  */
 void sumRows_shared(const GpuMat& A, GpuMat& C, double val = 1.);
+
 /**
  * @brief transpose
  * @param A
  * @param C - out C = A'
  */
 void transpose(const GpuMat& A, GpuMat& C);
+
 /**
  * @brief reLu
  * @param A
  * @param C - out C = reLu(A)
  */
 void reLu(const GpuMat& A, GpuMat& C);
+
 /**
  * @brief reLu
  * @param A
  */
 void reLu(GpuMat& A);
+
 /**
  * @brief deriv_reLu
  * @param A
  * @param C - out C = deriv_reLu(A)
  */
 void deriv_reLu(const GpuMat& A, GpuMat& C);
+
+/**
+ * @brief deriv_reLu
+ * @param A
+ */
+void deriv_reLu(GpuMat& A);
+
 /**
  * @brief sigmoid
  * @param A
  * @param C - out C = sigmoid(A)
  */
 void sigmoid(const GpuMat& A, GpuMat& C);
+
 /**
  * @brief sigmoid
  * @param A
  */
 void sigmoid(GpuMat& A);
+
 /**
  * @brief deriv_sigmoid
  * @param A
- * @param B
  * @param C - out C = deriv_sigmoid(A)
  */
 void deriv_sigmoid(const GpuMat& A, GpuMat& C);
+
+/**
+ * @brief deriv_sigmoid
+ * @param A
+ */
+void deriv_sigmoid(GpuMat& A);
+
 /**
  * @brief tanh
  * @param A
- * @param B
  * @param C - out C = tanh(A)
  */
 void tanh(const GpuMat& A, GpuMat& C);
+
 /**
  * @brief tanh
  * @param A = tanh(A)
  */
 void tanh(GpuMat& A);
+
 /**
  * @brief deriv_tanh
  * @param A
- * @param B
  * @param C - out C = deriv_tanh(A)
  */
 void deriv_tanh(const GpuMat& A, GpuMat& C);
+
+/**
+ * @brief deriv_tanh
+ * @param A
+ */
+void deriv_tanh(GpuMat& A);
+
 /**
  * @brief softmax
  * @param A
@@ -350,6 +391,7 @@ void deriv_tanh(const GpuMat& A, GpuMat& C);
  * @param partZ = sum(exp(A), axis)
  */
 void softmax(const GpuMat& A, int axis, GpuMat& C, GpuMat& partZ);
+
 /**
  * @brief softmax
  * @param A = softmax(A)
@@ -357,6 +399,7 @@ void softmax(const GpuMat& A, int axis, GpuMat& C, GpuMat& partZ);
  * @param partZ = sum(exp(A), axis)
  */
 void softmax(GpuMat& A, int axis, GpuMat& partZ);
+
 /**
  * @brief sub
  * @param A
@@ -380,6 +423,7 @@ void subIndOne(const GpuMat& A, const GpuMat& Ind, GpuMat& B);
  * @param mat
  */
 void write_fs(std::fstream &fs, const GpuMat &mat);
+
 /**
  * @brief read_fs
  * read from fstream

@@ -89,26 +89,6 @@ void mlp::apply_func(GpuMat &A, etypefunction func)
 	}
 }
 
-void mlp::apply_back_func(const GpuMat &D1, GpuMat &D2, etypefunction func){
-	switch (func) {
-		default:
-		case RELU:
-			deriv_reLu(A1, DA1);
-			break;
-		case SOFTMAX:
-			//				A = softmax(A, 1);
-			D1.copyTo(D2);
-			return;
-		case SIGMOID:
-			deriv_sigmoid(A1, DA1);
-			break;
-		case TANH:
-			deriv_tanh(A1, DA1);
-			break;
-	}
-	elemwiseMult(D1, DA1, D2);
-}
-
 etypefunction mlp::funcType() const{
 	return m_func;
 }
@@ -154,14 +134,42 @@ void mlp::forward(const GpuMat *mat, etypefunction func, bool save_A0)
 		pA0 = nullptr;
 }
 
+void mlp::apply_back_func(const GpuMat &D1, GpuMat &D2, etypefunction func){
+	switch (func) {
+		default:
+		case RELU:
+			deriv_reLu(A1);
+			break;
+		case SOFTMAX:
+			//				A = softmax(A, 1);
+//			D1.copyTo(D2);
+			return;
+		case SIGMOID:
+			deriv_sigmoid(A1);
+			break;
+		case TANH:
+			deriv_tanh(A1);
+			break;
+	}
+	if(A1.data == D2.data){
+		elemwiseMult(D2, D1);
+	}else{
+		elemwiseMult(D1, A1, D2);
+	}
+}
+
 void mlp::backward(const GpuMat &Delta, bool last_layer)
 {
 	if(!pA0 || !m_init)
 		throw new std::invalid_argument("mlp::backward: not initialized. wrong parameters");
 
-	apply_back_func(Delta, DA1, m_func);
+	gpumat::GpuMat& DA1 = (m_func == gpumat::SOFTMAX)? (GpuMat&)Delta : A1;
 
 	double m = Delta.rows;
+
+	if(m_func != gpumat::SOFTMAX){
+		apply_back_func(Delta, DA1, m_func);
+	}
 
 	matmulT1(*pA0, DA1, gW);
 	mulval(gW, 1. / m);

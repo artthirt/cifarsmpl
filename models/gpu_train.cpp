@@ -208,7 +208,7 @@ void gpu_train::forward(const std::vector<gpumat::GpuMat> &X,
 		pvX = &cnv.XOut();
 	}
 
-	gpumat::conv2::vec2mat(m_conv.back().A2, m_Xout);
+	gpumat::conv2::vec2mat(m_conv.back().XOut(), m_Xout);
 
 	gpumat::GpuMat *pA = &m_Xout;
 

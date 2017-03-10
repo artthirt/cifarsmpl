@@ -540,6 +540,20 @@ __global__ void deriv_reLu(Mtx A, Mtx C)
 		dC[row * C.cols + col] = (dA[row * A.cols + col] > 0)? 1 : 0;
 }
 
+template< class T >
+__global__ void deriv_reLu(Mtx A)
+{
+	int row = threadIdx.y + blockIdx.y * blockDim.y;
+	int col = threadIdx.x + blockIdx.x * blockDim.x;
+
+	T* dA = (T*)A.data;
+
+	if(row < A.rows && col < A.cols)
+		dA[row * A.cols + col] = (dA[row * A.cols + col] > 0)? 1 : 0;
+}
+
+//////////
+
 /**
  * @brief sigmoid
  * @param A
@@ -592,6 +606,20 @@ __global__ void deriv_sigmoid(Mtx A, Mtx C)
 	if(row < A.rows && col < A.cols){
 		T val = dA[row * A.cols + col];
 		dC[row * C.cols + col] = val * (1 - val);
+	}
+}
+
+template< class T >
+__global__ void deriv_sigmoid(Mtx A)
+{
+	int row = threadIdx.y + blockIdx.y * blockDim.y;
+	int col = threadIdx.x + blockIdx.x * blockDim.x;
+
+	T* dA = (T*)A.data;
+
+	if(row < A.rows && col < A.cols){
+		T val = dA[row * A.cols + col];
+		dA[row * A.cols + col] = val * (1 - val);
 	}
 }
 
@@ -651,6 +679,20 @@ __global__ void deriv_tanh(Mtx A, Mtx C)
 	if(row < A.rows && col < A.cols){
 		T val = dA[row * A.cols + col];
 		dC[row * C.cols + col] = (1. - val * val);
+	}
+}
+
+template< class T >
+__global__ void deriv_tanh(Mtx A)
+{
+	int row = threadIdx.y + blockIdx.y * blockDim.y;
+	int col = threadIdx.x + blockIdx.x * blockDim.x;
+
+	T* dA = (T*)A.data;
+
+	if(row < A.rows && col < A.cols){
+		T val = dA[row * A.cols + col];
+		dA[row * A.cols + col] = (1. - val * val);
 	}
 }
 
@@ -1939,6 +1981,8 @@ void cuda_sumrows_shared(const GpuMat& A, GpuMat& sums, double val)
 	}
 }
 
+////////////////
+
 /**
  * @brief cuda_reLu
  * @param A
@@ -2008,6 +2052,26 @@ void cuda_derivReLu(const GpuMat& A, GpuMat& C)
 	}
 }
 
+extern "C"
+void cuda_derivReLu2(GpuMat& A)
+{
+	int x1 = A.cols / BLOCKSIZE + 1;
+	int x2 = A.rows / BLOCKSIZE + 1;
+
+	dim3 dimGrid(x1, x2), dimBlock(BLOCKSIZE, BLOCKSIZE);
+
+	switch (A.type) {
+	case GPU_DOUBLE:
+		internal::deriv_reLu<double> <<<dimGrid, dimBlock>>>(A);
+		break;
+	case GPU_FLOAT:
+		internal::deriv_reLu<float> <<<dimGrid, dimBlock>>>(A);
+		break;
+	}
+}
+
+////////////////////
+
 /**
  * @brief cuda_sigmoid
  * @param A
@@ -2076,6 +2140,26 @@ void cuda_deriv_sigmoid(const GpuMat& A, GpuMat& C)
 	}
 }
 
+extern "C"
+void cuda_deriv_sigmoid2(GpuMat& A)
+{
+	int x1 = A.cols / BLOCKSIZE + 1;
+	int x2 = A.rows / BLOCKSIZE + 1;
+
+	dim3 dimGrid(x1, x2), dimBlock(BLOCKSIZE, BLOCKSIZE);
+
+	switch (A.type) {
+	case GPU_DOUBLE:
+		internal::deriv_sigmoid<double> <<<dimGrid, dimBlock>>>(A);
+		break;
+	case GPU_FLOAT:
+		internal::deriv_sigmoid<float> <<<dimGrid, dimBlock>>>(A);
+		break;
+	}
+}
+
+///////////////
+
 /**
  * @brief cuda_tanh
  * @param A
@@ -2143,6 +2227,26 @@ void cuda_deriv_tanh(const GpuMat& A, GpuMat& C)
 		break;
 	}
 }
+
+extern "C"
+void cuda_deriv_tanh2(GpuMat& A)
+{
+	int x1 = A.cols / BLOCKSIZE + 1;
+	int x2 = A.rows / BLOCKSIZE + 1;
+
+	dim3 dimGrid(x1, x2), dimBlock(BLOCKSIZE, BLOCKSIZE);
+
+	switch (A.type) {
+	case GPU_DOUBLE:
+		internal::deriv_tanh<double> <<<dimGrid, dimBlock>>>(A);
+		break;
+	case GPU_FLOAT:
+		internal::deriv_tanh<float> <<<dimGrid, dimBlock>>>(A);
+		break;
+	}
+}
+
+/////////////////
 
 /**
  * @brief cuda_softmax
