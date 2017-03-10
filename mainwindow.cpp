@@ -27,8 +27,8 @@ MainWindow::MainWindow(QWidget *parent) :
 	std::vector< int > cnv_w;
 	std::vector< char > cnv_p;
 
-	cnv.push_back(32);
-	cnv.push_back(32);
+	cnv.push_back(64);
+	cnv.push_back(96);
 //	cnv.push_back(40);
 //	cnv.push_back(1);
 
@@ -40,7 +40,9 @@ MainWindow::MainWindow(QWidget *parent) :
 	cnv_p.push_back(true);
 	cnv_p.push_back(true);
 
-	mlp.push_back(750);
+	mlp.push_back(1024);
+	mlp.push_back(1024);
+	mlp.push_back(850);
 	mlp.push_back(750);
 	mlp.push_back(850);
 	mlp.push_back(600);
@@ -51,7 +53,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	m_train.setMlpLayers(mlp);
 
 	m_train.setUseRandData(true);
-	m_train.setRandData(5, 7, 0.1);
+	m_train.setRandData(1, 9, 0.1);
 	m_train.setDropoutProb(0.9);
 
 	m_train.init();
@@ -66,6 +68,8 @@ MainWindow::MainWindow(QWidget *parent) :
 	ui->sb_batch->setValue(m_batch);
 	ui->sb_delay->setValue(m_delay);
 	ui->sb_iter_numb->setValue(m_delimiter);
+
+	ui->dsb_dropoutprob->setValue(m_train.dropoutProb());
 
 	ui->sb_wid->setMaximum((int)cnv.size());
 }
