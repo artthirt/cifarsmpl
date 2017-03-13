@@ -381,7 +381,7 @@ void cifar_train::randX(std::vector< ct::Matf > &X, std::vector<ct::Vec4f> &vals
 
 		float x = vals[i][0];
 		float y = vals[i][1];
-//		float ang = vals[i][2];
+		float ang = vals[i][2];
 		float br = vals[i][3];
 
 		int _num = omp_get_thread_num();
@@ -396,11 +396,11 @@ void cifar_train::randX(std::vector< ct::Matf > &X, std::vector<ct::Vec4f> &vals
 			flip<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, dX3, d);
 		}
 
-//		if(ang != 0){
-//			rotate_data<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, ang, dX1, d);
-//			rotate_data<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, ang, dX2, d);
-//			rotate_data<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, ang, dX3, d);
-//		}
+		if(ang != 0){
+			rotate_data<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, ang, dX1, d);
+			rotate_data<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, ang, dX2, d);
+			rotate_data<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, ang, dX3, d);
+		}
 
 		if(x && y){
 			translate<float>(x, y, cifar_reader::WidthIM, cifar_reader::HeightIM, dX1, d);

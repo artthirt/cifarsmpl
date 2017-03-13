@@ -177,6 +177,9 @@ void convnn_gpu::backcnv(const std::vector<gpumat::GpuMat> &D, std::vector<gpuma
 	/// A1 -> DA1
 	for(size_t i = 0; i < D.size(); ++i){
 		switch (m_func) {
+			case ct::LINEAR:
+				D[i].copyTo(DS[i]);
+				break;
 			case ct::RELU:
 				gpumat::deriv_reLu(A1[i]/*, DA1[i]*/);
 				break;
@@ -190,6 +193,10 @@ void convnn_gpu::backcnv(const std::vector<gpumat::GpuMat> &D, std::vector<gpuma
 				break;
 		}
 	}
+
+	if(m_func == gpumat::LINEAR)
+		return;
+
 	/// D * DA1
 	if(D.data() != DS.data()){
 		for(size_t i = 0; i < D.size(); ++i){
@@ -204,7 +211,7 @@ void convnn_gpu::backcnv(const std::vector<gpumat::GpuMat> &D, std::vector<gpuma
 
 void convnn_gpu::backward(const std::vector<gpumat::GpuMat> &D, bool last_level)
 {
-	if(D.empty() || D.size() != Xc.size()){
+	if(D.empty() || D.size() != A1.size()){
 		throw new std::invalid_argument("vector D not complies saved parameters");
 	}
 

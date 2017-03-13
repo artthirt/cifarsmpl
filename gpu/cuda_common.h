@@ -13,6 +13,7 @@
 namespace gpumat{
 
 	enum etypefunction{
+		LINEAR = 0,
 		RELU = 1,
 		SIGMOID,
 		SOFTMAX,
