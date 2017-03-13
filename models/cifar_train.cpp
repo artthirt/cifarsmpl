@@ -31,6 +31,31 @@ void flip(int w, int h, T *X, std::vector<T> &d)
 }
 
 template< typename T >
+void crop(int w, int h, int new_w, int new_h, T *X, std::vector<T> &d)
+{
+	if(new_w > w || new_h > h)
+		return;
+
+	if((int)d.size() != w * h)
+		d.resize(w * h);
+	std::fill(d.begin(), d.end(), 0);
+
+	int xc = w / 2, yc = h / 2;
+//#pragma omp parallel for
+#ifdef __GNUC__
+#pragma omp simd
+#endif
+	for(int i = yc - new_h/2; i < yc + new_h/2; i++){
+		for(int j = xc - new_w/2; j < xc + new_w/2; j++){
+			d[i * w + j] = X[i * w + j];
+		}
+	}
+	for(size_t i = 0; i < d.size(); i++){
+		X[i] = d[i];
+	}
+}
+
+template< typename T >
 void translate(int x, int y, int w, int h, T *X, std::vector<T> &d)
 {
 	if((int)d.size() != w * h)
@@ -389,6 +414,13 @@ void cifar_train::randX(std::vector< ct::Matf > &X, std::vector<ct::Vec4f> &vals
 		std::vector< float >& d = ds[_num];
 
 		int fl = ufl(ct::generator);
+		int fl1 = ufl(ct::generator);
+
+		if(fl1){
+			crop<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, 24, 24, dX1, d);
+			crop<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, 24, 24, dX2, d);
+			crop<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, 24, 24, dX3, d);
+		}
 
 		if(fl){
 			flip<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, dX1, d);
