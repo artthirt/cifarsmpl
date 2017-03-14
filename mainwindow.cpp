@@ -53,7 +53,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	m_train.setUseRandData(true);
 	m_train.setRandData(5, 0, 0);
-	m_train.setDropoutProb(0.85);
+	m_train.setDropoutProb(0.9);
 
 	m_train.init();
 

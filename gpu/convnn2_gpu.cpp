@@ -215,16 +215,25 @@ void convnn_gpu::backward(const std::vector<gpumat::GpuMat> &D, bool last_level)
 		throw new std::invalid_argument("vector D not complies saved parameters");
 	}
 
+	qDebug("<<<<< backward(channels=%d, kernels=%d, Delta[%dx%d], W[%dx%d]) >>>>>>",
+		   channels, K, D[0].rows, D[0].cols, W[0].rows, W[0].cols);
+
 	dSub2.resize(D.size());
 
 	if(m_use_pool){
 //		dSub.resize(D.size());
+//		qDebug("backward: upsample(D[%dx%d])", D[0].rows, D[0].cols);
+
 		gpumat::conv2::upsample(D, K, Mask, szA2, szA1, dSub2);
+
+//		qDebug("backward: derivative(D[%dx%d])", dSub2[0].rows, dSub2[0].cols);
+
 		backcnv(dSub2, dSub2);
 
 //		save_vec(dSub);
 
 	}else{
+//		qDebug("backward: derivative(D[%dx%d])", D[0].rows, D[0].cols);
 		backcnv(D, dSub2);
 	}
 
@@ -237,6 +246,8 @@ void convnn_gpu::backward(const std::vector<gpumat::GpuMat> &D, bool last_level)
 	}
 #endif
 
+//	qDebug("backward: Xc[%dx%d]' x D[%dx%d]", Xc[0].rows, Xc[0].cols, dSub2[0].rows, dSub2[0].cols);
+
 	vgW.resize(D.size());
 	vgB.resize(D.size());
 	for(size_t i = 0; i < D.size(); ++i){
@@ -246,7 +257,7 @@ void convnn_gpu::backward(const std::vector<gpumat::GpuMat> &D, bool last_level)
 		gpumat::GpuMat& vgBi	= vgB[i];
 		gpumat::matmulT1_shared(Xci, dSubi, Wi);
 
-//		gpumat::mulval(Wi, (double)1. / dSubi.rows);
+		gpumat::mulval(Wi, (double)1. / dSubi.rows);
 //		gpumat::save_gmat(Xci, "Xgi.txt");
 //		gpumat::save_gmat(dSubi, "Dgi.txt");
 //		gpumat::save_gmat(Wi, "Wgi.txt");
@@ -289,6 +300,8 @@ void convnn_gpu::backward(const std::vector<gpumat::GpuMat> &D, bool last_level)
 	}
 
 	m_optim.pass(gW, gB, W, B);
+
+//	qDebug("<<<<< end backward >>>>>>");
 }
 
 void convnn_gpu::write(std::fstream &fs)
