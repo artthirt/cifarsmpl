@@ -19,9 +19,9 @@ int main(int argc, char *argv[])
 //	if(0)
 //		tagg.test_file();
 //	else
-		tagg.test_conv_gpu();
+//		tagg.test_conv_gpu();
 //	tagg.test_hconcat();
-//	tagg.test_im2col();
+	tagg.test_im2col();
 //	tagg.test_conv();
 
 	return 0;

@@ -183,7 +183,7 @@ void mlp::backward(const GpuMat &Delta, bool last_layer)
 	gB.swap_dims();
 
 	if(!last_layer){
-		matmulT2_shared(DA1, W, DltA0);
+		matmulT2(DA1, W, DltA0);
 	}
 }
 

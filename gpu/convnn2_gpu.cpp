@@ -91,7 +91,7 @@ void convnn_gpu::init(const ct::Size &_szA0, int _channels, int stride, int _K, 
 	gW.resize(1);
 	gB.resize(1);
 
-	float n = (float)1./szW.area();
+	float n = (float)0.1;
 
 	for(size_t i = 0; i < W.size(); ++i){
 		ct::Matf Wi(rows, cols), Bi(K, 1);
@@ -237,6 +237,7 @@ void convnn_gpu::backward(const std::vector<gpumat::GpuMat> &D, bool last_level)
 //		qDebug("backward: derivative(D[%dx%d])", D[0].rows, D[0].cols);
 		backcnv(D, dSub2);
 	}
+//	qt_work_mat::q_save_mat(dSub2[0], "testMask.txt");
 
 #if 0
 	if(channels == 3){
@@ -256,14 +257,14 @@ void convnn_gpu::backward(const std::vector<gpumat::GpuMat> &D, bool last_level)
 		gpumat::GpuMat& dSubi	= dSub2[i];
 		gpumat::GpuMat& Wi		= vgW[i];
 		gpumat::GpuMat& vgBi	= vgB[i];
-		gpumat::matmulT1_shared(Xci, dSubi, Wi);
+		gpumat::matmulT1(Xci, dSubi, Wi);
 
-//		gpumat::mulval(Wi, (double)1. / dSubi.rows);
+		gpumat::mulval(Wi, (double)1. / (K));
 //		gpumat::save_gmat(Xci, "Xgi.txt");
 //		gpumat::save_gmat(dSubi, "Dgi.txt");
 //		gpumat::save_gmat(Wi, "Wgi.txt");
 		vgBi.swap_dims();
-		sumRows(dSubi, vgBi, (double)1. / dSubi.rows);
+		sumRows(dSubi, vgBi, (double)1. / (K));
 		vgBi.swap_dims();
 	}
 //	gpumat::save_gmat(vgW[0], "Wg1.txt");
@@ -281,7 +282,7 @@ void convnn_gpu::backward(const std::vector<gpumat::GpuMat> &D, bool last_level)
 
 
 #if 0
-	if(channels == 3){
+	if(1/*channels == 128*/){
 		save_vec(vgW);
 		gpumat::save_gmat(gW[0], "Wg.txt");
 	}
@@ -296,7 +297,7 @@ void convnn_gpu::backward(const std::vector<gpumat::GpuMat> &D, bool last_level)
 		}
 		back_derivT(Dc, szA1, szA0, channels, szW, stride, Dlt);
 		//gpumat::save_gmat(dSub[0], "dSub.txt");
-		//gpumat::save_gmat(Dlt[0], "Dltgi.txt");
+//		gpumat::save_gmat(Dlt[0], "Dltgi.txt");
 		//gpumat::save_gmat(Dc[0], "Dc.txt");
 	}
 
@@ -613,9 +614,6 @@ void gpumat::conv2::subsample(const std::vector<gpumat::GpuMat> &X,
 
 	szO.width = szA.width / 2;
 	szO.height = szA.height / 2;
-
-	if((szO.width % 2) == 1) szO.width += 1;
-	if((szO.height % 2) == 1) szO.height += 1;
 
 	int K = X[0].cols;
 
