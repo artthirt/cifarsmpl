@@ -14,11 +14,12 @@
 namespace gpumat{
 
 enum{
-	GPU_FLOAT = 0,
-	GPU_DOUBLE
+	GPU_FLOAT = 1,
+	GPU_DOUBLE = 2
 };
 
 const int sizeof_enum[] = {
+	0,
 	sizeof(float),		/// GPU_FLOAT
 	sizeof(double)		/// GPU_DOUBLE
 };

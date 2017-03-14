@@ -309,12 +309,12 @@ void GpuMat::save(const std::string filename) const
 
 void GpuMat::release()
 {
-	rows = cols = type = 0;
 	if(data != nullptr){
 		cudaError_t err = cudaFree(data);
 		assert(err == cudaSuccess);
 		data = nullptr;
 	}
+	rows = cols = type = 0;
 }
 
 /////////////////////////////////////////////////

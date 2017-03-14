@@ -41,8 +41,8 @@ MainWindow::MainWindow(QWidget *parent) :
 	cnv_p.push_back(true);
 //	cnv_p.push_back(false);
 
+	mlp.push_back(1024);
 	mlp.push_back(256);
-	mlp.push_back(128);
 //	mlp.push_back(512);
 //	mlp.push_back(512);
 	mlp.push_back(10);

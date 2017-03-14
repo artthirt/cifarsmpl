@@ -511,7 +511,7 @@ void getSlice(const ct::Matf &Xs, int first, int last, ct::Matf &Xsi)
 
 void cifar_train::sliceEstimage(const std::vector<ct::Matf> &Xs, ct::Matf &y, uint &right, double &l2)
 {
-	int batch = 100;
+	int batch = 50;
 
 	int cnt = y.rows / batch;
 	if(!cnt)cnt = 1;
