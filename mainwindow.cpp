@@ -38,7 +38,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	cnv_w.push_back(3);
 	cnv_p.push_back(true);
 	cnv_p.push_back(true);
-	cnv_p.push_back(false);
+	cnv_p.push_back(true);
 	cnv_p.push_back(false);
 
 	mlp.push_back(512);
@@ -52,7 +52,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	m_train.setMlpLayers(mlp);
 
 	m_train.setUseRandData(true);
-	m_train.setRandData(5, 0, 0);
+	m_train.setRandData(3, 0, 0);
 	m_train.setDropoutProb(0.9);
 
 	m_train.init();

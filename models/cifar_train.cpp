@@ -88,7 +88,7 @@ void rotate_data(int w, int h, T angle, T *X, std::vector<T> &d)
 	int cw = w / 2;
 	int ch = h / 2;
 
-	if(d.size() != w * h)
+	if((int)d.size() != w * h)
 		d.resize(w * h);
 
 	std::fill(d.begin(), d.end(), 0);
@@ -106,58 +106,13 @@ void rotate_data(int w, int h, T angle, T *X, std::vector<T> &d)
 
 			int nx0 = std::round(x1 * cos(angle) + y1 * sin(angle));
 			int ny0 = std::round(-x1 * sin(angle) + y1 * cos(angle));
-//			int nx1 = (x1 * cos(angle + delta) + y1 * sin(angle + delta));
-//			int ny1 = (-x1 * sin(angle + delta) + y1 * cos(angle + delta));
-//			int nx2 = (x1 * cos(angle - delta) + y1 * sin(angle - delta));
-//			int ny2 = (-x1 * sin(angle - delta) + y1 * cos(angle - delta));
 			nx0 += cw; ny0 += ch;
-//			nx1 += cw; ny1 += ch;
-//			nx2 += cw; ny2 += ch;
 			int ix0 = nx0, iy0 = ny0;
-//			int ix1 = nx1, iy1 = ny1;
-//			int ix2 = nx2, iy2 = ny2;
 			if(ix0 >= 0 && ix0 < w && iy0 >= 0 && iy0 < h){
 				d[iy0 * w + ix0] = c;
 			}
-//			if(ix1 >= 0 && ix1 < w && iy1 >= 0 && iy1 < h){
-//				d[iy1 * w + ix1] = c;
-//			}
-//			if(ix2 >= 0 && ix2 < w && iy2 >= 0 && iy2 < h){
-//				d[iy2 * w + ix2] = c;
-//			}
-//			if(ix + 1 >= 0 && ix + 1 < w && iy >= 0 && iy < h){
-//				d[iy * w + ix + 1] = c;
-//			}
-//			if(ix - 1 >= 0 && ix - 1 < w && iy >= 0 && iy < h){
-//				d[iy * w + ix - 1] = c;
-//			}
-//			if(ix >= 0 && ix < w && iy + 1 >= 0 && iy + 1 < h){
-//				d[(iy + 1) * w + ix] = c;
-//			}
-//			if(ix >= 0 && ix < w && iy - 1 >= 0 && iy - 1 < h){
-//				d[(iy - 1) * w + ix] = c;
-//			}
 		}
 	}
-//	for(int y = 1; y < h - 1; y++){
-//		for(int x = 1; x < w - 1; x++){
-//			T c = d[y * w + x];
-//			if(c < -0.999999){
-//				T c0 = d[(y + 1) * w + (x)];
-//				T c1 = d[(y) * w + (x + 1)];
-//				T c2 = d[(y - 1) * w + (x)];
-//				T c3 = d[(y) * w + (x - 1)];
-
-//				T c4 = d[(y - 1) * w + (x - 1)];
-//				T c5 = d[(y + 1) * w + (x + 1)];
-//				T c6 = d[(y - 1) * w + (x + 1)];
-//				T c7 = d[(y - 1) * w + (x + 1)];
-
-//				c = (/*c0 + c1 + c2 + c3 + */c4 + c5 + c6 + c7)/4.;
-//				d[y * w + x] = c;
-//			}
-//		}
-//	}
 
 	for(size_t i = 0; i < d.size(); i++){
 		X[i] = d[i];
@@ -324,7 +279,7 @@ void cifar_train::randValues(size_t count, std::vector<ct::Vec4f> &vals, float o
 	vals.resize(count);
 	for(size_t i = 0; i < vals.size(); ++i){
 		ct::Vec4f& v = vals[i];
-		v.zeros();
+		v = ct::Vec4f::zeros();
 	}
 
 	if(offset){
@@ -414,13 +369,13 @@ void cifar_train::randX(std::vector< ct::Matf > &X, std::vector<ct::Vec4f> &vals
 		std::vector< float >& d = ds[_num];
 
 		int fl = ufl(ct::generator);
-		int fl1 = ufl(ct::generator);
+//		int fl1 = ufl(ct::generator);
 
-		if(fl1){
-			crop<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, 24, 24, dX1, d);
-			crop<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, 24, 24, dX2, d);
-			crop<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, 24, 24, dX3, d);
-		}
+//		if(fl1){
+//			crop<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, 24, 24, dX1, d);
+//			crop<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, 24, 24, dX2, d);
+//			crop<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, 24, 24, dX3, d);
+//		}
 
 		if(fl){
 			flip<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, dX1, d);
