@@ -215,8 +215,9 @@ void convnn_gpu::backward(const std::vector<gpumat::GpuMat> &D, bool last_level)
 		throw new std::invalid_argument("vector D not complies saved parameters");
 	}
 
-	qDebug("<<<<< backward(channels=%d, kernels=%d, Delta[%dx%d], W[%dx%d]) >>>>>>",
-		   channels, K, D[0].rows, D[0].cols, W[0].rows, W[0].cols);
+	qDebug("<<<<< backward(channels=%d, kernels=%d, Delta[%dx%d], W[%dx%d], szA0[%dx%d], szA1[%dx%d], szA2[%dx%d]) >>>>>>",
+		   channels, K, D[0].rows, D[0].cols, W[0].rows, W[0].cols,
+			szA0.width, szA0.height, szA1.width, szA1.height, szA2.width, szA2.height);
 
 	dSub2.resize(D.size());
 
@@ -612,6 +613,10 @@ void gpumat::conv2::subsample(const std::vector<gpumat::GpuMat> &X,
 
 	szO.width = szA.width / 2;
 	szO.height = szA.height / 2;
+
+	if((szO.width % 2) == 1) szO.width += 1;
+	if((szO.height % 2) == 1) szO.height += 1;
+
 	int K = X[0].cols;
 
 	Y.resize(X.size());
