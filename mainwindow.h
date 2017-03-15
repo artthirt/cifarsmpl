@@ -56,6 +56,8 @@ private slots:
 
 	void on_dsb_dropoutprob_valueChanged(double arg1);
 
+	void on_actionSave_matrices_triggered();
+
 private:
 	Ui::MainWindow *ui;
 	QTimer m_timer;

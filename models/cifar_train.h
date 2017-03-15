@@ -70,6 +70,8 @@ public:
 	void setDropoutProb(double val);
 	double dropoutProb() const;
 
+	void save_weights(bool gpu);
+
 private:
 	cifar_reader* m_cifar;
 	std::vector< int > m_layers;

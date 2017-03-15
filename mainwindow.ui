@@ -342,7 +342,7 @@
      <x>0</x>
      <y>0</y>
      <width>807</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -352,6 +352,7 @@
     <addaction name="actOpenDir"/>
     <addaction name="action_save_model"/>
     <addaction name="actionLoad_model"/>
+    <addaction name="actionSave_matrices"/>
    </widget>
    <addaction name="menuFile"/>
   </widget>
@@ -377,6 +378,11 @@
   <action name="actionLoad_model">
    <property name="text">
     <string>Load model</string>
+   </property>
+  </action>
+  <action name="actionSave_matrices">
+   <property name="text">
+    <string>Save matrices</string>
    </property>
   </action>
  </widget>

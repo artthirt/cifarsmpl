@@ -853,6 +853,13 @@ double cifar_train::dropoutProb() const
 	return m_dropoutProb;
 }
 
+void cifar_train::save_weights(bool gpu)
+{
+	if(gpu){
+		m_gpu_train.save_weights();
+	}
+}
+
 void cifar_train::setDropout(float p, int layers)
 {
 	for(int i = 0; i < std::min(layers, (int)m_mlp.size() - 1); ++i){

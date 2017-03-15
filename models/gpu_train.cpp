@@ -392,6 +392,22 @@ double gpu_train::dropoutProb() const
 	return m_dropoutProb;
 }
 
+void gpu_train::save_weights()
+{
+	for(size_t i = 0; i < m_conv.size(); ++i){
+		QString name = "cnvW_" + QString::number(i) + ".txt";
+		qt_work_mat::q_save_mat(m_conv[i].W[0], name);
+		name = "cnvB_" + QString::number(i) + ".txt";
+		qt_work_mat::q_save_mat(m_conv[i].B[0], name);
+	}
+	for(size_t i = 0; i < m_mlp.size(); ++i){
+		QString name = "mlpW_" + QString::number(i) + ".txt";
+		qt_work_mat::q_save_mat(m_mlp[i].W, name);
+		name = "mlpB_" + QString::number(i) + ".txt";
+		qt_work_mat::q_save_mat(m_mlp[i].B, name);
+	}
+}
+
 void gpu_train::setDropout(float p, int layers)
 {
 	for(int i = 0; i < std::min(layers, (int)m_mlp.size() - 1); ++i){

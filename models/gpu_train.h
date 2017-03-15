@@ -45,6 +45,8 @@ public:
 	void setDropoutProb(double val);
 	double dropoutProb() const;
 
+	void save_weights();
+
 private:
 	std::vector< int > m_layers;
 	std::vector< int > m_cnvlayers;

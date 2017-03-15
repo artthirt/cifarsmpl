@@ -270,3 +270,8 @@ void MainWindow::on_dsb_dropoutprob_valueChanged(double arg1)
 {
 	m_train.setDropoutProb(arg1);
 }
+
+void MainWindow::on_actionSave_matrices_triggered()
+{
+	m_train.save_weights(ui->chb_gpu->isChecked());
+}
