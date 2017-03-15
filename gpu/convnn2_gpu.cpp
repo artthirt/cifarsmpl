@@ -91,7 +91,7 @@ void convnn_gpu::init(const ct::Size &_szA0, int _channels, int stride, int _K, 
 	gW.resize(1);
 	gB.resize(1);
 
-	float n = (float)0.1;
+	float n = (float)0.01;
 
 	for(size_t i = 0; i < W.size(); ++i){
 		ct::Matf Wi(rows, cols), Bi(K, 1);
