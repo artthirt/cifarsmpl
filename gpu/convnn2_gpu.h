@@ -59,7 +59,7 @@ public:
 
 	ct::Size szOut() const;
 
-	void init(const ct::Size& _szA0, int _channels, int stride, int _K, ct::Size& _szW, bool use_pool = true);
+	void init(const ct::Size& _szA0, int _channels, int stride, int _K, ct::Size& _szW, bool use_pool = true, bool use_transpose = true);
 
 	void forward(const std::vector< gpumat::GpuMat >* _pX, gpumat::etypefunction func);
 
@@ -78,6 +78,7 @@ private:
 	std::vector< gpumat::GpuMat > dSub2;
 	std::vector< gpumat::GpuMat > Dc;		///
 //	std::vector< gpumat::GpuMat > DA1;		///
+	bool m_use_transpose;
 };
 
 /**

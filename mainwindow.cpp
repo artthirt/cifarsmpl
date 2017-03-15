@@ -29,19 +29,19 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	cnv.push_back(64);
 	cnv.push_back(128);
-//	cnv.push_back(256);
-//	cnv.push_back(256);
+	cnv.push_back(256);
+//	cnv.push_back(512);
 
-	cnv_w.push_back(5);
-	cnv_w.push_back(5);
-//	cnv_w.push_back(3);
+	cnv_w.push_back(3);
+	cnv_w.push_back(3);
+	cnv_w.push_back(3);
 //	cnv_w.push_back(3);
 	cnv_p.push_back(true);
 	cnv_p.push_back(true);
-//	cnv_p.push_back(false);
+	cnv_p.push_back(false);
 //	cnv_p.push_back(false);
 
-	mlp.push_back(1024);
+	mlp.push_back(512);
 	//mlp.push_back(256);
 	mlp.push_back(512);
 	mlp.push_back(512);

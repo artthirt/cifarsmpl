@@ -203,6 +203,7 @@ void subsample(const ct::Mat_<T>& X, const ct::Size& szA, ct::Mat_<T>& Y, ct::Ma
 
 				T mmax = dX[(y0 * szA.width + x0) * X.cols];
 				int xm = x0, ym = y0;
+				T resM = 0;
 #ifdef __GNUC__
 #pragma omp simd
 #endif
@@ -214,13 +215,14 @@ void subsample(const ct::Mat_<T>& X, const ct::Size& szA, ct::Mat_<T>& Y, ct::Ma
 								mmax = val;
 								xm = x0 + b;
 								ym = y0 + a;
+								resM = 1;
 							}
 						}
 					}
 				}
 
 				dY[(y * szO.width + x) * Y.cols] = mmax;
-				dM[(ym * szA.width + xm) * Mask.cols] = 1.;
+				dM[(ym * szA.width + xm) * Mask.cols] = resM;
 			}
 		}
 	}
@@ -372,6 +374,7 @@ public:
 		m_use_pool = false;
 		pX = nullptr;
 		stride = 1;
+		m_use_transpose = true;
 	}
 
 	std::vector< ct::Mat_<T> >& XOut(){
@@ -422,11 +425,13 @@ public:
 		m_optim.setAlpha(alpha);
 	}
 
-	void init(const ct::Size& _szA0, int _channels, int stride, int _K, ct::Size& _szW, bool use_pool = true){
+	void init(const ct::Size& _szA0, int _channels, int stride, int _K, ct::Size& _szW,
+			  bool use_pool = true, bool use_transpose = true){
 		szW = _szW;
 		K = _K;
 		channels = _channels;
 		m_use_pool = use_pool;
+		m_use_transpose = use_transpose;
 		szA0 = _szA0;
 
 		int rows = szW.area() * channels;
@@ -456,7 +461,7 @@ public:
 		Xc.resize(pX->size());
 		A1.resize(pX->size());
 
-		if(((*pX)[0]).cols == channels){
+		if(m_use_transpose){
 			for(size_t i = 0; i < Xc.size(); ++i){
 				ct::Mat_<T>& Xi = (*pX)[i];
 				ct::Size szOut;
@@ -627,6 +632,7 @@ public:
 private:
 	bool m_use_pool;
 	ct::etypefunction m_func;
+	bool m_use_transpose;
 };
 
 }

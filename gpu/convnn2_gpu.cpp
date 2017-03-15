@@ -24,6 +24,7 @@ convnn_gpu::convnn_gpu()
 	m_use_pool = false;
 	pX = nullptr;
 	stride = 1;
+	m_use_transpose = true;
 }
 
 void convnn_gpu::setAlpha(double val)
@@ -72,12 +73,13 @@ ct::Size convnn_gpu::szOut() const
 		return szA1;
 }
 
-void convnn_gpu::init(const ct::Size &_szA0, int _channels, int stride, int _K, ct::Size &_szW, bool use_pool)
+void convnn_gpu::init(const ct::Size &_szA0, int _channels, int stride, int _K, ct::Size &_szW, bool use_pool, bool use_transpose)
 {
 	szW = _szW;
 	K = _K;
 	channels = _channels;
 	m_use_pool = use_pool;
+	m_use_transpose = use_transpose;
 	szA0 = _szA0;
 
 	int rows = szW.area() * channels;
@@ -91,7 +93,7 @@ void convnn_gpu::init(const ct::Size &_szA0, int _channels, int stride, int _K, 
 	gW.resize(1);
 	gB.resize(1);
 
-	float n = (float)0.01;
+	float n = (float)0.1;
 
 	for(size_t i = 0; i < W.size(); ++i){
 		ct::Matf Wi(rows, cols), Bi(K, 1);
@@ -119,7 +121,7 @@ void convnn_gpu::forward(const std::vector<gpumat::GpuMat> *_pX, gpumat::etypefu
 
 	ct::Size szOut;
 
-	if((*pX)[0].cols == channels){
+	if(m_use_transpose){
 		gpumat::conv2::im2colsT(*pX, szA0, channels, szW, stride, Xc, szOut);
 	}else{
 		gpumat::conv2::im2cols(*pX, szA0, channels, szW, stride, Xc, szOut);
@@ -242,7 +244,7 @@ void convnn_gpu::backward(const std::vector<gpumat::GpuMat> &D, bool last_level)
 #if 0
 	if(channels == 3){
 		qt_work_mat::q_save_mat(D[26], "testD26.txt");
-		qt_work_mat::q_save_mat(dSub[26], "testDSub26.txt");
+//		qt_work_mat::q_save_mat(dSub[26], "testDSub26.txt");
 		qt_work_mat::q_save_mat(dSub2[26], "testDSub2_26.txt");
 		//save_vec(dSub2);
 	}
@@ -264,7 +266,7 @@ void convnn_gpu::backward(const std::vector<gpumat::GpuMat> &D, bool last_level)
 //		gpumat::save_gmat(dSubi, "Dgi.txt");
 //		gpumat::save_gmat(Wi, "Wgi.txt");
 		vgBi.swap_dims();
-		sumRows(dSubi, vgBi/*, (double)1. / (Xci.total())*/);
+		sumRows(dSubi, vgBi /*, (double)1. / (Xci.total())*/);
 		vgBi.swap_dims();
 	}
 //	gpumat::save_gmat(vgW[0], "Wg1.txt");
@@ -277,8 +279,8 @@ void convnn_gpu::backward(const std::vector<gpumat::GpuMat> &D, bool last_level)
 		gpumat::add(gW[0], vgW[i]);
 		gpumat::add(gB[0], vgB[i]);
 	}
-	gpumat::mulval(gW[0], (double)1./(D.size() * Xc[0].total()));
-	gpumat::mulval(gB[0], (double)1./(D.size() * Xc[0].total()));
+	gpumat::mulval(gW[0], (double)1./(D.size() * channels));
+	gpumat::mulval(gB[0], (double)1./(D.size() * channels));
 
 
 #if 0
@@ -622,6 +624,7 @@ void gpumat::conv2::subsample(const std::vector<gpumat::GpuMat> &X,
 
 	for(size_t i = 0; i < X.size(); ++i){
 		Y[i].resize(szO.area(), K, X[i].type);
+		Y[i].zeros();
 		Mask[i].resize(X[i].rows, X[i].cols, X[i].type);
 		Mask[i].zeros();
 	}
@@ -685,6 +688,7 @@ void gpumat::conv2::upsample(const std::vector<gpumat::GpuMat> &Y,
 
 	for(size_t i = 0; i < X.size(); ++i){
 		X[i].resize(area, K, type);
+		X[i].zeros();
 	}
 
 	cuda_upsample2vec(Y, Mask, szO, szA, X);

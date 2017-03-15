@@ -92,7 +92,7 @@ void gpu_train::init()
 			gpumat::conv2::convnn_gpu& cnv = m_conv[i];
 			ct::Size szW(m_cnvweights[i], m_cnvweights[i]);
 			bool pool = m_cnvpooling.size() > i? m_cnvpooling[i] : true;
-			cnv.init(sz, input, 1, m_cnvlayers[i], szW, pool);
+			cnv.init(sz, input, 1, m_cnvlayers[i], szW, pool, i != 0);
 			input = m_cnvlayers[i];
 			sz = cnv.szOut();
 		}

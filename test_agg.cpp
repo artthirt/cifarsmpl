@@ -142,13 +142,13 @@ class TestCnv_gpu{
 public:
 	TestCnv_gpu(){
 		mlp.resize(4);
-		int K1 = 25;
-		int K2 = 35;
+		int K1 = 32;
+		int K2 = 64;
 
 		szA0 = ct::Size(cifar_reader::WidthIM, cifar_reader::HeightIM);
-		szW = ct::Size(5, 5);
+		szW = ct::Size(3, 3);
 
-		cnv1.init(szA0, 3, 1, K1, szW);
+		cnv1.init(szA0, 3, 1, K1, szW, true, false);
 		cnv2.init(cnv1.szA2, K1, 1, K2, szW);
 
 	}
@@ -577,10 +577,10 @@ void test_agg::test_file()
 	qt_work_mat::q_load_mat("testMask.txt", Mask);
 
 	qt_work_mat::q_load_mat("testD26.txt", D);
-	qt_work_mat::q_load_mat("testDSub26.txt", dSub1);
+//	qt_work_mat::q_load_mat("testDSub26.txt", dSub1);
 	qt_work_mat::q_load_mat("testDSub2_26.txt", dSub2);
 
-	conv2::im2col(A0, ct::Size(32, 32), 3, ct::Size(5, 5), 1, tmp1, szOut);
+	conv2::im2col(A0, ct::Size(32, 32), 3, ct::Size(3, 3), 1, tmp1, szOut);
 	check_zero(tmp1 - Xc);
 
 	tmp2 = Xc * W;
@@ -588,12 +588,12 @@ void test_agg::test_file()
 	ct::v_relu(tmp2);
 	check_zero(tmp2 - A1);
 
-	conv2::subsample(tmp2, ct::Size(28, 28), tmp1, tmp3, szOut);
+	conv2::subsample(tmp2, ct::Size(30, 30), tmp1, tmp3, szOut);
 	check_zero(tmp1 - A2);
 	check_zero(tmp3 - Mask);
 
-	conv2::upsample(D, 15, Mask, ct::Size(14, 14), ct::Size(28, 28), tmp1);
-	check_zero(tmp1 - dSub1);
+	conv2::upsample(D, 32, Mask, ct::Size(15, 15), ct::Size(30, 30), tmp1);
+//	check_zero(tmp1 - dSub1);
 	ct::elemwiseMult(tmp1, ct::derivRelu(A1));
 	check_zero(tmp1 - dSub2);
 }
