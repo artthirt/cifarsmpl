@@ -259,12 +259,12 @@ void convnn_gpu::backward(const std::vector<gpumat::GpuMat> &D, bool last_level)
 		gpumat::GpuMat& vgBi	= vgB[i];
 		gpumat::matmulT1(Xci, dSubi, Wi);
 
-		gpumat::mulval(Wi, (double)1. / (K));
+//		gpumat::mulval(Wi, (double)1. / (Xci.total()));
 //		gpumat::save_gmat(Xci, "Xgi.txt");
 //		gpumat::save_gmat(dSubi, "Dgi.txt");
 //		gpumat::save_gmat(Wi, "Wgi.txt");
 		vgBi.swap_dims();
-		sumRows(dSubi, vgBi, (double)1. / (K));
+		sumRows(dSubi, vgBi/*, (double)1. / (Xci.total())*/);
 		vgBi.swap_dims();
 	}
 //	gpumat::save_gmat(vgW[0], "Wg1.txt");
@@ -277,8 +277,8 @@ void convnn_gpu::backward(const std::vector<gpumat::GpuMat> &D, bool last_level)
 		gpumat::add(gW[0], vgW[i]);
 		gpumat::add(gB[0], vgB[i]);
 	}
-	gpumat::mulval(gW[0], (double)1./(D.size()));
-	gpumat::mulval(gB[0], (double)1./(D.size()));
+	gpumat::mulval(gW[0], (double)1./(D.size() * Xc[0].total()));
+	gpumat::mulval(gB[0], (double)1./(D.size() * Xc[0].total()));
 
 
 #if 0
