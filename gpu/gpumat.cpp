@@ -13,311 +13,6 @@
 using namespace gpumat;
 
 ///////////////////////////////////
-///////////////////////////////////
-
-GpuMat::GpuMat()
-{
-	rows = 0;
-	cols = 0;
-	type = 0;
-	data = nullptr;
-}
-
-GpuMat::GpuMat(int rows, int cols, int type)
-{
-	this->rows = 0;
-	this->cols = 0;
-	this->type = 0;
-	this->data = nullptr;
-
-	if(rows && cols){
-		this->rows = rows;
-		this->cols = cols;
-		this->type = type;
-
-		int size = rows * cols * depth();
-
-		cudaError_t err = cudaMalloc(&data, size);
-		assert(err == cudaSuccess);
-	}
-}
-
-GpuMat::GpuMat(int rows, int cols, int type, void *data)
-{
-	this->rows = 0;
-	this->cols = 0;
-	this->type = 0;
-	this->data = nullptr;
-
-	if(rows && cols && data){
-		this->rows = rows;
-		this->cols = cols;
-		this->type = type;
-
-		int size = rows * cols * depth();
-
-		cudaError_t err = cudaMalloc(&this->data, size);
-
-		if(data && this->data){
-			err = cudaMemcpy(this->data, data, size, cudaMemcpyHostToDevice);
-		}
-		assert(err == cudaSuccess);
-	}
-}
-
-GpuMat::GpuMat(const GpuMat &mat)
-{
-	rows = mat.rows;
-	cols = mat.cols;
-	type = mat.type;
-	data = nullptr;
-
-	if(mat.data){
-		cudaError_t err = cudaMalloc((void**)&data, mat.size());
-		if(data && mat.data)
-			err = cudaMemcpy(data, mat.data, mat.size(), cudaMemcpyDeviceToDevice);
-		assert(err == cudaSuccess);
-	}
-}
-
-GpuMat::~GpuMat()
-{
-	release();
-}
-
-GpuMat &GpuMat::operator =(const GpuMat &mat)
-{
-	if(mat.empty())
-		return *this;
-
-	cudaError_t err = cudaSuccess;
-	if(mat.rows != rows || mat.cols != cols || mat.type != type){
-		release();
-
-		rows = mat.rows;
-		cols = mat.cols;
-		type = mat.type;
-
-		err = cudaMalloc(&data, mat.size());
-		assert(err == cudaSuccess);
-	}
-
-	if(mat.data && err == cudaSuccess ){
-		err = cudaMemcpy(data, mat.data, mat.size(), cudaMemcpyDeviceToDevice);
-		assert(err == cudaSuccess);
-	}
-	return *this;
-}
-
-GpuMat &GpuMat::ones()
-{
-	if(data){
-		memset(*this, 1);
-	}
-
-	return *this;
-}
-
-GpuMat &GpuMat::zeros()
-{
-	if(data){
-		cudaError_t err = cudaMemset(data, 0, size());
-		assert(err == cudaSuccess);
-	}
-	return *this;
-}
-
-int GpuMat::depth() const
-{
-	return SIZEOF_TYPE(type);
-}
-
-int GpuMat::size() const
-{
-	return rows * cols * depth();
-}
-
-int GpuMat::total() const
-{
-	return rows * cols;
-}
-
-bool GpuMat::empty() const
-{
-	return data == nullptr;
-}
-
-ct::Size GpuMat::sz() const
-{
-	return ct::Size(cols, rows);
-}
-
-void GpuMat::resize(int rows, int cols, int type)
-{
-	if(!rows || ! cols)
-		return;
-
-	int sz = rows * cols * SIZEOF_TYPE(type);
-
-	if(sz == size()){
-		this->rows = rows;
-		this->cols = cols;
-		this->type = type;
-
-		return;
-	}
-	release();
-
-	this->rows = rows;
-	this->cols = cols;
-	this->type = type;
-
-	cudaError_t err = cudaMalloc(&data, size());
-	assert(err == cudaSuccess);
-}
-
-void GpuMat::resize(const ct::Size &sz, int type)
-{
-	resize(sz.height, sz.width, type);
-}
-
-void GpuMat::resize(const GpuMat &mat)
-{
-	if(mat.empty())
-		return;
-
-	resize(mat.rows, mat.cols, mat.type);
-}
-
-void GpuMat::copyTo(GpuMat &mat) const
-{
-	if(empty())
-		return;
-
-	mat = *this;
-}
-
-void GpuMat::setData(void *data)
-{
-	if(!data || !this->data || !rows || !cols)
-		return;
-
-	cudaError_t err = cudaMemcpy(this->data, data, size(), cudaMemcpyHostToDevice);
-	assert(err == cudaSuccess);
-}
-
-void GpuMat::getData(void *data) const
-{
-	if(!this->data || !data || !rows || !cols)
-		return;
-
-	cudaError_t err = cudaMemcpy(data, this->data, size(), cudaMemcpyDeviceToHost);
-	assert(err == cudaSuccess);
-}
-
-void GpuMat::free()
-{
-	release();
-}
-
-void GpuMat::swap_dims()
-{
-	std::swap(rows, cols);
-}
-
-//************
-
-template<typename T >
-std::string getString(void* data, int rows, int cols)
-{
-	if(!rows || !cols)
-		return "";
-	std::vector<T> vec;
-	vec.resize(rows * cols);
-
-	int size = rows * cols * sizeof(T);
-
-	cudaError_t err = cudaMemcpy(&vec[0], data, size, cudaMemcpyDeviceToHost);
-	assert(err == cudaSuccess);
-
-	std::stringstream stream;
-
-	stream << std::setprecision(4) << "[";
-	for(int i = 0; i < rows; i++){
-		for(int j = 0; j < cols; j++){
-			stream << vec[i * cols + j] << "\t";
-		}
-		if(i != rows - 1)stream << ";\n ";
-	}
-	stream << "]\n";
-	return stream.str();
-}
-
-//************
-
-std::string GpuMat::operator()() const
-{
-	if(!data)
-		return "";
-
-	switch (type) {
-		case GPU_FLOAT:
-			return getString<float>(data, rows, cols);
-		case GPU_DOUBLE:
-			return getString<double>(data, rows, cols);
-	}
-	return "";
-}
-
-std::string GpuMat::print(int _rows) const
-{
-	if(!data)
-		return "";
-
-	if(_rows < 0)
-		_rows = rows;
-	if(_rows > rows)
-		_rows = rows;
-
-	std::string res;
-	switch (type) {
-		case GPU_FLOAT:
-			res = getString<float>(data, _rows, cols);
-		break;
-		case GPU_DOUBLE:
-			res = getString<double>(data, _rows, cols);
-		break;
-	}
-
-//	std::fstream fs;
-//	fs.open("temp.txt", std::ios_base::out);
-//	fs.write(res.c_str(), res.size());
-//	fs.close();
-
-	return res;
-}
-
-void GpuMat::save(const std::string filename) const
-{
-	std::string res = (*this)();
-
-	std::fstream fs;
-	fs.open(filename.c_str(), std::ios_base::out);
-	fs.write(res.c_str(), res.size());
-	fs.close();
-}
-
-void GpuMat::release()
-{
-	if(data != nullptr){
-		cudaError_t err = cudaFree(data);
-		assert(err == cudaSuccess);
-		data = nullptr;
-	}
-	rows = cols = type = 0;
-}
-
-/////////////////////////////////////////////////
 
 /**
  * @brief cuda_memset
@@ -689,6 +384,315 @@ void cuda_adamgrad(GpuMat& A, const GpuMat& mA, const GpuMat& vA,
 extern "C"
 void cuda_subIndOne(const GpuMat& A, const GpuMat& Ind, GpuMat& B);
 
+
+/////////////////////////////////////////////////
+
+///////////////////////////////////
+///////////////////////////////////
+
+GpuMat::GpuMat()
+{
+	rows = 0;
+	cols = 0;
+	type = 0;
+	data = nullptr;
+}
+
+GpuMat::GpuMat(int rows, int cols, int type)
+{
+	this->rows = 0;
+	this->cols = 0;
+	this->type = 0;
+	this->data = nullptr;
+
+	if(rows && cols){
+		this->rows = rows;
+		this->cols = cols;
+		this->type = type;
+
+		int size = rows * cols * depth();
+
+		cudaError_t err = cudaMalloc(&data, size);
+		assert(err == cudaSuccess);
+	}
+}
+
+GpuMat::GpuMat(int rows, int cols, int type, void *data)
+{
+	this->rows = 0;
+	this->cols = 0;
+	this->type = 0;
+	this->data = nullptr;
+
+	if(rows && cols && data){
+		this->rows = rows;
+		this->cols = cols;
+		this->type = type;
+
+		int size = rows * cols * depth();
+
+		cudaError_t err = cudaMalloc(&this->data, size);
+
+		if(data && this->data){
+			err = cudaMemcpy(this->data, data, size, cudaMemcpyHostToDevice);
+		}
+		assert(err == cudaSuccess);
+	}
+}
+
+GpuMat::GpuMat(const GpuMat &mat)
+{
+	rows = mat.rows;
+	cols = mat.cols;
+	type = mat.type;
+	data = nullptr;
+
+	if(mat.data){
+		cudaError_t err = cudaMalloc((void**)&data, mat.size());
+		if(data && mat.data)
+			err = cudaMemcpy(data, mat.data, mat.size(), cudaMemcpyDeviceToDevice);
+		assert(err == cudaSuccess);
+	}
+}
+
+GpuMat::~GpuMat()
+{
+	release();
+}
+
+GpuMat &GpuMat::operator =(const GpuMat &mat)
+{
+	if(mat.empty())
+		return *this;
+
+	cudaError_t err = cudaSuccess;
+	if(mat.rows != rows || mat.cols != cols || mat.type != type){
+		release();
+
+		rows = mat.rows;
+		cols = mat.cols;
+		type = mat.type;
+
+		err = cudaMalloc(&data, mat.size());
+		assert(err == cudaSuccess);
+	}
+
+	if(mat.data && err == cudaSuccess ){
+		err = cudaMemcpy(data, mat.data, mat.size(), cudaMemcpyDeviceToDevice);
+		assert(err == cudaSuccess);
+	}
+	return *this;
+}
+
+GpuMat &GpuMat::ones()
+{
+	if(empty())
+		return *this;
+
+	memset(*this, 1);
+
+	return *this;
+}
+
+GpuMat &GpuMat::zeros()
+{
+	if(empty())
+		return *this;
+
+	memset(*this, 0);
+
+	return *this;
+}
+
+int GpuMat::depth() const
+{
+	return SIZEOF_TYPE(type);
+}
+
+int GpuMat::size() const
+{
+	return rows * cols * depth();
+}
+
+int GpuMat::total() const
+{
+	return rows * cols;
+}
+
+bool GpuMat::empty() const
+{
+	return data == nullptr;
+}
+
+ct::Size GpuMat::sz() const
+{
+	return ct::Size(cols, rows);
+}
+
+void GpuMat::resize(int rows, int cols, int type)
+{
+	if(!rows || ! cols)
+		return;
+
+	int sz = rows * cols * SIZEOF_TYPE(type);
+
+	if(sz == size()){
+		this->rows = rows;
+		this->cols = cols;
+		this->type = type;
+
+		return;
+	}
+	release();
+
+	this->rows = rows;
+	this->cols = cols;
+	this->type = type;
+
+	cudaError_t err = cudaMalloc(&data, size());
+	assert(err == cudaSuccess);
+}
+
+void GpuMat::resize(const ct::Size &sz, int type)
+{
+	resize(sz.height, sz.width, type);
+}
+
+void GpuMat::resize(const GpuMat &mat)
+{
+	if(mat.empty())
+		return;
+
+	resize(mat.rows, mat.cols, mat.type);
+}
+
+void GpuMat::copyTo(GpuMat &mat) const
+{
+	if(empty())
+		return;
+
+	mat = *this;
+}
+
+void GpuMat::setData(void *data)
+{
+	if(!data || !this->data || !rows || !cols)
+		return;
+
+	cudaError_t err = cudaMemcpy(this->data, data, size(), cudaMemcpyHostToDevice);
+	assert(err == cudaSuccess);
+}
+
+void GpuMat::getData(void *data) const
+{
+	if(!this->data || !data || !rows || !cols)
+		return;
+
+	cudaError_t err = cudaMemcpy(data, this->data, size(), cudaMemcpyDeviceToHost);
+	assert(err == cudaSuccess);
+}
+
+void GpuMat::free()
+{
+	release();
+}
+
+void GpuMat::swap_dims()
+{
+	std::swap(rows, cols);
+}
+
+//************
+
+template<typename T >
+std::string getString(void* data, int rows, int cols)
+{
+	if(!rows || !cols)
+		return "";
+	std::vector<T> vec;
+	vec.resize(rows * cols);
+
+	int size = rows * cols * sizeof(T);
+
+	cudaError_t err = cudaMemcpy(&vec[0], data, size, cudaMemcpyDeviceToHost);
+	assert(err == cudaSuccess);
+
+	std::stringstream stream;
+
+	stream << std::setprecision(4) << "[";
+	for(int i = 0; i < rows; i++){
+		for(int j = 0; j < cols; j++){
+			stream << vec[i * cols + j] << "\t";
+		}
+		if(i != rows - 1)stream << ";\n ";
+	}
+	stream << "]\n";
+	return stream.str();
+}
+
+//************
+
+std::string GpuMat::operator()() const
+{
+	if(!data)
+		return "";
+
+	switch (type) {
+		case GPU_FLOAT:
+			return getString<float>(data, rows, cols);
+		case GPU_DOUBLE:
+			return getString<double>(data, rows, cols);
+	}
+	return "";
+}
+
+std::string GpuMat::print(int _rows) const
+{
+	if(!data)
+		return "";
+
+	if(_rows < 0)
+		_rows = rows;
+	if(_rows > rows)
+		_rows = rows;
+
+	std::string res;
+	switch (type) {
+		case GPU_FLOAT:
+			res = getString<float>(data, _rows, cols);
+		break;
+		case GPU_DOUBLE:
+			res = getString<double>(data, _rows, cols);
+		break;
+	}
+
+//	std::fstream fs;
+//	fs.open("temp.txt", std::ios_base::out);
+//	fs.write(res.c_str(), res.size());
+//	fs.close();
+
+	return res;
+}
+
+void GpuMat::save(const std::string filename) const
+{
+	std::string res = (*this)();
+
+	std::fstream fs;
+	fs.open(filename.c_str(), std::ios_base::out);
+	fs.write(res.c_str(), res.size());
+	fs.close();
+}
+
+void GpuMat::release()
+{
+	if(data != nullptr){
+		cudaError_t err = cudaFree(data);
+		assert(err == cudaSuccess);
+		data = nullptr;
+	}
+	rows = cols = type = 0;
+}
 
 /////////////////////////////////////////////////
 
