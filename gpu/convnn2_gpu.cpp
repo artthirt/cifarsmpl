@@ -308,7 +308,7 @@ void convnn_gpu::backward(const std::vector<gpumat::GpuMat> &D, bool last_level)
 	}
 
 	if(m_pool_dropout){
-		set_dropout(A1, m_Dropout);
+		set_dropout(dSub2, m_Dropout);
 	}
 //	qt_work_mat::q_save_mat(dSub2[0], "testMask.txt");
 
