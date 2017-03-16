@@ -12,6 +12,7 @@ public:
 	void test_conv();
 	void test_conv_gpu();
 	void test_file();
+	void test_norm();
 };
 
 #endif // TEST_AGG_H

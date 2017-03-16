@@ -493,7 +493,7 @@ void cuda_im2cols_vec(const std::vector< gpumat::GpuMat > &X,
 				  ct::Size &szOut)
 {
 	int x1 = szOut.area() * channels / BLOCKSIZE + 1;
-	int x2 = X.size() / BLOCKSIZE + 1;
+	int x2 = (int)X.size() / BLOCKSIZE + 1;
 
 	dim3 dimGrid(x1, x2), dimBlock(BLOCKSIZE, BLOCKSIZE);
 
@@ -545,7 +545,7 @@ void cuda_im2colsT_vec(const std::vector< gpumat::GpuMat > &X,
 				  ct::Size &szOut)
 {
 	int x1 = szOut.area() * channels / BLOCKSIZE + 1;
-	int x2 = X.size() / BLOCKSIZE + 1;
+	int x2 = (int)X.size() / BLOCKSIZE + 1;
 
 	dim3 dimGrid(x1, x2), dimBlock(BLOCKSIZE, BLOCKSIZE);
 
@@ -597,7 +597,7 @@ void cuda_back_deriv_vec(const std::vector< gpumat::GpuMat > &Delta,
 				std::vector< gpumat::GpuMat > &X)
 {
 	int x1 = szOut.area() * channels / BLOCKSIZE + 1;
-	int x2 = X.size() / BLOCKSIZE + 1;
+	int x2 = (int)X.size() / BLOCKSIZE + 1;
 
 	dim3 dimGrid(x1, x2), dimBlock(BLOCKSIZE, BLOCKSIZE);
 
@@ -647,7 +647,7 @@ void cuda_back_derivT_vec(const std::vector< gpumat::GpuMat > &Delta,
 				std::vector< gpumat::GpuMat > &X)
 {
 	int x1 = szOut.area() * channels / BLOCKSIZE + 1;
-	int x2 = X.size() / BLOCKSIZE + 1;
+	int x2 = (int)X.size() / BLOCKSIZE + 1;
 
 	dim3 dimGrid(x1, x2), dimBlock(BLOCKSIZE, BLOCKSIZE);
 
@@ -695,7 +695,7 @@ void cuda_subsample2_vec(const std::vector< gpumat::GpuMat > &X,
 {
 	int K = X[0].cols;
 	int x1 = szO.area() * K / BLOCKSIZE + 1;
-	int x2 = X.size() / BLOCKSIZE + 1;
+	int x2 = (int)X.size() / BLOCKSIZE + 1;
 
 	dim3 dimGrid(x1, x2), dimBlock(BLOCKSIZE, BLOCKSIZE);
 
@@ -735,7 +735,7 @@ void cuda_upsample2vec(const std::vector<gpumat::GpuMat> &Y, const std::vector<g
 {
 	int K = X[0].cols;
 	int x1 = szO.area() * K / BLOCKSIZE + 1;
-	int x2 = X.size() / BLOCKSIZE + 1;
+	int x2 = (int)X.size() / BLOCKSIZE + 1;
 
 	dim3 dimGrid(x1, x2), dimBlock(BLOCKSIZE, BLOCKSIZE);
 

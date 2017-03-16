@@ -1045,11 +1045,35 @@ inline Mat_<T> elemwiseSqrt(const Mat_<T>& m)
 	T* m_val = &(*m.val)[0];
 
 	//#pragma omp parallel for
-#pragma omp parallel for
+#ifdef __GNUC__
+#pragma omp simd
+#endif
 	for(int i = 0; i < m.total(); i++){
 		res_val[i] = std::sqrt(m_val[i]);
 	}
 	return res;
+}
+
+/**
+ * @brief sqrt
+ * @param m
+ * @return
+ */
+template< typename T >
+void v_elemwiseSqrt(Mat_<T>& m)
+{
+	if(m.empty())
+		throw new std::invalid_argument("v_elemwiseSqrt: matrix is empty");
+
+	T* m_val = m.ptr();
+
+	//#pragma omp parallel for
+#ifdef __GNUC__
+#pragma omp simd
+#endif
+	for(int i = 0; i < m.total(); i++){
+		m_val[i] = sqrt(m_val[i]);
+	}
 }
 
 /**
@@ -1066,9 +1090,34 @@ inline Mat_<T> elemwiseSqr(const Mat_<T>& m)
 	T* m_val = &(*m.val)[0];
 
 	//#pragma omp parallel for
-#pragma omp parallel for
+#ifdef __GNUC__
+#pragma omp simd
+#endif
 	for(int i = 0; i < m.total(); i++){
 		res_val[i] = m_val[i] * m_val[i];
+	}
+	return res;
+}
+
+/**
+ * @brief sqr
+ * @param m
+ * @return
+ */
+template< typename T >
+inline Mat_<T> elemwiseSqr(const Mat_<T>& m, T eps)
+{
+	Mat_<T> res(m.rows, m.cols);
+
+	T* res_val = &(*res.val)[0];
+	T* m_val = &(*m.val)[0];
+
+	//#pragma omp parallel for
+#ifdef __GNUC__
+#pragma omp simd
+#endif
+	for(int i = 0; i < m.total(); i++){
+		res_val[i] = m_val[i] * m_val[i] + eps;
 	}
 	return res;
 }
@@ -1087,7 +1136,9 @@ void v_elemwiseSqr(Mat_<T>& m)
 	T* m_val = m.ptr();
 
 	//#pragma omp parallel for
-#pragma omp parallel for
+#ifdef __GNUC__
+#pragma omp simd
+#endif
 	for(int i = 0; i < m.total(); i++){
 		m_val[i] = m_val[i] * m_val[i];
 	}
@@ -1110,7 +1161,9 @@ inline Mat_<T> elemwiseDiv(const Mat_<T>& m1, const Mat_<T>& m2)
 	T* m1_val = &(*m1.val)[0];
 	T* m2_val = &(*m2.val)[0];
 //#pragma omp parallel for
-#pragma omp parallel for
+#ifdef __GNUC__
+#pragma omp simd
+#endif
 	for(int i = 0; i < m1.total(); i++){
 		res_val[i] = m1_val[i] / m2_val[i];
 	}
@@ -1272,6 +1325,123 @@ inline Mat_<T> subIndOne(const Mat_<T>& mat, const Mat_<T>& ind)
 		dR[i * mat.cols + index] -= 1.;
 	}
 	return res;
+}
+
+template< typename T >
+void get_mean(const ct::Mat_<T>& X, ct::Mat_<T>& Y, int axis = 0)
+{
+	if(X.empty())
+		throw new std::invalid_argument("median: empty input matrix");
+
+	if(axis == 0){
+
+		T m = (T)X.rows;
+
+		Y.setSize(1, X.cols);
+		Y.fill(0);
+
+		T *dY = Y.ptr();
+		T *dX = X.ptr();
+		for(int j = 0; j < X.cols; ++j){
+			for(int i = 0; i < X.rows; ++i){
+				dY[j] += dX[i * X.cols + j];
+			}
+		}
+		for(int j = 0; j < X.cols; ++j){
+			dY[j] /= m;
+		}
+	}else{
+		T m = (T)X.cols;
+
+		Y.setSize(X.rows, 1);
+		Y.fill(0);
+
+		T *dY = Y.ptr();
+		T *dX = X.ptr();
+		for(int i = 0; i < X.rows; ++i){
+			for(int j = 0; j < X.cols; ++j){
+				dY[i] += dX[i * X.cols + j];
+			}
+		}
+		for(int i = 0; i < X.rows; ++i){
+			dY[i] /= m;
+		}
+	}
+}
+
+template< typename T >
+void get_std(const ct::Mat_<T>& X, const ct::Mat_<T>& median, ct::Mat_<T>& Y, int axis = 0)
+{
+	if(X.empty() || median.empty() || (X.cols != median.cols || median.rows != 1 && axis == 0)
+			|| (X.rows != median.rows || median.cols != 1 && axis == 1))
+		throw new std::invalid_argument("get_std: dimensions error");
+
+	Y.setSize(median.size());
+	Y.fill(0);
+
+	T *dX = X.ptr();
+	T *dM = median.ptr();
+	T *dY = Y.ptr();
+
+	if(axis == 0){
+		T m = (T)X.rows;
+		for(int i = 0; i < X.rows; ++i){
+			for(int j = 0; j < X.cols; ++j){
+				T val = (dX[i * X.cols + j] - dM[j]);
+				dY[j] += val * val;
+			}
+		}
+		for(int j = 0; j < X.cols; ++j){
+			dY[j] = dY[j] / m;
+		}
+	}else{
+		T m = (T)X.cols;
+		for(int i = 0; i < X.rows; ++i){
+			for(int j = 0; j < X.cols; ++j){
+				T val = (dX[i * X.cols + j] - dM[i]);
+				dY[i] += val * val;
+			}
+		}
+		for(int i = 0; i < X.rows; ++i){
+			dY[i] = dY[i] / m;
+		}
+	}
+}
+
+template< typename T >
+void get_norm(const ct::Mat_<T>& X, const ct::Mat_<T>& mean, const ct::Mat_<T>& std, ct::Mat_<T>& Y, int axis = 0, T eps = 1e-8)
+{
+	if(X.empty() || mean.empty() || std.empty())
+		throw new ::std::invalid_argument("get_norm: empty matrices");
+
+	Y.setSize(X.size());
+
+	T *dX = X.ptr();
+	T *dM = mean.ptr();
+	T *dS = std.ptr();
+	T *dY = Y.ptr();
+
+	if(axis == 0){
+		if(X.cols != mean.cols || mean.rows != 1)
+			throw new ::std::invalid_argument("get_norm: dimensions wrong");
+
+		for(int i = 0; i < X.rows; ++i){
+			for(int j = 0; j < X.cols; ++j){
+				dY[i * Y.cols + j] = (dX[i * X.cols + j] - dM[j])/(sqrt(dS[j] + eps));
+			}
+		}
+
+	}else{
+		if(X.rows != mean.rows || mean.cols != 1)
+			throw new ::std::invalid_argument("get_norm: dimensions wrong");
+
+		for(int i = 0; i < X.rows; ++i){
+			for(int j = 0; j < X.cols; ++j){
+				dY[i * Y.cols + j] = (dX[i * X.cols + j] - dM[i])/(sqrt(dS[i] + eps));
+			}
+		}
+
+	}
 }
 
 }

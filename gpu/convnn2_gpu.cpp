@@ -25,11 +25,19 @@ convnn_gpu::convnn_gpu()
 	pX = nullptr;
 	stride = 1;
 	m_use_transpose = true;
+	m_pool_dropout = false;
+	m_prob_dropout = 0.9;
 }
 
 void convnn_gpu::setAlpha(double val)
 {
 	m_optim.setAlpha(val);
+}
+
+void convnn_gpu::setDropout(bool val, double prob)
+{
+	m_pool_dropout = val;
+	m_prob_dropout = prob;
 }
 
 std::vector<gpumat::GpuMat> &convnn_gpu::XOut()
@@ -109,6 +117,45 @@ void convnn_gpu::init(const ct::Size &_szA0, int _channels, int stride, int _K, 
 	m_optim.init(W, B);
 }
 
+template< typename T >
+void dropout_to_gpu(gpumat::GpuMat& Dropout, const ct::Size& sz, double prob)
+{
+	ct::Mat_<T> d;
+	ct::dropout(sz.height, sz.width, (T)prob, d);
+	gpumat::convert_to_gpu(d, Dropout);
+}
+
+void get_dropout(double prob, std::vector<gpumat::GpuMat>& X, gpumat::GpuMat& Dropout)
+{
+	if(X.empty() || std::abs(prob - 1.) < 1e-6)
+		return;
+
+	switch (X[0].type) {
+		case gpumat::GPU_DOUBLE:
+			dropout_to_gpu<double>(Dropout, X[0].sz(), prob);
+			break;
+		default:
+		case gpumat::GPU_FLOAT:
+			dropout_to_gpu<float>(Dropout, X[0].sz(), prob);
+			break;
+	}
+	for(size_t i = 0; i < X.size(); ++i){
+		gpumat::elemwiseMult(X[i], Dropout);
+	}
+//	qDebug("get_dropout: pool dropout generated and applied. prob=%f", prob);
+}
+
+void set_dropout(std::vector<gpumat::GpuMat>& X, const gpumat::GpuMat& Dropout)
+{
+	if(X.empty() || Dropout.empty())
+		return;
+
+	for(size_t i = 0; i < X.size(); ++i){
+		gpumat::elemwiseMult(X[i], Dropout);
+	}
+//	qDebug("set_dropout: pool dropout applied");
+}
+
 void convnn_gpu::forward(const std::vector<gpumat::GpuMat> *_pX, gpumat::etypefunction func)
 {
 	if(!_pX)
@@ -150,6 +197,11 @@ void convnn_gpu::forward(const std::vector<gpumat::GpuMat> *_pX, gpumat::etypefu
 				break;
 		}
 	}
+
+	if(m_pool_dropout){
+		get_dropout(m_prob_dropout, A1, m_Dropout);
+	}
+
 	if(m_use_pool){
 		Mask.resize(Xc.size());
 		A2.resize(A1.size());
@@ -169,6 +221,21 @@ void convnn_gpu::forward(const std::vector<gpumat::GpuMat> *_pX, gpumat::etypefu
 		qt_work_mat::q_save_mat(W[0], "testW.txt");
 		qt_work_mat::q_save_mat(B[0], "testB.txt");
 		qt_work_mat::q_save_mat(Mask[26], "testMask.txt");
+	}
+#endif
+
+#if 0
+	{
+		QString pref = QString::number(channels) + "_" + QString::number(K);
+		qt_work_mat::q_save_mat((*pX)[0], "Px_" + pref + ".txt");
+		qt_work_mat::q_save_mat(Xc[0], "Xc_" + pref + ".txt");
+		qt_work_mat::q_save_mat(A1[0], "A1_" + pref + ".txt");
+		if(!A2.empty()){
+			qt_work_mat::q_save_mat(Mask[0], "M_" + pref + ".txt");
+			qt_work_mat::q_save_mat(A2[0], "A2_" + pref + ".txt");
+		}
+		qt_work_mat::q_save_mat(W[0], "W_" + pref + ".txt");
+		qt_work_mat::q_save_mat(B[0], "B_" + pref + ".txt");
 	}
 #endif
 }
@@ -238,6 +305,10 @@ void convnn_gpu::backward(const std::vector<gpumat::GpuMat> &D, bool last_level)
 	}else{
 //		qDebug("backward: derivative(D[%dx%d])", D[0].rows, D[0].cols);
 		backcnv(D, dSub2);
+	}
+
+	if(m_pool_dropout){
+		set_dropout(A1, m_Dropout);
 	}
 //	qt_work_mat::q_save_mat(dSub2[0], "testMask.txt");
 

@@ -11,4 +11,5 @@ HEADERS  += $$PWD/custom_types.h \
     $$PWD/mlp.h \
     $$PWD/convnn.h \
     $$PWD/matops.h \
-    $$PWD/convnn2.h
+    $$PWD/convnn2.h \
+    $$PWD/norm_layer.h

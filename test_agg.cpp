@@ -20,6 +20,8 @@
 
 #include "showmatrices.h"
 
+#include "norm_layer.h"
+
 template< typename T >
 void saveimage2file(const ct::Mat_<T>& X, const ct::Size &szA, int channels, const std::string& fn)
 {
@@ -596,4 +598,25 @@ void test_agg::test_file()
 //	check_zero(tmp1 - dSub1);
 	ct::elemwiseMult(tmp1, ct::derivRelu(A1));
 	check_zero(tmp1 - dSub2);
+}
+
+void test_agg::test_norm()
+{
+	ct::NL<float> nl;
+
+	int wd = 14;
+	int K = 5;
+
+	ct::Matf mat(wd * wd, K);
+
+	mat.randn(20, 10);
+
+	qt_work_mat::q_save_mat(mat, "input.txt");
+
+	std::vector< ct::Matf > vmat;
+	vmat.push_back(mat);
+
+	nl.forward(vmat);
+
+	qt_work_mat::q_save_mat(nl.A1[0], "output.txt");
 }

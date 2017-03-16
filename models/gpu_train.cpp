@@ -268,7 +268,7 @@ void gpu_train::pass()
 
 	std::vector< gpumat::GpuMat >* pX = &m_splitD;
 
-	for(int i = m_conv.size() - 1; i > -1; --i){
+	for(int i = (int)m_conv.size() - 1; i > -1; --i){
 		gpumat::conv2::convnn_gpu& cnv = m_conv[i];
 
 		cnv.backward(*pX, i == 0);
@@ -410,6 +410,9 @@ void gpu_train::save_weights()
 
 void gpu_train::setDropout(float p, int layers)
 {
+	for(size_t i = 0; i < m_conv.size(); ++i){
+		m_conv[i].setDropout(true, p);
+	}
 	for(int i = 0; i < std::min(layers, (int)m_mlp.size() - 1); ++i){
 		m_mlp[i].setDropout(true, p);
 	}
@@ -417,6 +420,9 @@ void gpu_train::setDropout(float p, int layers)
 
 void gpu_train::clearDropout()
 {
+	for(size_t i = 0; i < m_conv.size(); ++i){
+		m_conv[i].setDropout(false);
+	}
 	for(size_t i = 0; i < m_mlp.size(); ++i){
 		m_mlp[i].setDropout(false);
 	}

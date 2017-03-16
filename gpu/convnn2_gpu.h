@@ -35,9 +35,14 @@ public:
 	std::vector< gpumat::GpuMat > gW;		/// gradient for weights
 	std::vector< gpumat::GpuMat > gB;		/// gradient for biases
 
+	bool m_pool_dropout;
+	double m_prob_dropout;
+
 	convnn_gpu();
 
 	void setAlpha(double val);
+
+	void setDropout(bool val, double prob = 0.9);
 
 	std::vector<gpumat::GpuMat> &XOut();
 	/**
@@ -73,8 +78,8 @@ public:
 private:
 	bool m_use_pool;
 	gpumat::etypefunction m_func;
+	gpumat::GpuMat m_Dropout;
 
-//	std::vector< gpumat::GpuMat > dSub;
 	std::vector< gpumat::GpuMat > dSub2;
 	std::vector< gpumat::GpuMat > Dc;		///
 //	std::vector< gpumat::GpuMat > DA1;		///
