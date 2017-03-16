@@ -607,11 +607,16 @@ void test_agg::test_norm()
 	int wd = 14;
 	int K = 5;
 
-	ct::Matf mat(wd * wd, K);
+	ct::Matf mat(wd * wd, K), mn, _std;
 
 	mat.randn(20, 10);
 
+	ct::get_mean(mat, mn);
+	ct::get_std(mat, mn, _std);
+
 	qt_work_mat::q_save_mat(mat, "input.txt");
+	qt_work_mat::q_save_mat(mn, "mean.txt");
+	qt_work_mat::q_save_mat(_std, "std.txt");
 
 	std::vector< ct::Matf > vmat;
 	vmat.push_back(mat);

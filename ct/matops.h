@@ -1370,29 +1370,33 @@ void get_mean(const ct::Mat_<T>& X, ct::Mat_<T>& Y, int axis = 0)
 }
 
 template< typename T >
-void get_std(const ct::Mat_<T>& X, const ct::Mat_<T>& median, ct::Mat_<T>& Y, int axis = 0)
+void get_std(const ct::Mat_<T>& X, const ct::Mat_<T>& mean, ct::Mat_<T>& Y, int axis = 0)
 {
-	if(X.empty() || median.empty() || (X.cols != median.cols || median.rows != 1 && axis == 0)
-			|| (X.rows != median.rows || median.cols != 1 && axis == 1))
+	if(X.empty() || mean.empty() || !(X.cols == mean.cols && mean.rows == 1 && axis == 0)
+			&& !(X.rows == mean.rows && mean.cols == 1 && axis == 1))
+	{
 		throw new std::invalid_argument("get_std: dimensions error");
+	}
 
-	Y.setSize(median.size());
+	Y.setSize(mean.size());
 	Y.fill(0);
 
 	T *dX = X.ptr();
-	T *dM = median.ptr();
+	T *dM = mean.ptr();
 	T *dY = Y.ptr();
 
 	if(axis == 0){
 		T m = (T)X.rows;
-		for(int i = 0; i < X.rows; ++i){
-			for(int j = 0; j < X.cols; ++j){
-				T val = (dX[i * X.cols + j] - dM[j]);
-				dY[j] += val * val;
+		for(int j = 0; j < X.cols; ++j){
+			for(int i = 0; i < X.rows; ++i){
+				T val1 = dX[i * X.cols + j];
+				T val2 = dM[j];
+				T val3 = val1 - val2;
+				dY[j] += val3 * val3;
 			}
 		}
 		for(int j = 0; j < X.cols; ++j){
-			dY[j] = dY[j] / m;
+			dY[j] = dY[j] / (m - 1);
 		}
 	}else{
 		T m = (T)X.cols;
@@ -1403,7 +1407,7 @@ void get_std(const ct::Mat_<T>& X, const ct::Mat_<T>& median, ct::Mat_<T>& Y, in
 			}
 		}
 		for(int i = 0; i < X.rows; ++i){
-			dY[i] = dY[i] / m;
+			dY[i] = dY[i] / (m - 1);
 		}
 	}
 }

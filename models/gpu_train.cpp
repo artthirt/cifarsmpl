@@ -2,6 +2,8 @@
 
 #include <QDebug>
 
+#include "matops.h"
+
 #include "qt_work_mat.h"
 
 const int channels = 3;
@@ -209,6 +211,17 @@ void gpu_train::forward(const std::vector<gpumat::GpuMat> &X,
 	}
 
 	gpumat::conv2::vec2mat(m_conv.back().XOut(), m_Xout);
+
+#ifdef QT_DEBUG
+	{
+		ct::Matf mat, mn, _std;
+		gpumat::convert_to_mat(m_Xout, mat);
+		ct::get_mean(mat, mn);
+		ct::get_std(mat, mn, _std);
+		ct::save_mat(mat, "mean.txt");
+		ct::save_mat(_std, "std.txt");
+	}
+#endif
 
 	gpumat::GpuMat *pA = &m_Xout;
 
