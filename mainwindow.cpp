@@ -44,7 +44,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	m_train.setMlpLayers(mlp);
 
 	m_train.setUseRandData(true);
-	m_train.setRandData(10, 3, 0.02);
+	m_train.setRandData(5, 5, 0.0);
 
 	m_train.init();
 
