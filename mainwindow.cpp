@@ -34,7 +34,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
 	mlp.push_back(ct::ParamsMlp(256, 0.8));
-	mlp.push_back(ct::ParamsMlp(256, 0.8));
+	mlp.push_back(ct::ParamsMlp(128, 0.8));
 	mlp.push_back(ct::ParamsMlp(10, 1));
 
 	m_train.setCifar(&m_cifar);
@@ -151,19 +151,23 @@ void MainWindow::update_prediction()
 
 void MainWindow::update_statistics()
 {
-	QString stat ="Statistics:\n";
-	stat += "y/p\t";
+	QString stat ="<b>Statistics:</b><br>";
+	stat += "<tr> <td><b>y/p</b></td>\t";
 	for(int i = 0; i < 10; ++i){
-		stat += QString::number(i + 1) + "\t";
+		stat += "<td><b>" + QString::number(i + 1) + "</b></td>";
 	}
-	stat += "\n";
+	stat += "</tr>";
 	for(int i = 0; i < 10; ++i){
-		stat += QString::number(i + 1) + ":\t";
+		stat += "<tr><td><b>" + QString::number(i + 1) + ":</b></td>";
 		for(int j = 0; j < 10; ++j){
 			double p = m_train.statistics(i, j);
-			stat += QString::number(p, 'f', 2) + "\t";
+			if(i == j){
+				stat += "<td><b>" + QString::number(p, 'f', 2) + "</b></td>";
+			}else{
+				stat += "<td>" + QString::number(p, 'f', 2) + "</td>";
+			}
 		}
-		stat += "\n";
+		stat += "</tr>";
 	}
 	ui->lb_stat->setText(stat);
 }
