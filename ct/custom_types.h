@@ -116,7 +116,7 @@ public:
 		assert(index < count);
 		return val[index];
 	}
-	T& operator[] (int index) const{
+	const T& operator[] (int index) const{
 		assert(index < count);
 		return val[index];
 	}

@@ -151,11 +151,19 @@ void MainWindow::update_prediction()
 
 void MainWindow::update_statistics()
 {
-	QString stat ="Statistics:";
+	QString stat ="Statistics:\n";
+	stat += "y/p\t";
 	for(int i = 0; i < 10; ++i){
-		ct::Vec2i vec = m_train.statistics(i);
-		double p = vec[1]? (double)1.0 * vec[0] / vec[1] : -1;
-		stat += QString("\nAcc(class[%1])=%2;").arg(i).arg(p);
+		stat += QString::number(i + 1) + "\t";
+	}
+	stat += "\n";
+	for(int i = 0; i < 10; ++i){
+		stat += QString::number(i) + ":\t";
+		for(int j = 0; j < 10; ++j){
+			double p = m_train.statistics(i, j);
+			stat += QString::number(p, 'f', 2) + "\t";
+		}
+		stat += "\n";
 	}
 	ui->lb_stat->setText(stat);
 }

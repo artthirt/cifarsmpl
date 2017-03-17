@@ -8,6 +8,8 @@
 
 const int channels = 3;
 
+const int count_classes = 10;
+
 template< typename T >
 void flip(int w, int h, T *X, std::vector<T> &d)
 {
@@ -140,6 +142,8 @@ cifar_train::cifar_train()
 	m_rand_data = ct::Vec3f(3, 3);
 	m_use_rand_data = false;
 	m_dropoutProb = 0.9;
+
+	m_statistics.resize(count_classes * count_classes);
 }
 
 void cifar_train::setCifar(cifar_reader *val)
@@ -537,13 +541,13 @@ int cifar_train::getRight(const ct::Matf &y, const ct::Matf &yp)
 	for(int i = 0; i < yp.rows; ++i){
 		int idp = yp.argmax(i, 1);
 		int idy = y.at(i, 0);
-		ct::Vec2i vec = m_statistics[idy];
+		ct::Vec2i& v1 = m_statistics[idy * count_classes + idp];
+		ct::Vec2i& v2 = m_statistics[idy * count_classes + idy];
 		if(idy == idp){
 			count++;
-			vec[0]++;
 		}
-		vec[1]++;
-		m_statistics[idy] = vec;
+		v1[0]++;
+		v2[1]++;
 	}
 	return count;
 }
@@ -558,7 +562,7 @@ void cifar_train::getEstimate(int batch, double &accuracy, double &l2, bool use_
 
 	m_cifar->getTrain2(batch, Xs, y);
 
-	m_statistics.clear();
+	std::fill(m_statistics.data(), m_statistics.data() + m_statistics.size(), 0);
 
 	uint right;
 	getEstimate(Xs, y, right, l2, use_gpu);
@@ -576,7 +580,7 @@ void cifar_train::getEstimateTest(int batch, double &accuracy, double &l2, bool 
 
 	m_cifar->getTest2(batch, Xs, y);
 
-	m_statistics.clear();
+	std::fill(m_statistics.data(), m_statistics.data() + m_statistics.size(), 0);
 
 	uint right;
 	getEstimate(Xs, y, right, l2, use_gpu);
@@ -594,7 +598,7 @@ void cifar_train::getEstimateTest(double &accuracy, double &l2, bool use_gpu)
 
 	uint size = m_cifar->count_test();
 
-	m_statistics.clear();
+	std::fill(m_statistics.data(), m_statistics.data() + m_statistics.size(), 0);
 
 	while(ind < size){
 		batch = m_cifar->getTest2(ind, batch, Xs, y);
@@ -826,9 +830,13 @@ void cifar_train::saveToFile(const QString &fn, bool gpu)
 
 }
 
-ct::Vec2i cifar_train::statistics(int val) const
+double cifar_train::statistics(int i0, int i1) const
 {
-	return m_statistics[val];
+	double v1 = m_statistics[i0 * count_classes + i1][0];
+	double v2 = m_statistics[i0 * count_classes + i0][1];
+	if(v2)
+		return v1 / v2;
+	return 0;
 }
 
 void cifar_train::setDropoutProb(double val)

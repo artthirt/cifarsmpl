@@ -63,7 +63,7 @@ public:
 	bool loadFromFile(const QString& fn, bool gpu);
 	void saveToFile(const QString& fn, bool gpu);
 
-	ct::Vec2i statistics(int val) const;
+	double statistics(int i0, int i1) const;
 
 	void setDropoutProb(double val);
 	double dropoutProb() const;
@@ -78,7 +78,7 @@ private:
 	bool m_init;
 	double m_dropoutProb;
 
-	QMap< int, ct::Vec2i > m_statistics;
+	std::vector< ct::Vec2i> m_statistics;
 
 	gpu_train m_gpu_train;
 
