@@ -25,7 +25,8 @@ public:
 
 	mlp();
 
-	void setDropout(bool val, double p = 0.95);
+	void setDropout(bool val);
+	void setDropout(double val);
 
 	bool isInit() const;
 

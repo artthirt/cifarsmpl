@@ -147,22 +147,17 @@ void cifar_train::setCifar(cifar_reader *val)
 	m_cifar = val;
 }
 
-void cifar_train::setConvLayers(const std::vector<int> &layers,
-								std::vector<int> weight_sizes,
-								const ct::Size szA0,
-								std::vector< char > *pooling)
+void cifar_train::setConvLayers(const std::vector<ct::ParamsCnv> &layers,
+								const ct::Size szA0)
 {
-	if(layers.empty() || weight_sizes.empty())
+	if(layers.empty())
 		throw new std::invalid_argument("empty parameters");
 
-	if(pooling)
-		m_cnvpooling = *pooling;
 	m_cnvlayers = layers;
-	m_cnvweights = weight_sizes;
 	m_szA0 = szA0;
 }
 
-void cifar_train::setMlpLayers(const std::vector<int> &layers)
+void cifar_train::setMlpLayers(const std::vector<ct::ParamsMlp> &layers)
 {
 	if(layers.empty())
 		throw new std::invalid_argument("empty parameters");
@@ -172,7 +167,7 @@ void cifar_train::setMlpLayers(const std::vector<int> &layers)
 
 void cifar_train::init()
 {
-	if(m_layers.empty() || m_cnvlayers.empty() || m_cnvweights.empty() || !m_cifar)
+	if(m_layers.empty() || m_cnvlayers.empty() || !m_cifar)
 		throw new std::invalid_argument("empty arguments");
 
 	//// 1
@@ -184,10 +179,9 @@ void cifar_train::init()
 		ct::Size sz = m_szA0;
 		for(size_t i = 0; i < m_conv.size(); ++i){
 			conv2::convnn<float>& cnv = m_conv[i];
-			ct::Size szW(m_cnvweights[i], m_cnvweights[i]);
-			bool pool = m_cnvpooling.size() > i? m_cnvpooling[i] : true;
-			cnv.init(sz, input, 1, m_cnvlayers[i], szW, pool, i != 0);
-			input = m_cnvlayers[i];
+			ct::Size szW(m_cnvlayers[i].size_w, m_cnvlayers[i].size_w);
+			cnv.init(sz, input, 1, m_cnvlayers[i].count_kernels, szW, m_cnvlayers[i].pooling, i != 0);
+			input = m_cnvlayers[i].count_kernels;
 			sz = cnv.szOut();
 		}
 	}
@@ -203,9 +197,10 @@ void cifar_train::init()
 
 		for(size_t i = 0; i < m_mlp.size(); ++i){
 			ct::mlpf& mlp = m_mlp[i];
-			int output = m_layers[i];
+			int output = m_layers[i].count;
 
 			mlp.init(input, output);
+			mlp.setDropout((float)m_layers[i].prob);
 
 			input = output;
 		}
@@ -231,7 +226,7 @@ void cifar_train::forward(const std::vector< ct::Matf > &X, ct::Matf &a_out,
 
 	{
 		if(use_drop)
-			setDropout(p, 4);
+			setDropout();
 		else
 			clearDropout();
 
@@ -746,7 +741,7 @@ void cifar_train::init_gpu()
 	if(m_gpu_train.isInit())
 		return;
 
-	m_gpu_train.setConvLayers(m_cnvlayers, m_cnvweights, m_szA0, &m_cnvpooling);
+	m_gpu_train.setConvLayers(m_cnvlayers, m_szA0);
 	m_gpu_train.setMlpLayers(m_layers);
 
 	m_gpu_train.init();
@@ -773,16 +768,12 @@ bool cifar_train::loadFromFile(const QString &fn, bool gpu)
 	fs.read((char*)&m_cnvlayers[0], m_cnvlayers.size() * sizeof(decltype(m_cnvlayers)::value_type));
 
 	fs.read((char*)&tmp, sizeof(tmp));
-	m_cnvweights.resize(tmp);
-	fs.read((char*)&m_cnvweights[0], m_cnvweights.size() * sizeof(decltype(m_cnvweights)::size_type));
-
-	fs.read((char*)&tmp, sizeof(tmp));
 	m_layers.resize(tmp);
 	fs.read((char*)&m_layers[0], m_layers.size() * sizeof(decltype(m_layers)::size_type));
 
 	fs.read((char*)&m_szA0, sizeof(m_szA0));
 
-	setConvLayers(m_cnvlayers, m_cnvweights, m_szA0);
+	setConvLayers(m_cnvlayers, m_szA0);
 
 	init();
 
@@ -817,10 +808,6 @@ void cifar_train::saveToFile(const QString &fn, bool gpu)
 	tmp = (int)m_cnvlayers.size();
 	fs.write((char*)&tmp, sizeof(tmp));
 	fs.write((char*)&m_cnvlayers[0], m_cnvlayers.size() * sizeof(decltype(m_cnvlayers)::value_type));
-
-	tmp = (int)m_cnvweights.size();
-	fs.write((char*)&tmp, sizeof(tmp));
-	fs.write((char*)&m_cnvweights[0], m_cnvweights.size() * sizeof(decltype(m_cnvweights)::size_type));
 
 	tmp = (int)m_layers.size();
 	fs.write((char*)&tmp, sizeof(tmp));
@@ -862,11 +849,11 @@ void cifar_train::save_weights(bool gpu)
 	}
 }
 
-void cifar_train::setDropout(float p, int layers)
+void cifar_train::setDropout()
 {
-	for(int i = 0; i < std::min(layers, (int)m_mlp.size() - 1); ++i){
+	for(int i = 0; i < m_mlp.size() - 1; ++i){
 		ct::mlpf& mlp = m_mlp[i];
-		mlp.setDropout(true, p);
+		mlp.setDropout(true);
 	}
 }
 

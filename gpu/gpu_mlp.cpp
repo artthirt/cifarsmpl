@@ -22,9 +22,14 @@ mlp::mlp(){
 	pA0 = nullptr;
 }
 
-void mlp::setDropout(bool val, double p){
+void mlp::setDropout(bool val)
+{
 	m_is_dropout = val;
-	m_prob = p;
+}
+
+void mlp::setDropout(double val)
+{
+	m_prob = val;
 }
 
 bool mlp::isInit() const

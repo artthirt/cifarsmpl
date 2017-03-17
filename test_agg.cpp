@@ -52,6 +52,9 @@ public:
 		int K1 = 25;
 		int K2 = 15;
 
+		mlp[0].setDropout(0.8f);
+		mlp[1].setDropout(0.8f);
+
 		szA0 = ct::Size(cifar_reader::WidthIM, cifar_reader::HeightIM);
 		szW = ct::Size(5, 5);
 
@@ -83,8 +86,8 @@ public:
 			optim.init(mlp);
 		}
 
-		mlp[0].setDropout(dropout, 0.9f);
-		mlp[1].setDropout(dropout, 0.9f);
+		mlp[0].setDropout(dropout);
+		mlp[1].setDropout(dropout);
 
 		mlp[0].forward(&X1, ct::RELU);
 		mlp[1].forward(&mlp[0].A1, ct::RELU);
@@ -147,6 +150,10 @@ public:
 		int K1 = 32;
 		int K2 = 64;
 
+		mlp[0].setDropout(0.8);
+		mlp[1].setDropout(0.8);
+		mlp[2].setDropout(0.8);
+
 		szA0 = ct::Size(cifar_reader::WidthIM, cifar_reader::HeightIM);
 		szW = ct::Size(3, 3);
 
@@ -185,9 +192,9 @@ public:
 			optim.init(mlp);
 		}
 
-		mlp[0].setDropout(dropout, 0.85f);
-		mlp[1].setDropout(dropout, 0.85f);
-		mlp[2].setDropout(dropout, 0.85f);
+		mlp[0].setDropout(dropout);
+		mlp[1].setDropout(dropout);
+		mlp[2].setDropout(dropout);
 
 		mlp[0].forward(&X1, gpumat::RELU);
 		mlp[1].forward(&mlp[0].A1, gpumat::RELU);

@@ -22,40 +22,27 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	ui->wcifar->setCifar(&m_cifar);
 
-	std::vector< int > cnv;
-	std::vector< int > mlp;
-	std::vector< int > cnv_w;
-	std::vector< char > cnv_p;
+	std::vector< ct::ParamsCnv > cnv;
+	std::vector< ct::ParamsMlp > mlp;
 
 	ct::generator.seed(17);
 
-	cnv.push_back(32);
-	cnv.push_back(64);
+	cnv.push_back(ct::ParamsCnv(5, 32, true, 0.9));
+	cnv.push_back(ct::ParamsCnv(5, 64, true, 0.9));
 //	cnv.push_back(256);
 //	cnv.push_back(512);
 
-	cnv_w.push_back(5);
-	cnv_w.push_back(5);
-//	cnv_w.push_back(3);
-//	cnv_w.push_back(3);
-	cnv_p.push_back(true);
-	cnv_p.push_back(true);
-//	cnv_p.push_back(false);
-//	cnv_p.push_back(false);
 
-	mlp.push_back(512);
-	//mlp.push_back(256);
-	mlp.push_back(512);
-	mlp.push_back(512);
-	mlp.push_back(10);
+	mlp.push_back(ct::ParamsMlp(512, 0.8));
+	mlp.push_back(ct::ParamsMlp(512, 0.8));
+	mlp.push_back(ct::ParamsMlp(10, 1));
 
 	m_train.setCifar(&m_cifar);
-	m_train.setConvLayers(cnv, cnv_w, ct::Size(32, 32), &cnv_p);
+	m_train.setConvLayers(cnv, ct::Size(32, 32));
 	m_train.setMlpLayers(mlp);
 
 	m_train.setUseRandData(true);
 	m_train.setRandData(10, 3, 0.02);
-	m_train.setDropoutProb(0.9);
 
 	m_train.init();
 

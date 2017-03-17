@@ -101,9 +101,11 @@ public:
 		pA0 = nullptr;
 	}
 
-	void setDropout(bool val, T p = (T)0.95){
+	void setDropout(bool val){
 		m_is_dropout = val;
-		m_prob = p;
+	}
+	void setDropout(T val){
+		m_prob = val;
 	}
 
 	bool isInit() const{

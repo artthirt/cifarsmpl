@@ -42,7 +42,8 @@ public:
 
 	void setAlpha(double val);
 
-	void setDropout(bool val, double prob = 0.9);
+	void setDropout(bool val);
+	void setDropout(double val);
 
 	std::vector<gpumat::GpuMat> &XOut();
 	/**

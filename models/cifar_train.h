@@ -22,11 +22,9 @@ public:
 
 	void setCifar(cifar_reader* val);
 
-	void setConvLayers(const std::vector< int >& layers,
-					   std::vector< int > weight_sizes,
-					   const ct::Size szA0 = ct::Size(32, 32),
-					   std::vector<char> *pooling = nullptr);
-	void setMlpLayers(const std::vector< int >& layers);
+	void setConvLayers(const std::vector< ct::ParamsCnv >& layers,
+					   const ct::Size szA0 = ct::Size(32, 32));
+	void setMlpLayers(const std::vector< ct::ParamsMlp >& layers);
 
 	void init();
 
@@ -74,10 +72,8 @@ public:
 
 private:
 	cifar_reader* m_cifar;
-	std::vector< int > m_layers;
-	std::vector< int > m_cnvlayers;
-	std::vector< int > m_cnvweights;
-	std::vector< char > m_cnvpooling;
+	std::vector< ct::ParamsMlp > m_layers;
+	std::vector< ct::ParamsCnv > m_cnvlayers;
 	ct::Size m_szA0;
 	bool m_init;
 	double m_dropoutProb;
@@ -102,7 +98,7 @@ private:
 	bool m_use_rand_data;
 	ct::Vec3f m_rand_data;
 
-	void setDropout(float p, int layers);
+	void setDropout();
 	void clearDropout();
 	void randValues(size_t count, std::vector< ct::Vec4f >& vals, float offset, float angle, float brightness = 0.1);
 	void randX(std::vector<ct::Matf> &X, std::vector<ct::Vec4f> &vals);

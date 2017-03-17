@@ -30,6 +30,40 @@ struct Size{
 	int height;
 };
 
+struct ParamsMlp{
+	ParamsMlp(){
+		count = 0;
+		this->prob = 1;
+	}
+	ParamsMlp(int val, double prob){
+		this->count = val;
+		this->prob = prob;
+	}
+
+	int count;
+	double prob;
+};
+
+struct ParamsCnv{
+	ParamsCnv(){
+		size_w = 0;
+		count_kernels = 0;
+		pooling = true;
+		prob = 1;
+	}
+	ParamsCnv(int size_w, int count_kernels, bool pooling, double prob){
+		this->size_w = size_w;
+		this->count_kernels = count_kernels;
+		this->pooling = pooling;
+		this->prob = prob;
+	}
+
+	int size_w;
+	int count_kernels;
+	bool pooling;
+	double prob;
+};
+
 }
 
 #endif // COMMON_TYPES_H

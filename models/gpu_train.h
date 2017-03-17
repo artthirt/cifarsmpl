@@ -11,11 +11,9 @@ class gpu_train
 public:
 	gpu_train();
 
-	void setConvLayers(const std::vector< int >& layers,
-					   std::vector< int > weight_sizes,
-					   const ct::Size szA0 = ct::Size(32, 32),
-					   std::vector<char> *pooling = nullptr);
-	void setMlpLayers(const std::vector< int >& layers);
+	void setConvLayers(const std::vector< ct::ParamsCnv >& layers,
+					   const ct::Size szA0 = ct::Size(32, 32));
+	void setMlpLayers(const std::vector< ct::ParamsMlp >& layers);
 
 	void setAlpha(double alpha);
 	void setAlphaCnv(double alpha);
@@ -28,10 +26,10 @@ public:
 	double getL2(const ct::Matf &yp, const ct::Matf &y);
 
 	void forward(const std::vector< ct::Matf > &X, ct::Matf &a_out,
-				 bool use_drop = false, double p = 0.95, bool use_ret = true);
+				 bool use_drop = false, bool use_ret = true);
 
 	void forward(const std::vector< gpumat::GpuMat > &X, gpumat::GpuMat **pAout,
-				 bool use_drop = false, double p = 0.95);
+				 bool use_drop = false);
 	void pass(const std::vector< ct::Matf >& X, const ct::Matf &y);
 	void pass();
 
@@ -48,10 +46,8 @@ public:
 	void save_weights();
 
 private:
-	std::vector< int > m_layers;
-	std::vector< int > m_cnvlayers;
-	std::vector< char > m_cnvpooling;
-	std::vector< int > m_cnvweights;
+	std::vector< ct::ParamsMlp > m_layers;
+	std::vector< ct::ParamsCnv > m_cnvlayers;
 	ct::Size m_szA0;
 	bool m_init;
 	double m_dropoutProb;
@@ -72,7 +68,7 @@ private:
 	gpumat::GpuMat m_tsub;
 	gpumat::GpuMat m_Xout;
 
-	void setDropout(float p, int layers);
+	void setDropout();
 	void clearDropout();
 };
 

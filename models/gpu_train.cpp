@@ -30,23 +30,19 @@ gpu_train::gpu_train()
 	m_dropoutProb = 0.9;
 }
 
-void gpu_train::setConvLayers(const std::vector<int> &layers,
-							  std::vector<int> weight_sizes,
-							  const ct::Size szA0, std::vector<char> *pooling)
+void gpu_train::setConvLayers(const std::vector< ct::ParamsCnv >& layers,
+							  const ct::Size szA0)
 {
-	if(layers.empty() || weight_sizes.empty())
+	if(layers.empty())
 		throw new std::invalid_argument("empty parameters");
 
-	if(pooling)
-		m_cnvpooling = *pooling;
 	m_cnvlayers = layers;
-	m_cnvweights = weight_sizes;
 	m_szA0 = szA0;
 
 	m_init = false;
 }
 
-void gpu_train::setMlpLayers(const std::vector<int> &layers)
+void gpu_train::setMlpLayers(const std::vector<ct::ParamsMlp> &layers)
 {
 	if(layers.empty())
 		throw new std::invalid_argument("empty parameters");
@@ -77,7 +73,7 @@ void gpu_train::init()
 	if(m_init)
 		return;
 
-	if(m_layers.empty() || m_cnvlayers.empty() || m_cnvweights.empty())
+	if(m_layers.empty() || m_cnvlayers.empty())
 		throw new std::invalid_argument("empty arguments");
 
 	//// 1
@@ -92,10 +88,10 @@ void gpu_train::init()
 		ct::Size sz = m_szA0;
 		for(size_t i = 0; i < m_conv.size(); ++i){
 			gpumat::conv2::convnn_gpu& cnv = m_conv[i];
-			ct::Size szW(m_cnvweights[i], m_cnvweights[i]);
-			bool pool = m_cnvpooling.size() > i? m_cnvpooling[i] : true;
-			cnv.init(sz, input, 1, m_cnvlayers[i], szW, pool, i != 0);
-			input = m_cnvlayers[i];
+			ct::ParamsCnv& params = m_cnvlayers[i];
+			ct::Size szW(params.size_w, params.size_w);
+			cnv.init(sz, input, 1, params.count_kernels, szW, params.pooling, i != 0);
+			input = params.count_kernels;
 			sz = cnv.szOut();
 		}
 	}
@@ -111,9 +107,11 @@ void gpu_train::init()
 
 		for(size_t i = 0; i < m_mlp.size(); ++i){
 			gpumat::mlp& mlp = m_mlp[i];
-			int output = m_layers[i];
+			ct::ParamsMlp &params = m_layers[i];
+			int output = params.count;
 
 			mlp.init(input, output, gpumat::GPU_FLOAT);
+			mlp.setDropout(params.prob);
 
 			input = output;
 		}
@@ -160,7 +158,7 @@ double gpu_train::getL2(const ct::Matf &yp, const ct::Matf &y)
 	return l2 / y.rows;
 }
 
-void gpu_train::forward(const std::vector<ct::Matf> &X, ct::Matf &a_out, bool use_drop, double p, bool use_ret)
+void gpu_train::forward(const std::vector<ct::Matf> &X, ct::Matf &a_out, bool use_drop, bool use_ret)
 {
 	if(X.empty())
 		return;
@@ -173,7 +171,7 @@ void gpu_train::forward(const std::vector<ct::Matf> &X, ct::Matf &a_out, bool us
 
 	gpumat::GpuMat *retA = nullptr;
 
-	forward(m_XsIn, &retA, use_drop, p);
+	forward(m_XsIn, &retA, use_drop);
 
 	if(use_ret && retA){
 		gpumat::convert_to_mat(*retA, a_out);
@@ -182,13 +180,13 @@ void gpu_train::forward(const std::vector<ct::Matf> &X, ct::Matf &a_out, bool us
 
 void gpu_train::forward(const std::vector<gpumat::GpuMat> &X,
 						gpumat::GpuMat **pAout,
-						bool use_drop, double p)
+						bool use_drop)
 {
 	if(X.empty())
 		return;
 
 	if(use_drop)
-		setDropout(p, 4);
+		setDropout();
 	else
 		clearDropout();
 
@@ -198,7 +196,7 @@ void gpu_train::forward(const std::vector<gpumat::GpuMat> &X,
 /// need realization
 ////////////////////
 	if(use_drop)
-		setDropout(p, 4);
+		setDropout();
 	else
 		clearDropout();
 
@@ -256,7 +254,7 @@ void gpu_train::pass(const std::vector<ct::Matf> &X, const ct::Matf &y)
 void gpu_train::pass()
 {
 	gpumat::GpuMat *yp;
-	forward(m_XsIn, &yp, true, m_dropoutProb);
+	forward(m_XsIn, &yp, true);
 
 	////**********************
 
@@ -326,13 +324,11 @@ bool gpu_train::loadFromFile(const std::string &fn)
 	}
 
 	read_vector(fs, m_cnvlayers);
-	read_vector(fs, m_cnvweights);
-	read_vector(fs, m_cnvpooling);
 	read_vector(fs, m_layers);
 
 	fs.read((char*)&m_szA0, sizeof(m_szA0));
 
-	setConvLayers(m_cnvlayers, m_cnvweights, m_szA0);
+	setConvLayers(m_cnvlayers, m_szA0);
 
 	init();
 
@@ -362,8 +358,6 @@ void gpu_train::saveToFile(const std::string &fn)
 	}
 
 	write_vector(fs, m_cnvlayers);
-	write_vector(fs, m_cnvweights);
-	write_vector(fs, m_cnvpooling);
 	write_vector(fs, m_layers);
 
 	fs.write((char*)&m_szA0, sizeof(m_szA0));
@@ -421,13 +415,13 @@ void gpu_train::save_weights()
 	}
 }
 
-void gpu_train::setDropout(float p, int layers)
+void gpu_train::setDropout()
 {
 	for(size_t i = 0; i < m_conv.size(); ++i){
-		m_conv[i].setDropout(true, p);
+		m_conv[i].setDropout(true);
 	}
-	for(int i = 0; i < std::min(layers, (int)m_mlp.size() - 1); ++i){
-		m_mlp[i].setDropout(true, p);
+	for(int i = 0; i < m_mlp.size(); ++i){
+		m_mlp[i].setDropout(true);
 	}
 }
 

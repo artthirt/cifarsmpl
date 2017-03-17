@@ -34,10 +34,14 @@ void convnn_gpu::setAlpha(double val)
 	m_optim.setAlpha(val);
 }
 
-void convnn_gpu::setDropout(bool val, double prob)
+void convnn_gpu::setDropout(bool val)
 {
 	m_pool_dropout = val;
-	m_prob_dropout = prob;
+}
+
+void convnn_gpu::setDropout(double val)
+{
+	m_prob_dropout = val;
 }
 
 std::vector<gpumat::GpuMat> &convnn_gpu::XOut()
