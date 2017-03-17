@@ -282,7 +282,7 @@ void cifar_train::randValues(size_t count, std::vector<ct::Vec4f> &vals, float o
 		v = ct::Vec4f::zeros();
 	}
 
-	if(offset){
+	if(offset > 0){
 		std::uniform_int_distribution<int> udtr(-offset, offset);
 		for(size_t i = 0; i < vals.size(); ++i){
 			int x = udtr(ct::generator);
@@ -292,16 +292,16 @@ void cifar_train::randValues(size_t count, std::vector<ct::Vec4f> &vals, float o
 			v[1] = y;
 		}
 	}
-	return;
 
-	if(angle){
+	if(angle > 0){
+		angle = ct::angle2rad(angle);
 		std::uniform_real_distribution<float> uar(-angle, angle);
 		for(size_t i = 0; i < vals.size(); ++i){
 			float ang = uar(ct::generator);
 			vals[i][2] = ang;
 		}
 	}
-	if(brightness){
+	if(brightness > 0){
 		std::normal_distribution<float> nbr(1, brightness);
 		for(size_t i = 0; i < vals.size(); ++i){
 			float br = nbr(ct::generator);
@@ -312,7 +312,7 @@ void cifar_train::randValues(size_t count, std::vector<ct::Vec4f> &vals, float o
 
 #include <QImage>
 
-void saveIm(float* dx1, float *dx2, float *dx3, int width, int height)
+void saveIm(float* dx1, float *dx2, float *dx3, int width, int height, const QString& name)
 {
 	QImage im(width, height, QImage::Format_ARGB32);
 
@@ -331,7 +331,7 @@ void saveIm(float* dx1, float *dx2, float *dx3, int width, int height)
 			sc[x] = qRgb(uc1, uc2, uc3);
 		}
 	}
-	im.save("tmp.bmp");
+	im.save(name);
 }
 
 void cifar_train::randX(std::vector< ct::Matf > &X, std::vector<ct::Vec4f> &vals)
@@ -383,7 +383,7 @@ void cifar_train::randX(std::vector< ct::Matf > &X, std::vector<ct::Vec4f> &vals
 			flip<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, dX3, d);
 		}
 
-		if(ang != 0){
+		if(ang){
 			rotate_data<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, ang, dX1, d);
 			rotate_data<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, ang, dX2, d);
 			rotate_data<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, ang, dX3, d);
@@ -399,7 +399,9 @@ void cifar_train::randX(std::vector< ct::Matf > &X, std::vector<ct::Vec4f> &vals
 			change_brightness(X[i], br);
 		}
 
-//		saveIm(dX1, dX2, dX3, cifar_reader::WidthIM, cifar_reader::HeightIM);
+//		QString name = "data/image_" + QString::number(i) + ".bmp";
+
+//		saveIm(dX1, dX2, dX3, cifar_reader::WidthIM, cifar_reader::HeightIM, name);
 	}
 #endif
 }

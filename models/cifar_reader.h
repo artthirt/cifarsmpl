@@ -161,7 +161,7 @@ inline void image2mat(const QByteArray& image, int w, int h,
 #endif
 	for(int i = 0; i < w * h * 3; ++i){
 		T val = (T)image.data()[i] / 255.;
-		dX[i] = 2. * val - 1.;
+		dX[i] = val;
 	}
 }
 
