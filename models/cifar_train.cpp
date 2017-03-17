@@ -436,9 +436,9 @@ void cifar_train::randX(std::vector< ct::Matf > &X, std::vector<ct::Vec4f> &vals
 			change_brightness(X[i], br);
 		}
 
-		QString name = "data/image_" + QString::number(i) + ".bmp";
+//		QString name = "data/image_" + QString::number(i) + ".bmp";
 
-		saveIm(dX1, dX2, dX3, cifar_reader::WidthIM, cifar_reader::HeightIM, name);
+//		saveIm(dX1, dX2, dX3, cifar_reader::WidthIM, cifar_reader::HeightIM, name);
 	}
 #endif
 }
