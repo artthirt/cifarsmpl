@@ -39,7 +39,7 @@ public:
 		}
 	}
 	void backward(const std::vector<ct::Mat_<T>>& D){
-		if(X.empty())
+		if(D.empty())
 			throw new std::invalid_argument("NL::backward: empty vector");
 	}
 };

@@ -1246,7 +1246,8 @@ void dropout(Mat_<T>& mat, T p, Mat_<T>& D, Mat_<T>& Dt, int seed = 0)
 {
 	std::binomial_distribution<int> bi(1, p);
 	//std::normal_distribution< double > nrm(0, 1);
-	generator.seed(seed);
+	if(seed > 0)
+		generator.seed(seed);
 
 	D = Mat_<T>::ones(mat.rows, mat.cols);
 	Dt = Mat_<T>::ones(mat.cols, mat.rows);
@@ -1273,7 +1274,8 @@ void dropout(int rows, int cols, T p, Mat_<T>& D, int seed = 0)
 {
 	std::binomial_distribution<int> bi(1, p);
 	//std::normal_distribution< double > nrm(0, 1);
-	generator.seed(seed);
+	if(seed > 0)
+		generator.seed(seed);
 
 	D.setSize(rows, cols);// = Mat_<T>::ones(rows, cols);
 
