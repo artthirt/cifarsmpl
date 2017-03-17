@@ -91,6 +91,7 @@ void gpu_train::init()
 			ct::ParamsCnv& params = m_cnvlayers[i];
 			ct::Size szW(params.size_w, params.size_w);
 			cnv.init(sz, input, 1, params.count_kernels, szW, params.pooling, i != 0);
+			cnv.setDropout(params.prob);
 			input = params.count_kernels;
 			sz = cnv.szOut();
 		}

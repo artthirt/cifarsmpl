@@ -33,7 +33,7 @@ MainWindow::MainWindow(QWidget *parent) :
 //	cnv.push_back(512);
 
 
-	mlp.push_back(ct::ParamsMlp(512, 0.8));
+	mlp.push_back(ct::ParamsMlp(256, 0.8));
 	mlp.push_back(ct::ParamsMlp(256, 0.8));
 	mlp.push_back(ct::ParamsMlp(10, 1));
 
