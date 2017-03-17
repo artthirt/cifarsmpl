@@ -28,7 +28,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	ct::generator.seed(17);
 
 	cnv.push_back(ct::ParamsCnv(5, 32, true, 0.9));
-	cnv.push_back(ct::ParamsCnv(5, 64, true, 0.9));
+	cnv.push_back(ct::ParamsCnv(5, 32, true, 0.9));
 //	cnv.push_back(256);
 //	cnv.push_back(512);
 
@@ -158,7 +158,7 @@ void MainWindow::update_statistics()
 	}
 	stat += "\n";
 	for(int i = 0; i < 10; ++i){
-		stat += QString::number(i) + ":\t";
+		stat += QString::number(i + 1) + ":\t";
 		for(int j = 0; j < 10; ++j){
 			double p = m_train.statistics(i, j);
 			stat += QString::number(p, 'f', 2) + "\t";
