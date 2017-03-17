@@ -27,14 +27,14 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	ct::generator.seed(17);
 
-	cnv.push_back(ct::ParamsCnv(5, 32, true, 0.9));
-	cnv.push_back(ct::ParamsCnv(5, 32, true, 0.9));
+	cnv.push_back(ct::ParamsCnv(5, 16, true, 0.9));
+	cnv.push_back(ct::ParamsCnv(5, 64, true, 0.9));
 //	cnv.push_back(256);
 //	cnv.push_back(512);
 
 
 	mlp.push_back(ct::ParamsMlp(512, 0.8));
-	mlp.push_back(ct::ParamsMlp(512, 0.8));
+	mlp.push_back(ct::ParamsMlp(256, 0.8));
 	mlp.push_back(ct::ParamsMlp(10, 1));
 
 	m_train.setCifar(&m_cifar);
