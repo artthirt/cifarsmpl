@@ -20,6 +20,12 @@ mlp::mlp(){
 	m_is_dropout = false;
 	m_prob = 0.95;
 	pA0 = nullptr;
+	m_lambda = 0.;
+}
+
+void mlp::setLambda(double val)
+{
+	m_lambda = val;
 }
 
 void mlp::setDropout(bool val)
@@ -162,6 +168,10 @@ void mlp::backward(const GpuMat &Delta, bool last_layer)
 
 	if(m_is_dropout && std::abs(m_prob - 1) > 1e-6){
 		elemwiseMult(gW, Dropout);
+	}
+
+	if(m_lambda > 0){
+		gpumat::add(gW, W, 1, m_lambda / m);
 	}
 
 	gB.swap_dims();

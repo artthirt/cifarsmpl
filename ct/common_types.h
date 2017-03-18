@@ -34,14 +34,17 @@ struct ParamsMlp{
 	ParamsMlp(){
 		count = 0;
 		this->prob = 1;
+		this->lambda_l2 = 0;
 	}
-	ParamsMlp(int val, double prob){
+	ParamsMlp(int val, double prob, double lambda_l2 = 0){
 		this->count = val;
 		this->prob = prob;
+		this->lambda_l2 = lambda_l2;
 	}
 
 	int count;
 	double prob;
+	double lambda_l2;
 };
 
 struct ParamsCnv{

@@ -60,6 +60,10 @@ public:
 
 	void init_gpu();
 
+	void setDebug(bool val);
+
+	void setLambdaMlp(double val);
+
 	bool loadFromFile(const QString& fn, bool gpu);
 	void saveToFile(const QString& fn, bool gpu);
 

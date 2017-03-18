@@ -58,6 +58,10 @@ private slots:
 
 	void on_actionSave_matrices_triggered();
 
+	void on_chb_debug_clicked(bool checked);
+
+	void on_dsb_lambda_valueChanged(double arg1);
+
 private:
 	Ui::MainWindow *ui;
 	QTimer m_timer;

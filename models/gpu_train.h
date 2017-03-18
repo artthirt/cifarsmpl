@@ -15,6 +15,9 @@ public:
 					   const ct::Size szA0 = ct::Size(32, 32));
 	void setMlpLayers(const std::vector< ct::ParamsMlp >& layers);
 
+	void setDebug(bool val);
+	void setLambda(double val);
+
 	void setAlpha(double alpha);
 	void setAlphaCnv(double alpha);
 
@@ -67,6 +70,8 @@ private:
 	gpumat::GpuMat m_td;
 	gpumat::GpuMat m_tsub;
 	gpumat::GpuMat m_Xout;
+
+	bool m_is_debug;
 
 	void setDropout();
 	void clearDropout();

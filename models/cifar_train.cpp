@@ -243,6 +243,7 @@ void cifar_train::init()
 
 			mlp.init(input, output);
 			mlp.setDropout((float)m_layers[i].prob);
+			mlp.setLambda(m_layers[i].lambda_l2);
 
 			input = output;
 		}
@@ -787,6 +788,22 @@ void cifar_train::init_gpu()
 	m_gpu_train.setMlpLayers(m_layers);
 
 	m_gpu_train.init();
+}
+
+void cifar_train::setDebug(bool val)
+{
+	m_gpu_train.setDebug(val);
+}
+
+void cifar_train::setLambdaMlp(double val)
+{
+	m_gpu_train.setLambda(val);
+
+
+	for(size_t i = 0; i < m_mlp.size(); ++i){
+		ct::mlp<float>& m = m_mlp[i];
+		m.setLambda(val);
+	}
 }
 
 bool cifar_train::loadFromFile(const QString &fn, bool gpu)

@@ -99,6 +99,11 @@ public:
 		m_is_dropout = false;
 		m_prob = (T)0.95;
 		pA0 = nullptr;
+		m_lambda = 0;
+	}
+
+	void setLambda(T val){
+		m_lambda = val;
 	}
 
 	void setDropout(bool val){
@@ -199,6 +204,10 @@ public:
 			elemwiseMult(gW, Dropout);
 		}
 
+		if(m_lambda > 0){
+			gW += W * (m_lambda / m);
+		}
+
 		gB = (sumRows(DA1) * (1.f / m));
 		gB.swap_dims();
 
@@ -221,6 +230,7 @@ private:
 	bool m_init;
 	bool m_is_dropout;
 	T m_prob;
+	T m_lambda;
 	etypefunction m_func;
 };
 

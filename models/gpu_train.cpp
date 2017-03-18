@@ -28,6 +28,7 @@ gpu_train::gpu_train()
 {
 	m_init = false;
 	m_dropoutProb = 0.9;
+	m_is_debug = false;
 }
 
 void gpu_train::setConvLayers(const std::vector< ct::ParamsCnv >& layers,
@@ -50,6 +51,19 @@ void gpu_train::setMlpLayers(const std::vector<ct::ParamsMlp> &layers)
 	m_layers = layers;
 
 	m_init = false;
+}
+
+void gpu_train::setDebug(bool val)
+{
+	m_is_debug = val;
+}
+
+void gpu_train::setLambda(double val)
+{
+	for(size_t i = 0; i < m_mlp.size(); ++i){
+		gpumat::mlp& m = m_mlp[i];
+		m.setLambda(val);
+	}
 }
 
 void gpu_train::setAlpha(double alpha)
@@ -113,6 +127,7 @@ void gpu_train::init()
 
 			mlp.init(input, output, gpumat::GPU_FLOAT);
 			mlp.setDropout(params.prob);
+			mlp.setLambda(params.lambda_l2);
 
 			input = output;
 		}
@@ -211,8 +226,8 @@ void gpu_train::forward(const std::vector<gpumat::GpuMat> &X,
 
 	gpumat::conv2::vec2mat(m_conv.back().XOut(), m_Xout);
 
-#ifdef QT_DEBUG
-	{
+
+	if(m_is_debug){
 		ct::Matf mat, mn, _std;
 		gpumat::convert_to_mat(m_Xout, mat);
 		ct::get_mean(mat, mn);
@@ -220,7 +235,6 @@ void gpu_train::forward(const std::vector<gpumat::GpuMat> &X,
 		ct::save_mat(mat, "mean.txt");
 		ct::save_mat(_std, "std.txt");
 	}
-#endif
 
 	gpumat::GpuMat *pA = &m_Xout;
 
@@ -273,7 +287,20 @@ void gpu_train::pass()
 
 		mlp.backward(*pD);
 
+		if(m_is_debug){
+			std::stringstream ss;
+			ss << "mlp_W" << i << ".txt";
+			gpumat::save_gmat(mlp.W, ss.str());
+			ss.str("");
+			ss << "mlp_B" << i << ".txt";
+			gpumat::save_gmat(mlp.B, ss.str());
+		}
+
 		pD = &mlp.DltA0;
+	}
+
+	if(m_is_debug){
+		gpumat::save_gmat(m_mlp[0].DltA0, "mlp0.dlt.txt");
 	}
 
 	gpumat::conv2::mat2vec(m_mlp[0].DltA0, m_conv.back().szK, m_splitD);
@@ -284,6 +311,15 @@ void gpu_train::pass()
 		gpumat::conv2::convnn_gpu& cnv = m_conv[i];
 
 		cnv.backward(*pX, i == 0);
+
+		if(m_is_debug){
+			std::stringstream ss;
+			ss << "cnv_W" << i << ".txt";
+			gpumat::save_gmat(cnv.W[0], ss.str());
+			ss.str("");
+			ss << "cnv_B" << i << ".txt";
+			gpumat::save_gmat(cnv.B[0], ss.str());
+		}
 
 		pX = &cnv.Dlt;
 	}

@@ -27,16 +27,17 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	ct::generator.seed(17);
 
-	cnv.push_back(ct::ParamsCnv(3, 64, true, 0.7));
-	cnv.push_back(ct::ParamsCnv(3, 128, true, 0.7));
-	cnv.push_back(ct::ParamsCnv(3, 256, false, 0.7));
-	cnv.push_back(ct::ParamsCnv(3, 512, false, 0.7));
+	cnv.push_back(ct::ParamsCnv(5, 64, true, 0.9));
+	cnv.push_back(ct::ParamsCnv(5, 128, false, 0.9));
+	cnv.push_back(ct::ParamsCnv(5, 256, true, 0.9));
+//	cnv.push_back(ct::ParamsCnv(3, 512, false, 0.7));
 //	cnv.push_back(256);
 //	cnv.push_back(512);
 
 
-	mlp.push_back(ct::ParamsMlp(1024, 1));
-	mlp.push_back(ct::ParamsMlp(640, 1));
+	mlp.push_back(ct::ParamsMlp(1024, 0.96, 0.01));
+	mlp.push_back(ct::ParamsMlp(640, 0.96, 0.01));
+	mlp.push_back(ct::ParamsMlp(512, 0.96));
 	mlp.push_back(ct::ParamsMlp(512, 1));
 	mlp.push_back(ct::ParamsMlp(10, 1));
 
@@ -278,4 +279,14 @@ void MainWindow::on_dsb_dropoutprob_valueChanged(double arg1)
 void MainWindow::on_actionSave_matrices_triggered()
 {
 	m_train.save_weights(ui->chb_gpu->isChecked());
+}
+
+void MainWindow::on_chb_debug_clicked(bool checked)
+{
+	m_train.setDebug(checked);
+}
+
+void MainWindow::on_dsb_lambda_valueChanged(double arg1)
+{
+	m_train.setLambdaMlp(arg1);
 }

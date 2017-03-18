@@ -25,6 +25,8 @@ public:
 
 	mlp();
 
+	void setLambda(double val);
+
 	void setDropout(bool val);
 	void setDropout(double val);
 
@@ -49,6 +51,7 @@ private:
 	bool m_init;
 	bool m_is_dropout;
 	double m_prob;
+	double m_lambda;
 	etypefunction m_func;
 };
 
