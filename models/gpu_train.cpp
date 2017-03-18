@@ -232,7 +232,7 @@ void gpu_train::forward(const std::vector<gpumat::GpuMat> &X,
 		gpumat::convert_to_mat(m_Xout, mat);
 		ct::get_mean(mat, mn);
 		ct::get_std(mat, mn, _std);
-		ct::save_mat(mat, "mean.txt");
+		ct::save_mat(mn, "mean.txt");
 		ct::save_mat(_std, "std.txt");
 	}
 
