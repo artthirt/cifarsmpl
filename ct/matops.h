@@ -1196,6 +1196,9 @@ void matmulT1(const Mat_<T>& At, const Mat_<T>& B, Mat_<T>& C)
 #pragma omp parallel for
 		for(int k = 0; k < B.cols; k++){
 			T s = 0;
+#ifdef __GNUC__
+#pragma omp simd
+#endif
 			for(int j = 0; j < At.rows; j++){
 				s += val1[j * At.cols + i]/*at(i, j)*/ * val2[j * B.cols + k]/*at(j, k)*/;
 			}
@@ -1232,6 +1235,9 @@ void matmulT2(const Mat_<T>& A, const Mat_<T>& Bt, Mat_<T>& C)
 #pragma omp parallel for
 		for(int k = 0; k < Bt.rows; k++){
 			T s = 0;
+#ifdef __GNUC__
+#pragma omp simd
+#endif
 			for(int j = 0; j < A.cols; j++){
 				s += val1[i * A.cols + j]/*at(i, j)*/ * val2[k * Bt.cols + j]/*at(j, k)*/;
 			}
@@ -1256,11 +1262,13 @@ void dropout(Mat_<T>& mat, T p, Mat_<T>& D, Mat_<T>& Dt, int seed = 0)
 	T* val2 = &(*Dt.val)[0];
 
 #pragma omp parallel for
-	for(int j = 0; j < mat.cols; j++){
+	for(int i = 0; i < mat.rows; i++){
 		int pi = bi(generator);
 		if(!pi){
-#pragma omp parallel for
-			for(int i = 0; i < mat.rows; i++){
+#ifdef __GNUC__
+#pragma omp simd
+#endif
+			for(int j = 0; j < mat.cols; j++){
 				val1[i * D.cols + j] = 0;
 				val2[j * D.rows + i] = 0;
 			}
@@ -1284,7 +1292,9 @@ void dropout(int rows, int cols, T p, Mat_<T>& D, int seed = 0)
 #pragma omp parallel for
 	for(int i = 0; i < rows; i++){
 		int pi = bi(generator);
-#pragma omp parallel for
+#ifdef __GNUC__
+#pragma omp simd
+#endif
 		for(int j = 0; j < cols; j++){
 			val1[i * D.cols + j] = T(pi);
 		}

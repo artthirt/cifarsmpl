@@ -421,7 +421,7 @@ void gpu_train::setDropout()
 	for(size_t i = 0; i < m_conv.size(); ++i){
 		m_conv[i].setDropout(true);
 	}
-	for(int i = 0; i < m_mlp.size(); ++i){
+	for(size_t i = 0; i < m_mlp.size(); ++i){
 		m_mlp[i].setDropout(true);
 	}
 }

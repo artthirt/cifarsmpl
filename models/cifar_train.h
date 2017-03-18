@@ -29,7 +29,7 @@ public:
 	void init();
 
 	void forward(const std::vector< ct::Matf >& X, ct::Matf& a_out,
-				 bool use_drop = false, float p = 0.95, bool use_gpu = false);
+				 bool use_drop = false, bool use_gpu = false);
 
 	void setRandData(float offset, float angle, float br);
 

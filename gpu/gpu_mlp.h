@@ -15,7 +15,7 @@ public:
 	GpuMat B;
 	GpuMat Z;
 	GpuMat A1;
-//	GpuMat DA1;
+	GpuMat DA1;
 	GpuMat PartZ;
 	GpuMat DltA0;
 	GpuMat Dropout;

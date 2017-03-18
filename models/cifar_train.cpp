@@ -254,13 +254,13 @@ void cifar_train::init()
 }
 
 void cifar_train::forward(const std::vector< ct::Matf > &X, ct::Matf &a_out,
-						  bool use_drop, float p, bool use_gpu)
+						  bool use_drop, bool use_gpu)
 {
 	if(X.empty())
 		return;
 
 	if(use_gpu && m_gpu_train.isInit()){
-		m_gpu_train.forward(X, a_out, use_drop, p);
+		m_gpu_train.forward(X, a_out, use_drop);
 		return;
 	}
 
@@ -709,7 +709,7 @@ QVector< int > cifar_train::predict(const QVector< TData >& data, bool use_gpu)
 
 		m_cifar->convToXy2(data, i, i + cnt, X);
 
-		forward(X, y, false, 0.95f, use_gpu);
+		forward(X, y, false, use_gpu);
 
 		for(int j = 0; j < y.rows; ++j){
 			pred[i + j] = y.argmax(j, 1);
@@ -897,7 +897,7 @@ void cifar_train::save_weights(bool gpu)
 
 void cifar_train::setDropout()
 {
-	for(int i = 0; i < m_mlp.size() - 1; ++i){
+	for(int i = 0; i < (int)m_mlp.size() - 1; ++i){
 		ct::mlpf& mlp = m_mlp[i];
 		mlp.setDropout(true);
 	}

@@ -27,16 +27,17 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	ct::generator.seed(17);
 
-	cnv.push_back(ct::ParamsCnv(3, 32, true, 0.9));
-	cnv.push_back(ct::ParamsCnv(3, 64, true, 0.9));
-	cnv.push_back(ct::ParamsCnv(3, 128, false, 0.9));
+	cnv.push_back(ct::ParamsCnv(3, 64, true, 0.7));
+	cnv.push_back(ct::ParamsCnv(3, 128, true, 0.7));
+	cnv.push_back(ct::ParamsCnv(3, 256, false, 0.7));
+	cnv.push_back(ct::ParamsCnv(3, 512, false, 0.7));
 //	cnv.push_back(256);
 //	cnv.push_back(512);
 
 
-	mlp.push_back(ct::ParamsMlp(512, 0.8));
-	mlp.push_back(ct::ParamsMlp(512, 0.8));
-	mlp.push_back(ct::ParamsMlp(512, 0.8));
+	mlp.push_back(ct::ParamsMlp(1024, 1));
+	mlp.push_back(ct::ParamsMlp(640, 1));
+	mlp.push_back(ct::ParamsMlp(512, 1));
 	mlp.push_back(ct::ParamsMlp(10, 1));
 
 	m_train.setCifar(&m_cifar);
@@ -44,7 +45,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	m_train.setMlpLayers(mlp);
 
 	m_train.setUseRandData(true);
-	m_train.setRandData(5, 5, 0.0);
+	m_train.setRandData(5, 0, 0.0);
 
 	m_train.init();
 

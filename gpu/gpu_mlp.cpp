@@ -75,23 +75,24 @@ void mlp::apply_func(const GpuMat &Z, GpuMat &A, etypefunction func){
 	}
 }
 
-void mlp::apply_func(GpuMat &A, etypefunction func)
-{
+void mlp::apply_back_func(const GpuMat &D1, GpuMat &D2, etypefunction func){
 	switch (func) {
 		default:
 		case RELU:
-			reLu(A);
+			deriv_reLu(A1, DA1);
 			break;
 		case SOFTMAX:
-			softmax(A, 1, PartZ);
-			break;
+			//				A = softmax(A, 1);
+			D1.copyTo(D2);
+			return;
 		case SIGMOID:
-			sigmoid(A);
+			deriv_sigmoid(A1, DA1);
 			break;
 		case TANH:
-			tanh(A);
+			deriv_tanh(A1, DA1);
 			break;
 	}
+	elemwiseMult(D1, DA1, D2);
 }
 
 etypefunction mlp::funcType() const{
@@ -139,44 +140,24 @@ void mlp::forward(const GpuMat *mat, etypefunction func, bool save_A0)
 		pA0 = nullptr;
 }
 
-void mlp::apply_back_func(const GpuMat &D1, GpuMat &D2, etypefunction func){
-	switch (func) {
-		default:
-		case RELU:
-			deriv_reLu(A1);
-			break;
-		case SOFTMAX:
-			//				A = softmax(A, 1);
-//			D1.copyTo(D2);
-			return;
-		case SIGMOID:
-			deriv_sigmoid(A1);
-			break;
-		case TANH:
-			deriv_tanh(A1);
-			break;
-	}
-	if(A1.data == D2.data){
-		elemwiseMult(D2, D1);
-	}else{
-		elemwiseMult(D1, A1, D2);
-	}
-}
-
 void mlp::backward(const GpuMat &Delta, bool last_layer)
 {
 	if(!pA0 || !m_init)
 		throw new std::invalid_argument("mlp::backward: not initialized. wrong parameters");
 
-	gpumat::GpuMat& DA1 = (m_func == gpumat::SOFTMAX)? (GpuMat&)Delta : A1;
+//	apply_back_func(Delta, DA1, m_func);
 
 	double m = Delta.rows;
 
+	gpumat::GpuMat* pDA1 = &DA1;
+
 	if(m_func != gpumat::SOFTMAX){
 		apply_back_func(Delta, DA1, m_func);
+	}else{
+		pDA1 = (GpuMat*)&Delta;
 	}
 
-	matmulT1(*pA0, DA1, gW);
+	matmulT1(*pA0, *pDA1, gW);
 	mulval(gW, 1. / m);
 
 	if(m_is_dropout && std::abs(m_prob - 1) > 1e-6){
@@ -184,11 +165,11 @@ void mlp::backward(const GpuMat &Delta, bool last_layer)
 	}
 
 	gB.swap_dims();
-	sumRows(DA1, gB, 1.f / m);
+	sumRows(*pDA1, gB, 1.f / m);
 	gB.swap_dims();
 
 	if(!last_layer){
-		matmulT2(DA1, W, DltA0);
+		matmulT2(*pDA1, W, DltA0);
 	}
 }
 
