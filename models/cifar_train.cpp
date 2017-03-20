@@ -33,7 +33,7 @@ void flip(int w, int h, T *X, std::vector<T> &d)
 }
 
 template< typename T >
-void crop(int w, int h, int new_w, int new_h, T *X, std::vector<T> &d)
+void crop(int w, int h, int new_w, int new_h, int offx, int offy, T *X, std::vector<T> &d)
 {
 	if(new_w > w || new_h > h)
 		return;
@@ -48,8 +48,15 @@ void crop(int w, int h, int new_w, int new_h, T *X, std::vector<T> &d)
 #pragma omp simd
 #endif
 	for(int i = yc - new_h/2; i < yc + new_h/2; i++){
-		for(int j = xc - new_w/2; j < xc + new_w/2; j++){
-			d[i * w + j] = X[i * w + j];
+		int y = offy + i;
+		if(y >= 0 && y < h){
+			for(int j = xc - new_w/2; j < xc + new_w/2; j++){
+				int x = offx + j;
+
+				if(x >= 0 && x < w){
+					d[y * w + x] = X[x * w + y];
+				}
+			}
 		}
 	}
 	for(size_t i = 0; i < d.size(); i++){
@@ -340,7 +347,7 @@ void cifar_train::randValues(size_t count, std::vector<ct::Vec4f> &vals, float o
 		}
 	}
 	if(brightness > 0){
-		std::normal_distribution<float> nbr(1, brightness);
+		std::uniform_real_distribution<float> nbr(1 - brightness, 1);
 		for(size_t i = 0; i < vals.size(); ++i){
 			float br = nbr(ct::generator);
 			vals[i][3] = br;
@@ -407,13 +414,13 @@ void cifar_train::randX(std::vector< ct::Matf > &X, std::vector<ct::Vec4f> &vals
 		std::vector< float >& d = ds[_num];
 
 		int fl = ufl(ct::generator);
-//		int fl1 = ufl(ct::generator);
+		int fl1 = ufl(ct::generator);
 
-//		if(fl1){
-//			crop<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, 24, 24, dX1, d);
-//			crop<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, 24, 24, dX2, d);
-//			crop<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, 24, 24, dX3, d);
-//		}
+		if(fl1 > 0){
+			crop<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, 24, 24, x, y, dX1, d);
+			crop<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, 24, 24, x, y, dX2, d);
+			crop<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, 24, 24, x, y, dX3, d);
+		}
 
 		if(fl > 0){
 			flip<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, dX1, d);
@@ -427,11 +434,11 @@ void cifar_train::randX(std::vector< ct::Matf > &X, std::vector<ct::Vec4f> &vals
 			rotate_data<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, ang, dX3, d);
 		}
 
-		if(x && y){
-			translate<float>(x, y, cifar_reader::WidthIM, cifar_reader::HeightIM, dX1, d);
-			translate<float>(x, y, cifar_reader::WidthIM, cifar_reader::HeightIM, dX2, d);
-			translate<float>(x, y, cifar_reader::WidthIM, cifar_reader::HeightIM, dX3, d);
-		}
+//		if(x && y){
+//			translate<float>(x, y, cifar_reader::WidthIM, cifar_reader::HeightIM, dX1, d);
+//			translate<float>(x, y, cifar_reader::WidthIM, cifar_reader::HeightIM, dX2, d);
+//			translate<float>(x, y, cifar_reader::WidthIM, cifar_reader::HeightIM, dX3, d);
+//		}
 
 		if(br){
 			change_brightness(X[i], br);
