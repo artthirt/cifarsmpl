@@ -429,6 +429,10 @@ std::vector<gpumat::conv2::convnn_gpu> &gpu_train::conv()
 void gpu_train::setDropoutProb(double val)
 {
 	m_dropoutProb = val;
+	for(int i = 0; i < (int)m_mlp.size() - 2; ++i){
+		gpumat::mlp& m = m_mlp[i];
+		m.setDropout(val);
+	}
 }
 
 double gpu_train::dropoutProb() const

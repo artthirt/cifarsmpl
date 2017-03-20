@@ -32,9 +32,11 @@ MainWindow::MainWindow(QWidget *parent) :
 	cnv.push_back(ct::ParamsCnv(3, 256, false, 0.9));
 	cnv.push_back(ct::ParamsCnv(3, 512, false, 0.9));
 
-	mlp.push_back(ct::ParamsMlp(640, 0.9, 0.001));
-	mlp.push_back(ct::ParamsMlp(640, 0.9, 0.001));
-	mlp.push_back(ct::ParamsMlp(512, 0.9, 0.001));
+	mlp.push_back(ct::ParamsMlp(512, 0.92, 0.005));
+	mlp.push_back(ct::ParamsMlp(512, 0.92, 0.005));
+	mlp.push_back(ct::ParamsMlp(512, 0.92, 0.005));
+	mlp.push_back(ct::ParamsMlp(512, 0.92, 0.005));
+	mlp.push_back(ct::ParamsMlp(512, 0.92, 0.005));
 	mlp.push_back(ct::ParamsMlp(512, 1));
 	mlp.push_back(ct::ParamsMlp(10, 1));
 
@@ -43,7 +45,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	m_train.setMlpLayers(mlp);
 
 	m_train.setUseRandData(true);
-	m_train.setRandData(10, 1, 0.0);
+	m_train.setRandData(5, 0, 0.0);
 
 	m_train.init();
 
@@ -58,7 +60,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	ui->sb_delay->setValue(m_delay);
 	ui->sb_iter_numb->setValue(m_delimiter);
 
-	ui->dsb_dropoutprob->setValue(m_train.dropoutProb());
+//	ui->dsb_dropoutprob->setValue(m_train.dropoutProb());
 
 	ui->sb_wid->setMaximum((int)cnv.size());
 }

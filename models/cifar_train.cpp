@@ -415,7 +415,7 @@ void cifar_train::randX(std::vector< ct::Matf > &X, std::vector<ct::Vec4f> &vals
 //			crop<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, 24, 24, dX3, d);
 //		}
 
-		if(fl){
+		if(fl > 0){
 			flip<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, dX1, d);
 			flip<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, dX2, d);
 			flip<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, dX3, d);
