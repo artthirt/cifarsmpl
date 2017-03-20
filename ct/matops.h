@@ -1263,15 +1263,13 @@ void dropout(Mat_<T>& mat, T p, Mat_<T>& D, Mat_<T>& Dt, int seed = 0)
 
 #pragma omp parallel for
 	for(int i = 0; i < mat.rows; i++){
-		int pi = bi(generator);
-		if(!pi){
 #ifdef __GNUC__
 #pragma omp simd
 #endif
-			for(int j = 0; j < mat.cols; j++){
-				val1[i * D.cols + j] = 0;
-				val2[j * D.rows + i] = 0;
-			}
+		for(int j = 0; j < mat.cols; j++){
+			int pi = bi(generator);
+			val1[i * D.cols + j] = (T)pi;
+			val2[j * D.rows + i] = (T)pi;
 		}
 	}
 	elemwiseMult(mat, D);
@@ -1291,11 +1289,11 @@ void dropout(int rows, int cols, T p, Mat_<T>& D, int seed = 0)
 
 #pragma omp parallel for
 	for(int i = 0; i < rows; i++){
-		int pi = bi(generator);
 #ifdef __GNUC__
 #pragma omp simd
 #endif
 		for(int j = 0; j < cols; j++){
+			int pi = bi(generator);
 			val1[i * D.cols + j] = T(pi);
 		}
 	}

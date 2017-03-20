@@ -54,7 +54,7 @@ void crop(int w, int h, int new_w, int new_h, int offx, int offy, T *X, std::vec
 				int x = offx + j;
 
 				if(x >= 0 && x < w){
-					d[y * w + x] = X[x * w + y];
+					d[y * w + x] = X[y * w + x];
 				}
 			}
 		}
