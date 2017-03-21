@@ -375,6 +375,7 @@ public:
 		pX = nullptr;
 		stride = 1;
 		m_use_transpose = true;
+		m_Lambda = 0;
 	}
 
 	std::vector< ct::Mat_<T> >& XOut(){
@@ -423,6 +424,10 @@ public:
 
 	void setAlpha(T alpha){
 		m_optim.setAlpha(alpha);
+	}
+
+	void setLambda(T val){
+		m_Lambda = val;
 	}
 
 	void init(const ct::Size& _szA0, int _channels, int stride, int _K, ct::Size& _szW,
@@ -594,6 +599,10 @@ public:
 		gW *= (T)1./(D.size());
 		gB *= (T)1./(D.size());
 
+		if(m_Lambda > 0){
+			gW += W * (m_Lambda / K);
+		}
+
 		if(!last_level){
 			Dlt.resize(D.size());
 
@@ -633,6 +642,7 @@ private:
 	bool m_use_pool;
 	ct::etypefunction m_func;
 	bool m_use_transpose;
+	T m_Lambda;
 };
 
 }

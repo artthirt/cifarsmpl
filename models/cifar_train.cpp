@@ -230,6 +230,7 @@ void cifar_train::init()
 			conv2::convnn<float>& cnv = m_conv[i];
 			ct::Size szW(m_cnvlayers[i].size_w, m_cnvlayers[i].size_w);
 			cnv.init(sz, input, 1, m_cnvlayers[i].count_kernels, szW, m_cnvlayers[i].pooling, i != 0);
+			cnv.setLambda(m_cnvlayers[i].lambda_l2);
 			input = m_cnvlayers[i].count_kernels;
 			sz = cnv.szOut();
 		}
@@ -388,6 +389,7 @@ void cifar_train::randX(std::vector< ct::Matf > &X, std::vector<ct::Vec4f> &vals
 	int area = cifar_reader::WidthIM * cifar_reader::HeightIM;
 
 	std::binomial_distribution<int> ufl(1, 0.5);
+	std::uniform_int_distribution<int> udtr(-m_rand_data[0], m_rand_data[0]);
 
 	int max_threads = omp_get_num_procs();
 
@@ -410,6 +412,8 @@ void cifar_train::randX(std::vector< ct::Matf > &X, std::vector<ct::Vec4f> &vals
 		float br = vals[i][3];
 
 		int _num = omp_get_thread_num();
+		float x1 = udtr(ct::generator);
+		float y1 = udtr(ct::generator);
 
 		std::vector< float >& d = ds[_num];
 
@@ -434,11 +438,11 @@ void cifar_train::randX(std::vector< ct::Matf > &X, std::vector<ct::Vec4f> &vals
 			rotate_data<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, ang, dX3, d);
 		}
 
-//		if(x && y){
-//			translate<float>(x, y, cifar_reader::WidthIM, cifar_reader::HeightIM, dX1, d);
-//			translate<float>(x, y, cifar_reader::WidthIM, cifar_reader::HeightIM, dX2, d);
-//			translate<float>(x, y, cifar_reader::WidthIM, cifar_reader::HeightIM, dX3, d);
-//		}
+		if(x1 && y1){
+			translate<float>(x1, y1, cifar_reader::WidthIM, cifar_reader::HeightIM, dX1, d);
+			translate<float>(x1, y1, cifar_reader::WidthIM, cifar_reader::HeightIM, dX2, d);
+			translate<float>(x1, y1, cifar_reader::WidthIM, cifar_reader::HeightIM, dX3, d);
+		}
 
 		if(br){
 			change_brightness(X[i], br);

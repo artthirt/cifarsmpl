@@ -53,18 +53,21 @@ struct ParamsCnv{
 		count_kernels = 0;
 		pooling = true;
 		prob = 1;
+		lambda_l2 = 0.;
 	}
-	ParamsCnv(int size_w, int count_kernels, bool pooling, double prob){
+	ParamsCnv(int size_w, int count_kernels, bool pooling, double prob, double lambda_l2){
 		this->size_w = size_w;
 		this->count_kernels = count_kernels;
 		this->pooling = pooling;
 		this->prob = prob;
+		this->lambda_l2 = lambda_l2;
 	}
 
 	int size_w;
 	int count_kernels;
 	bool pooling;
 	double prob;
+	double lambda_l2;
 };
 
 }

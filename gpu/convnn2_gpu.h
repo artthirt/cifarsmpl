@@ -41,6 +41,7 @@ public:
 	convnn_gpu();
 
 	void setAlpha(double val);
+	void setLambda(double val);
 
 	void setDropout(bool val);
 	void setDropout(double val);
@@ -80,6 +81,7 @@ private:
 	bool m_use_pool;
 	gpumat::etypefunction m_func;
 	gpumat::GpuMat m_Dropout;
+	double m_lambda;
 
 	std::vector< gpumat::GpuMat > dSub2;
 	std::vector< gpumat::GpuMat > Dc;		///

@@ -27,11 +27,17 @@ convnn_gpu::convnn_gpu()
 	m_use_transpose = true;
 	m_pool_dropout = false;
 	m_prob_dropout = 0.9;
+	m_lambda = 0;
 }
 
 void convnn_gpu::setAlpha(double val)
 {
 	m_optim.setAlpha(val);
+}
+
+void convnn_gpu::setLambda(double val)
+{
+	m_lambda = val;
 }
 
 void convnn_gpu::setDropout(bool val)
@@ -105,7 +111,7 @@ void convnn_gpu::init(const ct::Size &_szA0, int _channels, int stride, int _K, 
 	gW.resize(1);
 	gB.resize(1);
 
-	float n = (float)0.1;
+	float n = (float)1./sqrt(K);
 
 	for(size_t i = 0; i < W.size(); ++i){
 		ct::Matf Wi(rows, cols), Bi(K, 1);
@@ -357,6 +363,9 @@ void convnn_gpu::backward(const std::vector<gpumat::GpuMat> &D, bool last_level)
 	gpumat::mulval(gW[0], (double)1./(D.size() * channels));
 	gpumat::mulval(gB[0], (double)1./(D.size() * channels));
 
+	if(m_lambda > 0){
+		gpumat::add(gW[0], W[0], 1, (double)m_lambda / K);
+	}
 
 #if 0
 	if(1/*channels == 128*/){
