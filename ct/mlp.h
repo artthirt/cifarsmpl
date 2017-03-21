@@ -89,7 +89,7 @@ public:
 	Mat_<T> D1;
 	Mat_<T> DltA0;
 	Mat_<T> Dropout;
-	Mat_<T> WDropout;
+	Mat_<T> XDropout;
 	Mat_<T> gW;
 	Mat_<T> gB;
 
@@ -176,9 +176,9 @@ public:
 		m_func = func;
 
 		if(m_is_dropout && std::abs(m_prob - 1) > 1e-6){
-			ct::dropout(W.rows, W.cols, m_prob, Dropout);
-			elemwiseMult(W, Dropout, WDropout);
-			Z = *pA0 * WDropout;
+			ct::dropout(pA0->rows, pA0->cols, m_prob, Dropout);
+			elemwiseMult(*pA0, Dropout, XDropout);
+			Z = XDropout * W;
 		}else{
 			Z = *pA0 * W;
 		}
@@ -197,12 +197,13 @@ public:
 
 		T m = Delta.rows;
 
-		matmulT1(*pA0, DA1, gW);
+		if(m_is_dropout && std::abs(m_prob - 1) > 1e-6){
+			matmulT1(XDropout, DA1, gW);
+		}else{
+			matmulT1(*pA0, DA1, gW);
+		}
 		gW *= (T) 1. / m;
 
-		if(m_is_dropout && std::abs(m_prob - 1) > 1e-6){
-			elemwiseMult(gW, Dropout);
-		}
 
 		if(m_lambda > 0){
 			gW += W * (m_lambda / m);

@@ -19,7 +19,7 @@ public:
 	GpuMat PartZ;
 	GpuMat DltA0;
 	GpuMat Dropout;
-	GpuMat WDropout;
+	GpuMat XDropout;
 	GpuMat gW;
 	GpuMat gB;
 

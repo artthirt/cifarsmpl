@@ -105,21 +105,21 @@ etypefunction mlp::funcType() const{
 	return m_func;
 }
 
-inline void apply_dropout(const GpuMat& W, double prob, GpuMat& WDropout, GpuMat& Dropout)
+inline void apply_dropout(const GpuMat& X, double prob, GpuMat& XDropout, GpuMat& Dropout)
 {
-	switch (W.type) {
+	switch (X.type) {
 		case GPU_DOUBLE:{
 			ct::Matd _Dropout;
-			ct::dropout(W.rows, W.cols, prob, _Dropout);
+			ct::dropout(X.rows, X.cols, prob, _Dropout);
 			convert_to_gpu(_Dropout, Dropout);
-			elemwiseMult(W, Dropout, WDropout);
+			elemwiseMult(X, Dropout, XDropout);
 			break;
 		}
 		case GPU_FLOAT:{
 			ct::Matf _Dropout;
-			ct::dropout(W.rows, W.cols, (float)prob, _Dropout);
+			ct::dropout(X.rows, X.cols, (float)prob, _Dropout);
 			convert_to_gpu(_Dropout, Dropout);
-			elemwiseMult(W, Dropout, WDropout);
+			elemwiseMult(X, Dropout, XDropout);
 			break;
 		}
 	}
@@ -133,8 +133,8 @@ void mlp::forward(const GpuMat *mat, etypefunction func, bool save_A0)
 	m_func = func;
 
 	if(m_is_dropout && std::abs(m_prob - 1) > 1e-6){
-		apply_dropout(W, m_prob, WDropout, Dropout);
-		matmul(*pA0, WDropout, A1);
+		apply_dropout(*pA0, m_prob, XDropout, Dropout);
+		matmul(XDropout, W, A1);
 	}else{
 		matmul(*pA0, W, A1);
 	}
@@ -163,12 +163,13 @@ void mlp::backward(const GpuMat &Delta, bool last_layer)
 		pDA1 = (GpuMat*)&Delta;
 	}
 
-	matmulT1(*pA0, *pDA1, gW);
+	if(m_is_dropout && std::abs(m_prob - 1) > 1e-6){
+		matmulT1(XDropout, *pDA1, gW);
+	}else{
+		matmulT1(*pA0, *pDA1, gW);
+	}
 	mulval(gW, 1. / m);
 
-	if(m_is_dropout && std::abs(m_prob - 1) > 1e-6){
-		elemwiseMult(gW, Dropout);
-	}
 
 	if(m_lambda > 0){
 		gpumat::add(gW, W, 1, m_lambda / m);

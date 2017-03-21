@@ -27,12 +27,12 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	ct::generator.seed(17);
 
-	cnv.push_back(ct::ParamsCnv(3, 64, true, 0.93, 0.0001));
-	cnv.push_back(ct::ParamsCnv(3, 128, true, 0.92, 0.0001));
-	cnv.push_back(ct::ParamsCnv(3, 256, false, 0.93, 0.0001));
-	cnv.push_back(ct::ParamsCnv(3, 512, false, 0.92, 0.0001));
+	cnv.push_back(ct::ParamsCnv(3, 32, true, 0.7, 0.0001));
+	cnv.push_back(ct::ParamsCnv(3, 64, true, 0.7, 0.0001));
+	cnv.push_back(ct::ParamsCnv(3, 128, true, 0.7, 0.0001));
+//	cnv.push_back(ct::ParamsCnv(3, 512, false, 0.92, 0.0001));
 
-	mlp.push_back(ct::ParamsMlp(512, 0.95, 0.001));
+	mlp.push_back(ct::ParamsMlp(512, 0.6, 0.001));
 //	mlp.push_back(ct::ParamsMlp(512, 0.93, 0.001));
 //	mlp.push_back(ct::ParamsMlp(512, 0.98, 0.001));
 //	mlp.push_back(ct::ParamsMlp(512, 0.92, 0.005));
