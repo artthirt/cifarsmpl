@@ -109,54 +109,16 @@ void rotate_data(int w, int h, T angle, T *X, std::vector<T> &d)
 #endif
 	for(int y = 0; y < h; y++){
 		for(int x = 0; x < w; x++){
-			T c = X[y * w + x];
 			T x1 = x - cw;
 			T y1 = y - ch;
 
-			int nx0 = std::round(x1 * 1 - y1 * tan(angle/2));
-			int ny0 = std::round(y1 * 0	+ y1 * 1);
-			nx0 += cw; ny0 += ch;
-			int ix0 = nx0, iy0 = ny0;
-			if(ix0 >= 0 && ix0 < w && iy0 >= 0 && iy0 < h){
-				d[iy0 * w + ix0] = c;
-			}
-		}
-	}
-
-#ifdef __GNUC__
-#pragma omp simd
-#endif
-	for(int y = 0; y < h; y++){
-		for(int x = 0; x < w; x++){
-			T c = d[y * w + x];
-			T x1 = x - cw;
-			T y1 = y - ch;
-
-			int nx0 = std::round(x1 * 1 + y1 * 0);
-			int ny0 = std::round(x1 * sin(angle/2)	+ y1 * 1);
-			nx0 += cw; ny0 += ch;
-			int ix0 = nx0, iy0 = ny0;
-			if(ix0 >= 0 && ix0 < w && iy0 >= 0 && iy0 < h){
-				X[iy0 * w + ix0] = c;
-			}
-		}
-	}
-
-#ifdef __GNUC__
-#pragma omp simd
-#endif
-	for(int y = 0; y < h; y++){
-		for(int x = 0; x < w; x++){
-			T c = X[y * w + x];
-			T x1 = x - cw;
-			T y1 = y - ch;
-
-			int nx0 = std::round(x1 * 1 - y1 * tan(angle/2));
-			int ny0 = std::round(y1 * 0	+ y1 * 1);
-			nx0 += cw; ny0 += ch;
-			int ix0 = nx0, iy0 = ny0;
-			if(ix0 >= 0 && ix0 < w && iy0 >= 0 && iy0 < h){
-				d[iy0 * w + ix0] = c;
+			T nx = x1 * cos(angle) + y1 * sin(angle);
+			T ny = -x1 * sin(angle) + y1 * cos(angle);
+			nx += cw; ny += ch;
+			int ix = nx, iy = ny;
+			if(ix >= 0 && ix < w && iy >= 0 && iy < h){
+				T c = X[y * w + x];
+				d[iy * w + ix] = c;
 			}
 		}
 	}
@@ -228,10 +190,13 @@ void cifar_train::init()
 		ct::Size sz = m_szA0;
 		for(size_t i = 0; i < m_conv.size(); ++i){
 			conv2::convnn<float>& cnv = m_conv[i];
-			ct::Size szW(m_cnvlayers[i].size_w, m_cnvlayers[i].size_w);
-			cnv.init(sz, input, 1, m_cnvlayers[i].count_kernels, szW, m_cnvlayers[i].pooling, i != 0);
-			cnv.setLambda(m_cnvlayers[i].lambda_l2);
-			input = m_cnvlayers[i].count_kernels;
+			ct::ParamsCnv& params = m_cnvlayers[i];
+
+			ct::Size szW(params.size_w, params.size_w);
+
+			cnv.init(sz, input, 1, params.count, szW, params.pooling, i != 0);
+			cnv.setLambda(params.lambda_l2);
+			input = params.count;
 			sz = cnv.szOut();
 		}
 	}
@@ -247,11 +212,13 @@ void cifar_train::init()
 
 		for(size_t i = 0; i < m_mlp.size(); ++i){
 			ct::mlpf& mlp = m_mlp[i];
-			int output = m_layers[i].count;
+			ct::ParamsMlp& params = m_layers[i];
+
+			int output = params.count;
 
 			mlp.init(input, output);
-			mlp.setDropout((float)m_layers[i].prob);
-			mlp.setLambda(m_layers[i].lambda_l2);
+			mlp.setDropout((float)params.prob);
+			mlp.setLambda(params.lambda_l2);
 
 			input = output;
 		}

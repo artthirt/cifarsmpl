@@ -62,6 +62,8 @@ public:
 private:
 };
 
+void maxnorm(GpuMat& A, double c);
+
 }
 
 #endif // GPU_MLP_H

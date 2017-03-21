@@ -30,7 +30,19 @@ struct Size{
 	int height;
 };
 
-struct ParamsMlp{
+struct ParamsCommon{
+	double prob;
+	double lambda_l2;
+	int count;
+
+	ParamsCommon(){
+		prob = 1;
+		lambda_l2 = 0;
+		count = 0;
+	}
+};
+
+struct ParamsMlp: public ParamsCommon{
 	ParamsMlp(){
 		count = 0;
 		this->prob = 1;
@@ -41,33 +53,26 @@ struct ParamsMlp{
 		this->prob = prob;
 		this->lambda_l2 = lambda_l2;
 	}
-
-	int count;
-	double prob;
-	double lambda_l2;
 };
 
-struct ParamsCnv{
+struct ParamsCnv: public ParamsCommon{
 	ParamsCnv(){
 		size_w = 0;
-		count_kernels = 0;
+		count = 0;
 		pooling = true;
 		prob = 1;
 		lambda_l2 = 0.;
 	}
 	ParamsCnv(int size_w, int count_kernels, bool pooling, double prob, double lambda_l2){
 		this->size_w = size_w;
-		this->count_kernels = count_kernels;
+		this->count = count_kernels;
 		this->pooling = pooling;
 		this->prob = prob;
 		this->lambda_l2 = lambda_l2;
 	}
 
 	int size_w;
-	int count_kernels;
 	bool pooling;
-	double prob;
-	double lambda_l2;
 };
 
 }

@@ -1261,11 +1261,11 @@ void dropout(Mat_<T>& mat, T p, Mat_<T>& D, Mat_<T>& Dt, int seed = 0)
 	T* val1 = &(*D.val)[0];
 	T* val2 = &(*Dt.val)[0];
 
-#pragma omp parallel for
+//#pragma omp parallel for
 	for(int i = 0; i < mat.rows; i++){
-#ifdef __GNUC__
-#pragma omp simd
-#endif
+//#ifdef __GNUC__
+//#pragma omp simd
+//#endif
 		for(int j = 0; j < mat.cols; j++){
 			int pi = bi(generator);
 			val1[i * D.cols + j] = (T)pi;
@@ -1287,11 +1287,11 @@ void dropout(int rows, int cols, T p, Mat_<T>& D, int seed = 0)
 
 	T* val1 = &(*D.val)[0];
 
-#pragma omp parallel for
+//#pragma omp parallel for
 	for(int i = 0; i < rows; i++){
-#ifdef __GNUC__
-#pragma omp simd
-#endif
+//#ifdef __GNUC__
+//#pragma omp simd
+//#endif
 		for(int j = 0; j < cols; j++){
 			int pi = bi(generator);
 			val1[i * D.cols + j] = T(pi);

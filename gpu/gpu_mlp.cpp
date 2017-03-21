@@ -263,3 +263,52 @@ bool MlpOptim::pass(std::vector<mlp> &_mlp)
 	}
 	return true;
 }
+
+/////////////////
+
+#include "convnn_gpu.h"
+
+template<typename T >
+void _norm(GpuMat& A, T &s)
+{
+	gpumat::GpuMat res;
+	ct::Mat_<T> mA;
+
+	gpumat::reduce(A, res);
+
+	gpumat::convert_to_mat(res, mA);
+	s = sqrt(mA.at(0));
+	std::cout << s << std::endl;
+}
+
+template<typename T >
+void _maxnorm(GpuMat& A, double c, double s)
+{
+	if(s > c){
+		gpumat::mulval(A, c / s);
+	}
+}
+
+void gpumat::maxnorm(GpuMat &A, double c)
+{
+	GpuMat S;
+	gpumat::elemwiseSqr(A, S);
+
+	switch (A.type) {
+		case GPU_DOUBLE:
+		{
+			double s;
+			_norm<double>(S, s);
+			_maxnorm<double>(A, c, s);
+			break;
+		}
+		case GPU_FLOAT:
+		default:
+		{
+			float s;
+			_norm<float>(S, s);
+			_maxnorm<float>(A, c, s);
+			break;
+		}
+	}
+}
