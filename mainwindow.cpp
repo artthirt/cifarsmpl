@@ -29,13 +29,13 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	cnv.push_back(ct::ParamsCnv(3, 64, true, 0.95, 0.0001));
 	cnv.push_back(ct::ParamsCnv(3, 128, true, 0.95, 0.0001));
-	cnv.push_back(ct::ParamsCnv(3, 256, true, 0.95, 0.0001));
-//	cnv.push_back(ct::ParamsCnv(3, 512, false, 0.92, 0.0001));
+	cnv.push_back(ct::ParamsCnv(3, 256, false, 0.95, 0.0001));
+	cnv.push_back(ct::ParamsCnv(3, 512, false, 0.95, 0.0001));
 
-	mlp.push_back(ct::ParamsMlp(512, 0.94, 0.0001));
-	mlp.push_back(ct::ParamsMlp(512, 0.96, 0.0001));
-//	mlp.push_back(ct::ParamsMlp(512, 0.98, 0.001));
-//	mlp.push_back(ct::ParamsMlp(512, 0.92, 0.005));
+//	mlp.push_back(ct::ParamsMlp(512, 0.9, 0.001));
+//	mlp.push_back(ct::ParamsMlp(512, 0.9, 0.001));
+	mlp.push_back(ct::ParamsMlp(512, 0.9, 0.001));
+	mlp.push_back(ct::ParamsMlp(512, 0.92, 0.001));
 //	mlp.push_back(ct::ParamsMlp(512, 0.92, 0.005));
 //	mlp.push_back(ct::ParamsMlp(128, 1));
 	mlp.push_back(ct::ParamsMlp(10, 1));
@@ -45,7 +45,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	m_train.setMlpLayers(mlp);
 
 	m_train.setUseRandData(true);
-	m_train.setRandData(5, 3, 0.1);
+	m_train.setRandData(5, 0, 0.1);
 
 	m_train.init();
 

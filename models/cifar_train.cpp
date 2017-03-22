@@ -33,6 +33,12 @@ void flip(int w, int h, T *X, std::vector<T> &d)
 }
 
 template< typename T >
+void exchange(int w, int h, T *X1, T *X2)
+{
+	std::swap_ranges(X1, X1 + w * h, X2);
+}
+
+template< typename T >
 void crop(int w, int h, int new_w, int new_h, int offx, int offy, T *X, std::vector<T> &d)
 {
 	if(new_w > w || new_h > h)
@@ -386,6 +392,7 @@ void cifar_train::randX(std::vector< ct::Matf > &X, std::vector<ct::Vec4f> &vals
 
 		int fl = ufl(ct::generator);
 		int fl1 = ufl(ct::generator);
+		int fl2 = ufl(ct::generator);
 
 		if(fl1 > 0){
 			crop<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, 24, 24, x, y, dX1, d);
@@ -397,6 +404,10 @@ void cifar_train::randX(std::vector< ct::Matf > &X, std::vector<ct::Vec4f> &vals
 			flip<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, dX1, d);
 			flip<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, dX2, d);
 			flip<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, dX3, d);
+		}
+
+		if(fl2 > 0){
+			exchange<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, dX1, dX2);
 		}
 
 		if(ang){
