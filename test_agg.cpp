@@ -569,7 +569,8 @@ void check_zero(const ct::Mat_<T>& mat)
 {
 	ct::Mat_<T> tmp2;
 	tmp2 = ct::elemwiseSqr(mat);
-	assert(tmp2.sum() < 1e-6);
+	T sum = tmp2.sum();
+	assert(sum < 1e-6);
 }
 
 void test_agg::test_file()
@@ -631,4 +632,45 @@ void test_agg::test_norm()
 	nl.forward(vmat);
 
 	qt_work_mat::q_save_mat(nl.A1[0], "output.txt");
+}
+
+void test_agg::test_back()
+{
+	ct::Matf Dc, Dlt, tmp, tmp2, tmp3;
+	Dc.setSize(4, 2304);
+	Dlt.setSize(16, 256);
+	ct::read_mat("Dc5.bin", Dc);
+	ct::read_mat("Dlt5.bin", Dlt);
+
+	conv2::back_derivT(Dc, ct::Size(2, 2), ct::Size(4, 4), 256, ct::Size(3, 3), 1, tmp);
+
+	gpumat::GpuMat gDc, gDlt, gDlt2;
+
+	gpumat::convert_to_gpu(Dc, gDc);
+	gpumat::conv2::back_derivT(gDc, ct::Size(2, 2), ct::Size(4, 4), 256, ct::Size(3, 3), 1, gDlt);
+	gpumat::convert_to_mat(gDlt, tmp2);
+
+	gpumat::conv2::back_derivT(gDc, ct::Size(2, 2), ct::Size(4, 4), 256, ct::Size(3, 3), 1, gDlt2);
+	gpumat::convert_to_mat(gDlt, tmp3);
+
+	check_zero(tmp3 - tmp2);
+
+	check_zero(tmp2 - tmp);
+
+	std::vector< gpumat::GpuMat > vDc, vDlt;
+
+	vDc.push_back(gDc);
+
+	for(int i = 0; i < 20; ++i){
+		gpumat::conv2::back_derivT(vDc, ct::Size(2, 2), ct::Size(4, 4), 256, ct::Size(3, 3), 1, vDlt);
+		gpumat::convert_to_mat(vDlt[0], tmp3);
+
+		check_zero(tmp3 - tmp);
+	}
+
+	check_zero(tmp3 - Dlt);
+
+	check_zero(tmp2 - Dlt);
+
+	check_zero(tmp - Dlt);
 }

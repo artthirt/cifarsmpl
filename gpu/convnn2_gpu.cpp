@@ -16,6 +16,48 @@ void save_vec(const std::vector< gpumat::GpuMat >& Dlt)
 	}
 }
 
+//////////////////////////
+
+#include "convnn2.h"
+
+template< typename T>
+void check(const ct::Mat_<T> &c1, const ct::Mat_<T>& c2)
+{
+	ct::Mat_<T> c3 = c2 - c1;
+	ct::v_elemwiseSqr(c3);
+	float s = c3.sum();
+	ct::save_mat(c3, "c3.txt");
+	assert(s < 1e-6);
+}
+
+void check_deriv(const std::vector< gpumat::GpuMat >& Delta,
+				 const ct::Size& szOut,
+				 const ct::Size& szA0,
+				 int channels,
+				 const ct::Size& szW,
+				 int stride,
+				 std::vector< gpumat::GpuMat >& X)
+{
+	return;
+
+	gpumat::GpuMat Dlt;
+
+	back_derivT(Delta[0], szOut, szA0, channels, szW, stride, Dlt);
+
+	ct::Matf c1, c2, c3, c4;
+
+	gpumat::convert_to_mat(X[0], c1);
+//	gpumat::convert_to_mat(Dlt, c2);
+
+//	check(c1, c2);
+
+	gpumat::convert_to_mat(Delta[0], c4);
+
+	conv2::back_derivT(c4, szOut, szA0, channels, szW, stride, c3);
+
+	check(c3, c1);
+}
+
 
 //////////////////////////
 
@@ -381,7 +423,15 @@ void convnn_gpu::backward(const std::vector<gpumat::GpuMat> &D, bool last_level)
 			gpumat::GpuMat& Dci = Dc[i];
 			gpumat::matmulT2(dSub2[i], W[0], Dci);
 		}
+
+//		gpumat::write_gmat("Dc5.bin", Dc[0]);
 		back_derivT(Dc, szA1, szA0, channels, szW, stride, Dlt);
+
+#if 1
+		check_deriv(Dc, szA1, szA0, channels, szW, stride, Dlt);
+#endif
+
+//		gpumat::write_gmat("Dlt5.bin", Dlt[0]);
 		//gpumat::save_gmat(dSub[0], "dSub.txt");
 //		gpumat::save_gmat(Dlt[0], "Dltgi.txt");
 		//gpumat::save_gmat(Dc[0], "Dc.txt");
@@ -602,7 +652,7 @@ void gpumat::conv2::back_deriv(const gpumat::GpuMat &Delta,
 				gpumat::GpuMat &X)
 {
 	if(Delta.empty() || ! channels || !szA0.area() || !szW.area() || !stride)
-		throw new std::invalid_argument("im2cols: empty parameters");
+		throw new std::invalid_argument("back_deriv: empty parameters");
 
 	X.resize(szA0.area(), channels, Delta.type);
 	X.zeros();
@@ -616,7 +666,7 @@ void gpumat::conv2::back_deriv(const std::vector<gpumat::GpuMat> &Delta,
 							   std::vector<gpumat::GpuMat> &X)
 {
 	if(Delta.empty() || ! channels || !szA0.area() || !szW.area() || !stride)
-		throw new std::invalid_argument("im2cols: empty parameters");
+		throw new std::invalid_argument("back_deriv: empty parameters");
 
 	X.resize(Delta.size());
 
@@ -640,7 +690,7 @@ void gpumat::conv2::back_derivT(const gpumat::GpuMat &Delta,
 				gpumat::GpuMat &X)
 {
 	if(Delta.empty() || ! channels || !szA0.area() || !szW.area() || !stride)
-		throw new std::invalid_argument("im2cols: empty parameters");
+		throw new std::invalid_argument("back_derivT: empty parameters");
 
 	X.resize(szA0.area(), channels, Delta.type);
 	X.zeros();
@@ -654,7 +704,7 @@ void gpumat::conv2::back_derivT(const std::vector<gpumat::GpuMat> &Delta,
 								std::vector<gpumat::GpuMat> &X)
 {
 	if(Delta.empty() || ! channels || !szA0.area() || !szW.area() || !stride)
-		throw new std::invalid_argument("im2cols: empty parameters");
+		throw new std::invalid_argument("back_derivT: empty parameters");
 
 	X.resize(Delta.size());
 
@@ -751,7 +801,7 @@ void gpumat::conv2::upsample(const gpumat::GpuMat &Y, int K,
 			  const ct::Size &szA, gpumat::GpuMat &X)
 {
 	if(Y.empty() || Mask.empty() || Y.total() != szO.area() * K)
-		throw new std::invalid_argument("mat2vec: empty parameters");
+		throw new std::invalid_argument("upsample: empty parameters");
 
 	X.resize(szA.area(), K, Y.type);
 
@@ -763,7 +813,7 @@ void gpumat::conv2::upsample(const std::vector<gpumat::GpuMat> &Y,
 			  const ct::Size &szO, const ct::Size &szA, std::vector<gpumat::GpuMat> &X)
 {
 	if(Y.empty() || Y[0].empty() || Mask.empty() || Mask[0].empty() || Y[0].total() != szO.area() * K)
-		throw new std::invalid_argument("mat2vec: empty parameters");
+		throw new std::invalid_argument("upsample: empty parameters");
 
 	X.resize(Y.size());
 

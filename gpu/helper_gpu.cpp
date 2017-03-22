@@ -1,5 +1,7 @@
 #include "helper_gpu.h"
 
+#include "matops.h"
+
 #include <QDebug>
 
 namespace gpumat{
@@ -34,6 +36,65 @@ void convert_to_mat(const GpuMat &gmat, ct::Matd &mat)
 		return;
 	mat.setSize(gmat.rows, gmat.cols);
 	gmat.getData((void*)mat.ptr());
+}
+
+///*****************
+
+template< typename T >
+void write_mat(std::fstream &fs, const gpumat::GpuMat& mat)
+{
+	ct::Mat_<T> mmat;
+	convert_to_mat(mat, mmat);
+
+	ct::write_fs(fs, mmat);
+}
+
+void write_fs(std::fstream &fs, const gpumat::GpuMat& mat)
+{
+	if(!mat.empty()){
+		switch (mat.type) {
+		case GPU_DOUBLE:
+			write_mat<double>(fs, mat);
+			break;
+		case GPU_FLOAT:
+			write_mat<float>(fs, mat);
+			break;
+		}
+	}
+}
+
+template< typename T >
+void read_mat(std::fstream &fs, gpumat::GpuMat& mat)
+{
+	ct::Mat_<T> mmat;
+	mmat.setSize(mat.rows, mat.cols);
+	ct::read_fs(fs, mmat);
+
+	convert_to_gpu(mmat, mat);
+}
+
+void read_fs(std::fstream &fs, gpumat::GpuMat& mat)
+{
+	if(!mat.empty()){
+		switch (mat.type) {
+		case GPU_DOUBLE:
+			read_mat<double>(fs, mat);
+			break;
+		case GPU_FLOAT:
+			read_mat<float>(fs, mat);
+			break;
+		}
+	}
+}
+
+void write_gmat(const std::string &name, const GpuMat &mat)
+{
+	std::fstream fs;
+	fs.open(name, std::ios_base::out);
+
+	write_fs(fs, mat);
+
+	fs.close();
 }
 
 ///////////////////////////////

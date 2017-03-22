@@ -23,7 +23,8 @@ int main(int argc, char *argv[])
 //	tagg.test_hconcat();
 //	tagg.test_im2col();
 //	tagg.test_conv();
-	tagg.test_norm();
+//	tagg.test_norm();
+	tagg.test_back();
 
 	return 0;
 #endif

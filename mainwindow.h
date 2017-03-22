@@ -77,6 +77,9 @@ private:
 	void pass();
 	void update_prediction();
 	void update_statistics();
+
+	void load_settings();
+	void save_settings();
 };
 
 #endif // MAINWINDOW_H

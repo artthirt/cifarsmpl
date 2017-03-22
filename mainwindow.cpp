@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 
 #include <QFileDialog>
+#include <QSettings>
 
 const QString model_file("model.bin");
 
@@ -27,10 +28,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	ct::generator.seed(17);
 
-	cnv.push_back(ct::ParamsCnv(3, 64, true, 0.95, 0.0001));
-	cnv.push_back(ct::ParamsCnv(3, 128, true, 0.95, 0.0001));
-	cnv.push_back(ct::ParamsCnv(3, 256, false, 0.95, 0.0001));
-	cnv.push_back(ct::ParamsCnv(3, 512, false, 0.95, 0.0001));
+	cnv.push_back(ct::ParamsCnv(3, 32, true, 0.95, 0));
+	cnv.push_back(ct::ParamsCnv(3, 64, true, 0.95, 0));
+	cnv.push_back(ct::ParamsCnv(3, 128, true, 0.95, 0));
+//	cnv.push_back(ct::ParamsCnv(3, 512, false, 0.95, 0.0001));
 
 //	mlp.push_back(ct::ParamsMlp(512, 0.9, 0.001));
 //	mlp.push_back(ct::ParamsMlp(512, 0.9, 0.001));
@@ -63,10 +64,14 @@ MainWindow::MainWindow(QWidget *parent) :
 //	ui->dsb_dropoutprob->setValue(m_train.dropoutProb());
 
 	ui->sb_wid->setMaximum((int)cnv.size());
+
+	load_settings();
 }
 
 MainWindow::~MainWindow()
 {
+	save_settings();
+
 	delete ui;
 }
 
@@ -173,6 +178,34 @@ void MainWindow::update_statistics()
 		stat += "</tr>";
 	}
 	ui->lb_stat->setText(stat);
+}
+
+void MainWindow::load_settings()
+{
+	QSettings settings("config.main.ini", QSettings::IniFormat);
+	settings.beginGroup("main");
+	int tmp = settings.value("batch").toInt();
+	ui->sb_batch->setValue(tmp);
+
+	ui->dsb_alpha->setValue(settings.value("alpha").toDouble());
+
+	ui->sb_delay->setValue(settings.value("timeout").toInt());
+
+	ui->sb_iter_numb->setValue(settings.value("num_pass_check").toInt());
+
+	settings.endGroup();
+
+}
+
+void MainWindow::save_settings()
+{
+	QSettings settings("config.main.ini", QSettings::IniFormat);
+	settings.beginGroup("main");
+	settings.setValue("batch", ui->sb_batch->value());
+	settings.setValue("alpha", ui->dsb_alpha->value());
+	settings.setValue("timeout", ui->sb_delay->value());
+	settings.setValue("num_pass_check", ui->sb_iter_numb->value());
+	settings.endGroup();
 }
 
 void MainWindow::on_pb_pass_clicked(bool checked)

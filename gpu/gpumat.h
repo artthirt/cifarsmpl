@@ -417,23 +417,6 @@ void sub_adamGrad(GpuMat& A, const GpuMat& mA, const GpuMat& vA, double alpha, d
  */
 void subIndOne(const GpuMat& A, const GpuMat& Ind, GpuMat& B);
 
-/**
- * @brief write_fs
- * write to fstream
- * @param fs
- * @param mat
- */
-void write_fs(std::fstream &fs, const GpuMat &mat);
-
-/**
- * @brief read_fs
- * read from fstream
- * @param fs
- * @param mat
- */
-void read_fs(std::fstream &fs, gpumat::GpuMat& mat);
-
-
 }
 
 #endif // GPU_H

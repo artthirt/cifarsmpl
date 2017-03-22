@@ -1458,6 +1458,39 @@ void get_norm(const ct::Mat_<T>& X, const ct::Mat_<T>& mean, const ct::Mat_<T>& 
 	}
 }
 
+/**
+ * @brief write_fs
+ * @param fs
+ * @param mat
+ */
+template< typename T >
+void write_fs(std::fstream& fs, const ct::Mat_<T>& mat)
+{
+	fs.write((char*)mat.ptr(), sizeof(T) * mat.total());
+}
+
+/**
+ * @brief read_fs
+ * @param fs
+ * @param mat
+ */
+template< typename T >
+void read_fs(std::fstream& fs, ct::Mat_<T>& mat)
+{
+	fs.read((char*)mat.ptr(), sizeof(T) * mat.total());
+}
+
+template< typename T >
+void read_mat(const std::string& name, ct::Mat_<T>& mat)
+{
+	std::fstream fs;
+	fs.open(name, std::ios_base::in);
+
+	read_fs<T>(fs, mat);
+
+	fs.close();
+}
+
 }
 
 #endif // MATOPS_H

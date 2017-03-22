@@ -111,6 +111,7 @@ void back_deriv(const ct::Mat_<T>& Delta, const ct::Size& szOut, const ct::Size&
 
 	T *dX = X.ptr();
 	T *dR = Delta.ptr();
+#pragma omp parallel for
 	for(int c = 0; c < channels; ++c){
 		T *dXi = &dX[c * szA0.area()];
 		for(int y = 0; y < szOut.height; ++y){
@@ -119,7 +120,6 @@ void back_deriv(const ct::Mat_<T>& Delta, const ct::Size& szOut, const ct::Size&
 				int x0 = x * stride;
 				int row = y * szOut.width + x;
 
-#pragma omp parallel for
 				for(int a = 0; a < szW.height; ++a){
 #ifdef __GNUC__
 #pragma omp simd
@@ -148,6 +148,7 @@ void back_derivT(const ct::Mat_<T>& Delta, const ct::Size& szOut, const ct::Size
 	X.fill(0);
 
 	T *dR = Delta.ptr();
+#pragma omp parallel for
 	for(int c = 0; c < channels; ++c){
 		T *dXi = X.ptr() + c;
 		for(int y = 0; y < szOut.height; ++y){
@@ -156,7 +157,6 @@ void back_derivT(const ct::Mat_<T>& Delta, const ct::Size& szOut, const ct::Size
 				int x0 = x * stride;
 				int row = y * szOut.width + x;
 
-#pragma omp parallel for
 				for(int a = 0; a < szW.height; ++a){
 #ifdef __GNUC__
 #pragma omp simd
