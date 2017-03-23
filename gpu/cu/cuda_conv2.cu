@@ -139,35 +139,69 @@ __device__ void _back_deriv(const Mtx& Delta,
 {
 	int col = threadIdx.x + blockIdx.x * blockDim.x;
 
-	int szOutArea = szOut.width * szOut.height;
-	int all = szOutArea * channels;
-
+	int szA0Area = szA0.width * szA0.height;
+	int all = szA0Area * channels;
 	if(col < all){
-		int c = col / szOutArea;
-		int offset = col - c * szOutArea;
+//		int c = col / szOutArea;
+//		int offset = col - c * szOutArea;
 
-		int y = offset / szOut.width;
-		int x = offset - y * szOut.width;
+//		int y = offset / szOut.width;
+//		int x = offset - y * szOut.width;
 
-		int x0 = x * stride;
-		int y0 = y * stride;
-		int row2 = y * szOut.width + x;
+//		int x0 = x * stride;
+//		int y0 = y * stride;
+//		int row2 = y * szOut.width + x;
 
-		int szA0area = szA0.width * szA0.height;
+//		int szA0area = szA0.width * szA0.height;
+//		int szWarea = szW.width * szW.height;
+
+//		T *dX = (T*)X.data;
+//		T *dR = (T*)Delta.data;
+//		T *dXi = &dX[c * szA0area];
+
+//		for(int a = 0; a < szW.height; ++a){
+//			for(int b = 0; b < szW.width; ++b){
+//				int col2 = c * szWarea + (a * szW.width + b);
+//				if(y0 + a < szA0.height && x0 + b < szA0.width){
+//					dXi[(y0 + a) * szA0.width + (x0 + b)] += dR[row2 * Delta.cols + col2];
+//				}
+//			}
+//		}
+		int c = col / szA0Area;
+		int offset = col - c * szA0Area;
+
+		int y = offset / szA0.width;
+		int x = offset - y * szA0.width;
+
 		int szWarea = szW.width * szW.height;
 
 		T *dX = (T*)X.data;
 		T *dR = (T*)Delta.data;
-		T *dXi = &dX[c * szA0area];
+		T *dXi = &dX[c * szA0Area];
 
+		T sum = 0;
 		for(int a = 0; a < szW.height; ++a){
-			for(int b = 0; b < szW.width; ++b){
-				int col2 = c * szWarea + (a * szW.width + b);
-				if(y0 + a < szA0.height && x0 + b < szA0.width){
-					dXi[(y0 + a) * szA0.width + (x0 + b)] += dR[row2 * Delta.cols + col2];
+			if((y - a) % stride == 0){
+				int y0 = (y - a) / stride;
+				for(int b = 0; b < szW.width; ++b){
+
+					if((x - b) % stride == 0){
+
+						int x0 = (x - b) / stride;
+
+						if(y0 >= 0 && y0 < szOut.height &&
+								x0 >= 0 && x0 < szOut.width){
+							int row2 = y0 * szOut.width + x0;
+							int col2 = c * szWarea + (a * szW.width + b);
+							T val = dR[row2 * Delta.cols + col2];
+							sum += val;
+						}
+					}
 				}
 			}
 		}
+		dXi[y * szA0.width + x] = sum;
+
 	}
 }
 
@@ -214,17 +248,22 @@ __device__ void _back_derivT(const Mtx& Delta,
 //		}
 		T sum = 0;
 		for(int a = 0; a < szW.height; ++a){
-			for(int b = 0; b < szW.width; ++b){
+			if((y - a) % stride == 0){
+				int y0 = (y - a) / stride;
+				for(int b = 0; b < szW.width; ++b){
 
-				int y0 = y - szW.height + a + 1;
-				int x0 = x - szW.width + b + 1;
+					if((x - b) % stride == 0){
 
-				if(y0 >= 0 && y0 < szOut.height &&
-						x0 >= 0 && x0 < szOut.width){
-					int row2 = y0 * szOut.width + x0;
-					int col2 = c * szWarea + (a * szW.width + b);
-					T val = dR[row2 * Delta.cols + col2];
-					sum += val;
+						int x0 = (x - b) / stride;
+
+						if(y0 >= 0 && y0 < szOut.height &&
+								x0 >= 0 && x0 < szOut.width){
+							int row2 = y0 * szOut.width + x0;
+							int col2 = c * szWarea + (a * szW.width + b);
+							T val = dR[row2 * Delta.cols + col2];
+							sum += val;
+						}
+					}
 				}
 			}
 		}
@@ -589,7 +628,7 @@ void cuda_back_deriv(const gpumat::GpuMat &Delta,
 				int stride,
 				gpumat::GpuMat &X)
 {
-	int x1 = szOut.area() * channels / BLOCKSIZE + 1;
+	int x1 = szA0.area() * channels / BLOCKSIZE + 1;
 	int x2 = 1;
 
 	dim3 dimGrid(x1, x2), dimBlock(BLOCKSIZE, 1);
@@ -613,7 +652,7 @@ void cuda_back_deriv_vec(const std::vector< gpumat::GpuMat > &Delta,
 				int stride,
 				std::vector< gpumat::GpuMat > &X)
 {
-	int x1 = szOut.area() * channels / BLOCKSIZE + 1;
+	int x1 = szA0.area() * channels / BLOCKSIZE + 1;
 	int x2 = (int)X.size() / BLOCKSIZE + 1;
 
 	dim3 dimGrid(x1, x2), dimBlock(BLOCKSIZE, BLOCKSIZE);

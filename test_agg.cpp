@@ -636,6 +636,59 @@ void test_agg::test_norm()
 
 void test_agg::test_back()
 {
+	if(1){
+		ct::Matf mat(25, 2), res, b;
+		for(int i = 0; i < 25; ++i){
+			mat.ptr()[2 * i] = i + 1;
+			mat.ptr()[2 * i + 1] = i + 1;
+		}
+		std::cout << mat.print() << std::endl;
+
+		gpumat::GpuMat gmat, gres, gb;
+
+		gpumat::convert_to_gpu(mat, gmat);
+
+		ct::Size szout;
+		gpumat::conv2::im2colsT(gmat, ct::Size(5, 5), 2, ct::Size(3, 3), 1, gres, szout);
+
+		std::cout << gres.print() << std::endl;
+
+		gpumat::conv2::back_derivT(gres, szout, ct::Size(5, 5), 2, ct::Size(3, 3), 1, gb);
+
+		std::cout << gb.print() << std::endl;
+
+		conv2::im2colT(mat, ct::Size(5, 5), 2, ct::Size(3, 3), 1, res, szout);
+
+		conv2::back_derivT(res, szout, ct::Size(5, 5), 2, ct::Size(3, 3), 1, b);
+
+		std::cout << b.print() << std::endl;
+
+		ct::Matf matT = mat.t(), resT, bT;
+
+		std::cout << matT.print() << std::endl;
+
+		gpumat::convert_to_gpu(matT, gmat);
+
+		gpumat::conv2::im2cols(gmat, ct::Size(5, 5), 2, ct::Size(3, 3), 1, gres, szout);
+
+		std::cout << gres.print() << std::endl;
+
+		gpumat::conv2::back_deriv(gres, szout, ct::Size(5, 5), 2, ct::Size(3, 3), 1, gb);
+
+		std::cout << gb.print() << std::endl;
+
+		conv2::im2col(matT, ct::Size(5, 5), 2, ct::Size(3, 3), 1, res, szout);
+
+		conv2::back_deriv(res, szout, ct::Size(5, 5), 2, ct::Size(3, 3), 1, b);
+
+		std::cout << b.print() << std::endl;
+
+		return;
+	}
+
+
+	///////////////////
+
 	ct::Matf Dc, Dlt, tmp, tmp2, tmp3;
 	Dc.setSize(4, 2304);
 	Dlt.setSize(16, 256);

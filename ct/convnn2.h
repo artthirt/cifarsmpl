@@ -106,7 +106,7 @@ void back_deriv(const ct::Mat_<T>& Delta, const ct::Size& szOut, const ct::Size&
 	if(Delta.empty() || !channels)
 		return;
 
-	X.setSize(szA0.area(), channels);
+	X.setSize(channels, szA0.area());
 	X.fill(0);
 
 	T *dX = X.ptr();

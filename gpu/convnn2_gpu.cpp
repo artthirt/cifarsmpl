@@ -38,8 +38,6 @@ void check_deriv(const std::vector< gpumat::GpuMat >& Delta,
 				 int stride,
 				 std::vector< gpumat::GpuMat >& X)
 {
-	return;
-
 	gpumat::GpuMat Dlt;
 
 	back_derivT(Delta[0], szOut, szA0, channels, szW, stride, Dlt);
@@ -427,7 +425,7 @@ void convnn_gpu::backward(const std::vector<gpumat::GpuMat> &D, bool last_level)
 //		gpumat::write_gmat("Dc5.bin", Dc[0]);
 		back_derivT(Dc, szA1, szA0, channels, szW, stride, Dlt);
 
-#if 1
+#if 0
 		check_deriv(Dc, szA1, szA0, channels, szW, stride, Dlt);
 #endif
 
@@ -654,7 +652,7 @@ void gpumat::conv2::back_deriv(const gpumat::GpuMat &Delta,
 	if(Delta.empty() || ! channels || !szA0.area() || !szW.area() || !stride)
 		throw new std::invalid_argument("back_deriv: empty parameters");
 
-	X.resize(szA0.area(), channels, Delta.type);
+	X.resize(channels, szA0.area(), Delta.type);
 	X.zeros();
 
 	cuda_back_deriv(Delta, szOut, szA0, channels, szW, stride, X);
