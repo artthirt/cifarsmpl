@@ -134,6 +134,16 @@ void rotate_data(int w, int h, T angle, T *X, std::vector<T> &d)
 	}
 }
 
+
+template< typename T >
+inline T __tr(T val)
+{
+	if(val > 1)
+		val = 1;
+	if(val < 0)
+		val = 0;
+	return val;
+}
 template <typename T>
 void change_brightness(ct::Mat_<T>& mat, T val)
 {
@@ -142,7 +152,22 @@ void change_brightness(ct::Mat_<T>& mat, T val)
 #pragma omp simd
 #endif
 	for(int i = 0; i < mat.total(); ++i){
-		dM[i] *= val;
+		dM[i] = __tr(dM[i] * val);
+	}
+}
+
+template <typename T>
+void change_contrast(int w, int h, T* r, T* g, T* b, T C)
+{
+	T F = (259. * (C + 255.)) / (255. * (259. - C));
+
+#ifdef __GNUC__
+#pragma omp simd
+#endif
+	for(int i = 0; i < w * h; ++i){
+			r[i] = __tr(F * (r[i] - 0.5) + 0.5);
+			g[i] = __tr(F * (g[i] - 0.5) + 0.5);
+			b[i] = __tr(F * (b[i] - 0.5) + 0.5);
 	}
 }
 
@@ -363,6 +388,7 @@ void cifar_train::randX(std::vector< ct::Matf > &X, std::vector<ct::Vec4f> &vals
 
 	std::binomial_distribution<int> ufl(1, 0.5);
 	std::uniform_int_distribution<int> udtr(-m_rand_data[0], m_rand_data[0]);
+	std::uniform_real_distribution<float> uctr(-100, 100);
 
 	int max_threads = omp_get_num_procs();
 
@@ -370,6 +396,8 @@ void cifar_train::randX(std::vector< ct::Matf > &X, std::vector<ct::Vec4f> &vals
 
 	std::vector< std::vector< float > > ds;
 	ds.resize(max_threads * 2);
+
+	int w = cifar_reader::WidthIM, h = cifar_reader::HeightIM;
 
 #pragma omp parallel for
 	for(int i = 0; i < (int)X.size(); i++){
@@ -394,6 +422,9 @@ void cifar_train::randX(std::vector< ct::Matf > &X, std::vector<ct::Vec4f> &vals
 		int fl1 = ufl(ct::generator);
 		int fl2 = ufl(ct::generator);
 		int fl3 = ufl(ct::generator);
+		float ctr = uctr(ct::generator);
+
+		change_contrast<float>(w, h, dX1, dX2, dX3, ctr);
 
 //		if(fl1 > 0){
 //			crop<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, 24, 24, x, y, dX1, d);
@@ -402,28 +433,28 @@ void cifar_train::randX(std::vector< ct::Matf > &X, std::vector<ct::Vec4f> &vals
 //		}
 
 		if(fl > 0){
-			flip<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, dX1, d);
-			flip<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, dX2, d);
-			flip<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, dX3, d);
+			flip<float>(w, h, dX1, d);
+			flip<float>(w, h, dX2, d);
+			flip<float>(w, h, dX3, d);
 		}
 
-		if(fl2 > 0){
-			exchange<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, dX1, dX2);
-		}
-		if(fl3 > 0){
-			exchange<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, dX1, dX3);
-		}
+//		if(fl2 > 0){
+//			exchange<float>(w, h, dX1, dX2);
+//		}
+//		if(fl3 > 0){
+//			exchange<float>(w, h, dX1, dX3);
+//		}
 
 		if(ang){
-			rotate_data<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, ang, dX1, d);
-			rotate_data<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, ang, dX2, d);
-			rotate_data<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, ang, dX3, d);
+			rotate_data<float>(w, h, ang, dX1, d);
+			rotate_data<float>(w, h, ang, dX2, d);
+			rotate_data<float>(w, h, ang, dX3, d);
 		}
 
 		if(x1 && y1){
-			translate<float>(x1, y1, cifar_reader::WidthIM, cifar_reader::HeightIM, dX1, d);
-			translate<float>(x1, y1, cifar_reader::WidthIM, cifar_reader::HeightIM, dX2, d);
-			translate<float>(x1, y1, cifar_reader::WidthIM, cifar_reader::HeightIM, dX3, d);
+			translate<float>(x1, y1, w, h, dX1, d);
+			translate<float>(x1, y1, w, h, dX2, d);
+			translate<float>(x1, y1, w, h, dX3, d);
 		}
 
 		if(br){
@@ -431,8 +462,8 @@ void cifar_train::randX(std::vector< ct::Matf > &X, std::vector<ct::Vec4f> &vals
 		}
 
 //		QString name = "data/image_" + QString::number(i) + ".bmp";
-
-//		saveIm(dX1, dX2, dX3, cifar_reader::WidthIM, cifar_reader::HeightIM, name);
+//		saveIm(dX1, dX2, dX3, w, h,
+//			   "data/image_" + QString::number(i) + ".bmp");
 	}
 #endif
 }

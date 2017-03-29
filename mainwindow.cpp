@@ -31,10 +31,10 @@ MainWindow::MainWindow(QWidget *parent) :
 	cnv.push_back(ct::ParamsCnv(3, 64, true, 1, 0));
 	cnv.push_back(ct::ParamsCnv(3, 128, true, 1, 0));
 	cnv.push_back(ct::ParamsCnv(3, 256, false, 1, 0));
-	cnv.push_back(ct::ParamsCnv(3, 768, false, 1, 0));
+	cnv.push_back(ct::ParamsCnv(3, 512, false, 1, 0));
 
 //	mlp.push_back(ct::ParamsMlp(512, 0.9, 0.001));
-	mlp.push_back(ct::ParamsMlp(512, 0.95, 0.001));
+	mlp.push_back(ct::ParamsMlp(512, 0.95, 0.0001));
 //	mlp.push_back(ct::ParamsMlp(512, 0.95, 0.001));
 //	mlp.push_back(ct::ParamsMlp(512, 0.95, 0.001));
 //	mlp.push_back(ct::ParamsMlp(512, 0.98, 0.0));

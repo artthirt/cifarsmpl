@@ -112,7 +112,8 @@ inline void image2mat(uchar* db, int w, int h, int row, ct::Mat_<T>& mat)
 	T* dmi = &dm[row * mat.cols];
 	for(int y = 0; y < h; ++y){
 		for(int x = 0; x < w; ++x){
-			dmi[y * w + x] = db[y * w + x] / 255.;
+			unsigned char val = db[y * w + x];
+			dmi[y * w + x] = (T)val / 255.;
 		}
 	}
 
@@ -127,7 +128,10 @@ inline void image2matGray(uchar* dbR, uchar* dbG, uchar* dbB, int w, int h, int 
 	T* dmi = &dm[row * mat.cols];
 	for(int y = 0; y < h; ++y){
 		for(int x = 0; x < w; ++x){
-			T val = (T)(dbR[y * w + x] + dbG[y * w + x] + dbB[y * w + x]) / (255. * 3.);
+			unsigned char val1 = dbR[y * w + x];
+			unsigned char val2 = dbG[y * w + x];
+			unsigned char val3 = dbB[y * w + x];
+			T val = (T)(val1 + val2 + val3) / (255. * 3.);
 			dmi[y * w + x] = val;
 		}
 	}
@@ -160,7 +164,8 @@ inline void image2mat(const QByteArray& image, int w, int h,
 #pragma omp simd
 #endif
 	for(int i = 0; i < w * h * 3; ++i){
-		T val = (T)image.data()[i] / 255.;
+		unsigned char v = image.data()[i];
+		T val = (T)v / (T)255.;
 		dX[i] = val;
 	}
 }
@@ -187,7 +192,8 @@ inline void image2mats(const QByteArray& image, int w, int h, int bpp, std::vect
 		uchar* db = (uchar*)image.data() + i * w * h;
 		for(int y = 0; y < h; ++y){
 			for(int x = 0; x < w; ++x){
-				dm[y * w + x] = db[y * w + x] / 255.;
+				unsigned char val = db[y * w + x];
+				dm[y * w + x] = (T)val / 255.;
 			}
 		}
 	}
