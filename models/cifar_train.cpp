@@ -393,12 +393,13 @@ void cifar_train::randX(std::vector< ct::Matf > &X, std::vector<ct::Vec4f> &vals
 		int fl = ufl(ct::generator);
 		int fl1 = ufl(ct::generator);
 		int fl2 = ufl(ct::generator);
+		int fl3 = ufl(ct::generator);
 
-		if(fl1 > 0){
-			crop<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, 24, 24, x, y, dX1, d);
-			crop<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, 24, 24, x, y, dX2, d);
-			crop<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, 24, 24, x, y, dX3, d);
-		}
+//		if(fl1 > 0){
+//			crop<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, 24, 24, x, y, dX1, d);
+//			crop<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, 24, 24, x, y, dX2, d);
+//			crop<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, 24, 24, x, y, dX3, d);
+//		}
 
 		if(fl > 0){
 			flip<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, dX1, d);
@@ -408,6 +409,9 @@ void cifar_train::randX(std::vector< ct::Matf > &X, std::vector<ct::Vec4f> &vals
 
 		if(fl2 > 0){
 			exchange<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, dX1, dX2);
+		}
+		if(fl3 > 0){
+			exchange<float>(cifar_reader::WidthIM, cifar_reader::HeightIM, dX1, dX3);
 		}
 
 		if(ang){

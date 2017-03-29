@@ -91,14 +91,14 @@ void ShowMatrices::paint_cast(QPainter &painter, int width, int height, int offs
 		float m1 = m.max();
 		float m2 = m.min();
 
-		int off_y = m_channels == 3? 1 : m_channels;
+		int off_y = /*m_channels == 3? 1 : */m_channels;
 
 		if(m_channels == 1){
 			m.set_dims(m_sz);
 			painter.setPen(Qt::black);
 			draw_W(painter, m, x, y, wd, m1, m2);
 		}else{
-			if(m_channels == 3){
+			if(0/*m_channels == 3*/){
 				ct::Matf R, G, B;
 				R = m.getRows(0 * m_sz.area(), m_sz.area());
 				G = m.getRows(1 * m_sz.area(), m_sz.area());
