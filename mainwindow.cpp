@@ -254,10 +254,39 @@ void MainWindow::open_file(const QString &fn)
 
 	float* dA = A.ptr();
 
+	QString metaNames[] = {
+		"airplane",
+		"automobile",
+		"bird",
+		"cat",
+		"deer",
+		"dog",
+		"frog",
+		"horse",
+		"ship",
+		"truck"
+	};
+
 	QString out = "Probablity: ";
 
+	struct tmeta{
+		float prob;
+		int index;
+	};
+
+	std::vector< tmeta > meta;
+	meta.resize(10);
+
 	for(int i = 0; i < 10; ++i){
-		out += "\n" + QString::number(i + 1) + ": " + QString::number(dA[i], 'f', 3);
+		meta[i].prob = dA[i];
+		meta[i].index = i;
+//		out += "\n" + QString::number(i + 1) + ": " + QString::number(dA[i], 'f', 3);
+	}
+
+	qSort(meta.begin(), meta.end(), [&](const tmeta& t1, const tmeta& t2) {return t1.prob > t2.prob;});
+
+	for(size_t i = 0; i < meta.size(); ++i){
+		out += "\nprob[" + QString::number(meta[i].prob, 'f', 3) + "]: " + QString(metaNames[meta[i].index]);
 	}
 
 	ui->lb_prob->setText(out);
