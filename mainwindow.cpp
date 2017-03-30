@@ -231,11 +231,12 @@ void MainWindow::open_file(const QString &fn)
 	QByteArray ba;
 	ba.resize(32 * 32 * 3);
 
+	unsigned char* x1 = (unsigned char*)ba.data();
+	unsigned char* x2 = (unsigned char*)&ba.data()[1 * 32 * 32];
+	unsigned char* x3 = (unsigned char*)&ba.data()[2 * 32 * 32];
+
 	for(int y = 0; y < 32; ++y){
 		QRgb* sc = (QRgb*)im32.scanLine(y);
-		char* x1 = ba.data();
-		char* x2 = &ba.data()[1 * 32 * 32];
-		char* x3 = &ba.data()[2 * 32 * 32];
 		for(int x = 0; x < 32; ++x){
 			x1[y * 32 + x] = qRed(sc[x]);
 			x2[y * 32 + x] = qGreen(sc[x]);
