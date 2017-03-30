@@ -512,7 +512,7 @@ void cifar_train::pass(int batch, bool use_gpu)
 
 	std::vector< ct::Matf > vm, *pvm;
 
-	conv2::mat2vec(m_mlp.front().DltA0, m_conv.back().szK.t(), vm);
+	conv2::mat2vec(m_mlp.front().DltA0, m_conv.back().szK, vm);
 	pvm = &vm;
 
 	for(int i = (int)m_conv.size() - 1; i > -1; --i){
