@@ -830,6 +830,30 @@ void cifar_train::setLambdaMlp(double val)
 	}
 }
 
+template< typename T >
+inline void write_vector(std::fstream& fs, const std::vector<T> &vec)
+{
+	int tmp = (int)vec.size();
+	fs.write((char*)&tmp, sizeof(tmp));
+	if(tmp){
+		for(size_t i = 0; i < vec.size(); ++i){
+			vec[i].write(fs);
+		}
+	}
+}
+
+template< typename T >
+inline void read_vector(std::fstream& fs, std::vector<T>  &vec)
+{
+	int tmp;
+	fs.read((char*)&tmp, sizeof(tmp));
+	if(tmp){
+		for(size_t i = 0; i < vec.size(); ++i){
+			vec[i].read(fs);
+		}
+	}
+}
+
 bool cifar_train::loadFromFile(const QString &fn, bool gpu)
 {
 	if(gpu){
@@ -844,15 +868,8 @@ bool cifar_train::loadFromFile(const QString &fn, bool gpu)
 		return false;
 	}
 
-	int tmp;
-
-	fs.read((char*)&tmp, sizeof(tmp));
-	m_cnvlayers.resize(tmp);
-	fs.read((char*)&m_cnvlayers[0], m_cnvlayers.size() * sizeof(decltype(m_cnvlayers)::value_type));
-
-	fs.read((char*)&tmp, sizeof(tmp));
-	m_layers.resize(tmp);
-	fs.read((char*)&m_layers[0], m_layers.size() * sizeof(decltype(m_layers)::size_type));
+	read_vector(fs, m_cnvlayers);
+	read_vector(fs, m_layers);
 
 	fs.read((char*)&m_szA0, sizeof(m_szA0));
 
@@ -886,15 +903,8 @@ void cifar_train::saveToFile(const QString &fn, bool gpu)
 		return;
 	}
 
-	int tmp;
-
-	tmp = (int)m_cnvlayers.size();
-	fs.write((char*)&tmp, sizeof(tmp));
-	fs.write((char*)&m_cnvlayers[0], m_cnvlayers.size() * sizeof(decltype(m_cnvlayers)::value_type));
-
-	tmp = (int)m_layers.size();
-	fs.write((char*)&tmp, sizeof(tmp));
-	fs.write((char*)&m_layers[0], m_layers.size() * sizeof(decltype(m_layers)::size_type));
+	write_vector(fs, m_cnvlayers);
+	write_vector(fs, m_layers);
 
 	fs.write((char*)&m_szA0, sizeof(m_szA0));
 
