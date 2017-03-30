@@ -30,6 +30,7 @@ struct Size{
 	int height;
 };
 
+#pragma pack(push, 0)
 struct ParamsCommon{
 	double prob;
 	double lambda_l2;
@@ -41,7 +42,9 @@ struct ParamsCommon{
 		count = 0;
 	}
 };
+#pragma pack(pop)
 
+#pragma pack(push, 0)
 struct ParamsMlp: public ParamsCommon{
 	ParamsMlp(){
 		count = 0;
@@ -54,7 +57,9 @@ struct ParamsMlp: public ParamsCommon{
 		this->lambda_l2 = lambda_l2;
 	}
 };
+#pragma pack(pop)
 
+#pragma pack(push, 0)
 struct ParamsCnv: public ParamsCommon{
 	ParamsCnv(){
 		size_w = 0;
@@ -74,6 +79,7 @@ struct ParamsCnv: public ParamsCommon{
 	int size_w;
 	bool pooling;
 };
+#pragma pack(pop)
 
 }
 
