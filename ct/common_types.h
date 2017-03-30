@@ -1,6 +1,8 @@
 #ifndef COMMON_TYPES_H
 #define COMMON_TYPES_H
 
+#include <fstream>
+
 namespace ct{
 
 enum etypefunction{
@@ -30,21 +32,29 @@ struct Size{
 	int height;
 };
 
-#pragma pack(push, 0)
 struct ParamsCommon{
 	double prob;
 	double lambda_l2;
 	int count;
 
 	ParamsCommon(){
-		prob = 1;
+		prob = 1.;
 		lambda_l2 = 0;
 		count = 0;
 	}
-};
-#pragma pack(pop)
 
-#pragma pack(push, 0)
+	void write(std::fstream& fs) const{
+		fs.write((char*)&prob, sizeof(prob));
+		fs.write((char*)&lambda_l2, sizeof(lambda_l2));
+		fs.write((char*)&count, sizeof(count));
+	}
+	void read(std::fstream& fs){
+		fs.read((char*)&prob, sizeof(prob));
+		fs.read((char*)&lambda_l2, sizeof(lambda_l2));
+		fs.read((char*)&count, sizeof(count));
+	}
+};
+
 struct ParamsMlp: public ParamsCommon{
 	ParamsMlp(){
 		count = 0;
@@ -57,9 +67,7 @@ struct ParamsMlp: public ParamsCommon{
 		this->lambda_l2 = lambda_l2;
 	}
 };
-#pragma pack(pop)
 
-#pragma pack(push, 0)
 struct ParamsCnv: public ParamsCommon{
 	ParamsCnv(){
 		size_w = 0;
@@ -78,8 +86,18 @@ struct ParamsCnv: public ParamsCommon{
 
 	int size_w;
 	bool pooling;
+
+	void write(std::fstream& fs) const{
+		ParamsCommon::write(fs);
+		fs.write((char*)&size_w, sizeof(size_w));
+		fs.write((char*)&pooling, sizeof(pooling));
+	}
+	void read(std::fstream& fs){
+		ParamsCommon::read(fs);
+		fs.read((char*)&size_w, sizeof(size_w));
+		fs.read((char*)&pooling, sizeof(pooling));
+	}
 };
-#pragma pack(pop)
 
 }
 

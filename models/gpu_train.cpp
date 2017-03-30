@@ -334,8 +334,9 @@ inline void write_vector(std::fstream& fs, const std::vector<T> &vec)
 	int tmp = (int)vec.size();
 	fs.write((char*)&tmp, sizeof(tmp));
 	if(tmp){
-		const char* d = reinterpret_cast<const char*>(vec.data());
-		fs.write(d, vec.size() * sizeof(T));
+		for(size_t i = 0; i < vec.size(); ++i){
+			vec[i].write(fs);
+		}
 	}
 }
 
@@ -345,9 +346,9 @@ inline void read_vector(std::fstream& fs, std::vector<T>  &vec)
 	int tmp;
 	fs.read((char*)&tmp, sizeof(tmp));
 	if(tmp){
-		vec.resize(tmp);
-		char* d = reinterpret_cast<char*>(vec.data());
-		fs.read(d, vec.size() * sizeof(T));
+		for(size_t i = 0; i < vec.size(); ++i){
+			vec[i].read(fs);
+		}
 	}
 }
 
