@@ -4,6 +4,8 @@
 #include <QFileDialog>
 #include <QSettings>
 
+#include "cifar_reader.h"
+
 const QString model_file("model.bin");
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -35,7 +37,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 //	mlp.push_back(ct::ParamsMlp(512, 0.9, 0.001));
 	mlp.push_back(ct::ParamsMlp(512, 0.95, 0.0001));
-//	mlp.push_back(ct::ParamsMlp(512, 0.95, 0.001));
+	mlp.push_back(ct::ParamsMlp(512, 0.95, 0.0001));
 //	mlp.push_back(ct::ParamsMlp(512, 0.95, 0.001));
 //	mlp.push_back(ct::ParamsMlp(512, 0.98, 0.0));
 //	mlp.push_back(ct::ParamsMlp(128, 1));
@@ -208,6 +210,45 @@ void MainWindow::save_settings()
 	settings.endGroup();
 }
 
+void MainWindow::open_file(const QString &fn)
+{
+	QImage image;
+	image.load(fn);
+	if(image.isNull())
+		return;
+
+	QImage im256, im32;
+
+	im256 = image.scaled(QSize(256, 256));
+	im32 = image.scaled(QSize(32, 32));
+	im32 = im32.convertToFormat(QImage::Format_RGB888);
+
+	ui->lb_image->setPixmap(QPixmap::fromImage(im256));
+
+	std::vector< ct::Matf > vX;
+	ct::Matf A, X;
+
+	QByteArray ba((char*)im32.bits());
+
+	ct::image2mat<float>(ba, 32, 32, X);
+	vX.push_back(X);
+
+	m_train.forward(vX, A, false, ui->chb_gpu->isChecked());
+
+	if(A.empty())
+		return;
+
+	float* dA = A.ptr();
+
+	QString out = "Probablity: ";
+
+	for(int i = 0; i < 10; ++i){
+		out += "\n" + QString::number(i + 1) + ": " + QString::number(dA[i], 'f', 3);
+	}
+
+	ui->lb_prob->setText(out);
+}
+
 void MainWindow::on_pb_pass_clicked(bool checked)
 {
 	if(!m_cifar.isBinDataExists()){
@@ -321,4 +362,18 @@ void MainWindow::on_chb_debug_clicked(bool checked)
 void MainWindow::on_dsb_lambda_valueChanged(double arg1)
 {
 	m_train.setLambdaMlp(arg1);
+}
+
+void MainWindow::on_actionOpen_image_triggered()
+{
+	QStringList sl;
+	sl << "*.jpg" << "*.bmp" << "*.png" << "*.tif" << "*.gif";
+
+	QFileDialog dlg;
+	dlg.setAcceptMode(QFileDialog::AcceptOpen);
+	dlg.setNameFilters(sl);
+
+	if(dlg.exec()){
+		open_file(dlg.selectedFiles()[0]);
+	}
 }

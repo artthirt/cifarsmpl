@@ -62,6 +62,8 @@ private slots:
 
 	void on_dsb_lambda_valueChanged(double arg1);
 
+	void on_actionOpen_image_triggered();
+
 private:
 	Ui::MainWindow *ui;
 	QTimer m_timer;
@@ -80,6 +82,8 @@ private:
 
 	void load_settings();
 	void save_settings();
+
+	void open_file(const QString& fn);
 };
 
 #endif // MAINWINDOW_H

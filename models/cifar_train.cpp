@@ -407,8 +407,8 @@ void cifar_train::randX(std::vector< ct::Matf > &X, std::vector<ct::Vec4f> &vals
 		float *dX2 = &dX[1 * area];
 		float *dX3 = &dX[2 * area];
 
-		float x = vals[i][0];
-		float y = vals[i][1];
+//		float x = vals[i][0];
+//		float y = vals[i][1];
 		float ang = vals[i][2];
 		float br = vals[i][3];
 
@@ -419,9 +419,9 @@ void cifar_train::randX(std::vector< ct::Matf > &X, std::vector<ct::Vec4f> &vals
 		std::vector< float >& d = ds[_num];
 
 		int fl = ufl(ct::generator);
-		int fl1 = ufl(ct::generator);
-		int fl2 = ufl(ct::generator);
-		int fl3 = ufl(ct::generator);
+//		int fl1 = ufl(ct::generator);
+//		int fl2 = ufl(ct::generator);
+//		int fl3 = ufl(ct::generator);
 		float ctr = uctr(ct::generator);
 
 		change_contrast<float>(w, h, dX1, dX2, dX3, ctr);
