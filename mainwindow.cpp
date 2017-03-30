@@ -221,14 +221,27 @@ void MainWindow::open_file(const QString &fn)
 
 	im256 = image.scaled(QSize(256, 256));
 	im32 = image.scaled(QSize(32, 32));
-	im32 = im32.convertToFormat(QImage::Format_RGB888);
+	im32 = im32.convertToFormat(QImage::Format_RGB32);
 
 	ui->lb_image->setPixmap(QPixmap::fromImage(im256));
 
 	std::vector< ct::Matf > vX;
 	ct::Matf A, X;
 
-	QByteArray ba((char*)im32.bits());
+	QByteArray ba;
+	ba.resize(32 * 32 * 3);
+
+	for(int y = 0; y < 32; ++y){
+		QRgb* sc = (QRgb*)im32.scanLine(y);
+		char* x1 = ba.data();
+		char* x2 = &ba.data()[1 * 32 * 32];
+		char* x3 = &ba.data()[2 * 32 * 32];
+		for(int x = 0; x < 32; ++x){
+			x1[y * 32 + x] = qRed(sc[x]);
+			x2[y * 32 + x] = qGreen(sc[x]);
+			x3[y * 32 + x] = qBlue(sc[x]);
+		}
+	}
 
 	ct::image2mat<float>(ba, 32, 32, X);
 	vX.push_back(X);
@@ -367,7 +380,7 @@ void MainWindow::on_dsb_lambda_valueChanged(double arg1)
 void MainWindow::on_actionOpen_image_triggered()
 {
 	QStringList sl;
-	sl << "*.jpg" << "*.bmp" << "*.png" << "*.tif" << "*.gif";
+	sl << "*.bmp *.jpg *.jpeg *.bmp *.png *.tif *.gif";
 
 	QFileDialog dlg;
 	dlg.setAcceptMode(QFileDialog::AcceptOpen);
