@@ -104,7 +104,7 @@ void gpu_train::init()
 			gpumat::conv2::convnn_gpu& cnv = m_conv[i];
 			ct::ParamsCnv& params = m_cnvlayers[i];
 			ct::Size szW(params.size_w, params.size_w);
-			cnv.init(sz, input, 1, params.count, szW, params.pooling, i != 0);
+			cnv.init(sz, input, params.stride, params.count, szW, params.pooling, i != 0);
 			cnv.setDropout(params.prob);
 			cnv.setLambda(params.lambda_l2);
 			input = params.count;

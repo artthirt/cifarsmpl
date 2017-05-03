@@ -438,6 +438,7 @@ public:
 		m_use_pool = use_pool;
 		m_use_transpose = use_transpose;
 		szA0 = _szA0;
+		this->stride = stride;
 
 		int rows = szW.area() * channels;
 		int cols = K;

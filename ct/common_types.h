@@ -56,12 +56,12 @@ struct ParamsCommon{
 };
 
 struct ParamsMlp: public ParamsCommon{
-	ParamsMlp(){
+	ParamsMlp():ParamsCommon(){
 		count = 0;
 		this->prob = 1;
 		this->lambda_l2 = 0;
 	}
-	ParamsMlp(int val, double prob, double lambda_l2 = 0){
+	ParamsMlp(int val, double prob, double lambda_l2 = 0):ParamsCommon(){
 		this->count = val;
 		this->prob = prob;
 		this->lambda_l2 = lambda_l2;
@@ -69,23 +69,26 @@ struct ParamsMlp: public ParamsCommon{
 };
 
 struct ParamsCnv: public ParamsCommon{
-	ParamsCnv(){
+	ParamsCnv():ParamsCommon(){
 		size_w = 0;
 		count = 0;
 		pooling = true;
 		prob = 1;
 		lambda_l2 = 0.;
+		stride = 1;
 	}
-	ParamsCnv(int size_w, int count_kernels, bool pooling, double prob, double lambda_l2){
+	ParamsCnv(int size_w, int count_kernels, bool pooling, double prob, double lambda_l2, int stride = 1):ParamsCommon(){
 		this->size_w = size_w;
 		this->count = count_kernels;
 		this->pooling = pooling;
 		this->prob = prob;
 		this->lambda_l2 = lambda_l2;
+		this->stride = stride;
 	}
 
 	int size_w;
 	bool pooling;
+	int stride;
 
 	void write(std::fstream& fs) const{
 		ParamsCommon::write(fs);
