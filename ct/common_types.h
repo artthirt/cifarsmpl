@@ -94,11 +94,13 @@ struct ParamsCnv: public ParamsCommon{
 		ParamsCommon::write(fs);
 		fs.write((char*)&size_w, sizeof(size_w));
 		fs.write((char*)&pooling, sizeof(pooling));
+		fs.write((char*)&stride, sizeof(stride));
 	}
 	void read(std::fstream& fs){
 		ParamsCommon::read(fs);
 		fs.read((char*)&size_w, sizeof(size_w));
 		fs.read((char*)&pooling, sizeof(pooling));
+		fs.read((char*)&stride, sizeof(stride));
 	}
 };
 
