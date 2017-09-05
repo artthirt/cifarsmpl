@@ -459,10 +459,10 @@ void gpu_train::save_weights()
 
 void gpu_train::setDropout()
 {
-	for(size_t i = 0; i < m_conv.size(); ++i){
-		m_conv[i].setDropout(true);
-	}
-	for(size_t i = 0; i < m_mlp.size(); ++i){
+//	for(size_t i = 0; i < m_conv.size(); ++i){
+//		m_conv[i].setDropout(true);
+//	}
+	for(size_t i = 0; i < m_mlp.size() - 1; ++i){
 		m_mlp[i].setDropout(true);
 	}
 }
