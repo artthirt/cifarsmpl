@@ -20,7 +20,6 @@ SOURCES += main.cpp\
     widgetcifar.cpp \
     models/cifar_reader.cpp \
     models/cifar_train.cpp \
-    models/convnnf.cpp \
     drawcnvweight.cpp \
     qt_work_mat.cpp \
     models/gpu_train.cpp \
@@ -32,7 +31,6 @@ HEADERS  += mainwindow.h \
     widgetcifar.h \
     models/cifar_reader.h \
     models/cifar_train.h \
-    models/convnnf.h \
     drawcnvweight.h \
     qt_work_mat.h \
     models/gpu_train.h \
@@ -66,5 +64,5 @@ RCC_DIR = tmp/$$DST/rcc
 MOC_DIR = tmp/$$DST/moc
 
 
-include(ct/ct.pri)
-include(gpu/gpu.pri)
+include(ml_algorithms/ct/ct.pri)
+include(ml_algorithms/gpu/gpu.pri)

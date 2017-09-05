@@ -77,9 +77,7 @@ void gpu_train::setAlphaCnv(double alpha)
 	/// need realization
 	////////////////////
 
-	for(size_t i = 0; i < m_conv.size(); ++i){
-		m_conv[i].setAlpha(alpha);
-	}
+	m_cnv_optim.setAlpha(alpha);
 }
 
 void gpu_train::init()
@@ -101,10 +99,10 @@ void gpu_train::init()
 		int input = ::channels;
 		ct::Size sz = m_szA0;
 		for(size_t i = 0; i < m_conv.size(); ++i){
-			gpumat::conv2::convnn_gpu& cnv = m_conv[i];
+			gpumat::convnn_gpu& cnv = m_conv[i];
 			ct::ParamsCnv& params = m_cnvlayers[i];
 			ct::Size szW(params.size_w, params.size_w);
-			cnv.init(sz, input, params.stride, params.count, szW, params.pooling, i != 0);
+			cnv.init(sz, input, params.stride, params.count, szW, gpumat::LEAKYRELU, params.pooling, true, i != 0);
 			cnv.setDropout(params.prob);
 			cnv.setLambda(params.lambda_l2);
 			input = params.count;
@@ -126,7 +124,7 @@ void gpu_train::init()
 			ct::ParamsMlp &params = m_layers[i];
 			int output = params.count;
 
-			mlp.init(input, output, gpumat::GPU_FLOAT);
+			mlp.init(input, output, gpumat::GPU_FLOAT, i != m_mlp.size() - 1? gpumat::LEAKYRELU : gpumat::SOFTMAX);
 			mlp.setDropout(params.prob);
 			mlp.setLambda(params.lambda_l2);
 
@@ -135,6 +133,7 @@ void gpu_train::init()
 	}
 
 	m_optim.init(m_mlp);
+	m_cnv_optim.init(m_conv);
 
 	m_init = true;
 }
@@ -164,13 +163,12 @@ double gpu_train::getL2(const ct::Matf &yp, const ct::Matf &y)
 
 	//test_void(m_tsub);
 
-	gpumat::reduce(m_tsub, m_red);
-
 	ct::Matf red;
+	gpumat::convert_to_mat(m_tsub, red);
+//	gpumat::reduce(m_tsub, m_red);
 
-	gpumat::convert_to_mat(m_red, red);
 
-	double l2 = red.at(0, 0);
+	double l2 = red.sum();
 
 	return l2 / y.rows;
 }
@@ -220,12 +218,12 @@ void gpu_train::forward(const std::vector<gpumat::GpuMat> &X,
 	std::vector< gpumat::GpuMat > *pvX = (std::vector< gpumat::GpuMat >*)&X;
 
 	for(int i = 0; i < (int)m_conv.size(); ++i){
-		gpumat::conv2::convnn_gpu& cnv = m_conv[i];
-		cnv.forward(pvX, gpumat::RELU);
+		gpumat::convnn_gpu& cnv = m_conv[i];
+		cnv.forward(pvX);
 		pvX = &cnv.XOut();
 	}
 
-	gpumat::conv2::vec2mat(m_conv.back().XOut(), m_Xout);
+	gpumat::vec2mat(m_conv.back().XOut(), m_Xout);
 
 
 	if(m_is_debug){
@@ -304,27 +302,28 @@ void gpu_train::pass()
 		gpumat::save_gmat(m_mlp[0].DltA0, "mlp0.dlt.txt");
 	}
 
-	gpumat::conv2::mat2vec(m_mlp[0].DltA0, m_conv.back().szK, m_splitD);
+	gpumat::mat2vec(m_mlp[0].DltA0, m_conv.back().szK, m_splitD);
 
 	std::vector< gpumat::GpuMat >* pX = &m_splitD;
 
 	for(int i = (int)m_conv.size() - 1; i > -1; --i){
-		gpumat::conv2::convnn_gpu& cnv = m_conv[i];
+		gpumat::convnn_gpu& cnv = m_conv[i];
 
 		cnv.backward(*pX, i == 0);
 
 		if(m_is_debug){
 			std::stringstream ss;
 			ss << "cnv_W" << i << ".txt";
-			gpumat::save_gmat(cnv.W[0], ss.str());
+			gpumat::save_gmat(cnv.W, ss.str());
 			ss.str("");
 			ss << "cnv_B" << i << ".txt";
-			gpumat::save_gmat(cnv.B[0], ss.str());
+			gpumat::save_gmat(cnv.B, ss.str());
 		}
 
 		pX = &cnv.Dlt;
 	}
 
+	m_cnv_optim.pass(m_conv);
 	m_optim.pass(m_mlp);
 }
 
@@ -375,7 +374,7 @@ bool gpu_train::loadFromFile(const std::string &fn)
 	/// need realization
 	////////////////////
 	for(size_t i = 0; i < m_conv.size(); ++i){
-		gpumat::conv2::convnn_gpu& cnv = m_conv[i];
+		gpumat::convnn_gpu& cnv = m_conv[i];
 		cnv.read(fs);
 	}
 
@@ -406,7 +405,7 @@ void gpu_train::saveToFile(const std::string &fn)
 	////////////////////
 
 	for(size_t i = 0; i < m_conv.size(); ++i){
-		gpumat::conv2::convnn_gpu& cnv = m_conv[i];
+		gpumat::convnn_gpu& cnv = m_conv[i];
 		cnv.write(fs);
 	}
 
@@ -419,11 +418,11 @@ void gpu_train::saveToFile(const std::string &fn)
 
 uint gpu_train::outputFeatures() const
 {
-	const gpumat::conv2::convnn_gpu& cnv = m_conv.back();
+	const gpumat::convnn_gpu& cnv = m_conv.back();
 	return cnv.outputFeatures();
 }
 
-std::vector<gpumat::conv2::convnn_gpu> &gpu_train::conv()
+std::vector<gpumat::convnn_gpu> &gpu_train::conv()
 {
 	return m_conv;
 }
@@ -446,9 +445,9 @@ void gpu_train::save_weights()
 {
 	for(size_t i = 0; i < m_conv.size(); ++i){
 		QString name = "cnvW_" + QString::number(i) + ".txt";
-		qt_work_mat::q_save_mat(m_conv[i].W[0], name);
+		qt_work_mat::q_save_mat(m_conv[i].W, name);
 		name = "cnvB_" + QString::number(i) + ".txt";
-		qt_work_mat::q_save_mat(m_conv[i].B[0], name);
+		qt_work_mat::q_save_mat(m_conv[i].B, name);
 	}
 	for(size_t i = 0; i < m_mlp.size(); ++i){
 		QString name = "mlpW_" + QString::number(i) + ".txt";

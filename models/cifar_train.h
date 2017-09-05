@@ -95,7 +95,8 @@ private:
 
 	std::vector< conv2::convnn<float> > m_conv;
 	std::vector< ct::mlpf > m_mlp;
-	ct::MlpOptim< float > m_optim;
+	ct::MlpOptimMoment< float > m_optim;
+	conv2::CnvMomentumOptimizer< float > m_cnv_optim;
 
 	std::vector< ct::Vec4f > m_vals;
 

@@ -41,7 +41,7 @@ public:
 
 	uint outputFeatures() const;
 
-	std::vector<gpumat::conv2::convnn_gpu> &conv();
+	std::vector<gpumat::convnn_gpu> &conv();
 
 	void setDropoutProb(double val);
 	double dropoutProb() const;
@@ -55,9 +55,10 @@ private:
 	bool m_init;
 	double m_dropoutProb;
 
-	std::vector< gpumat::conv2::convnn_gpu > m_conv;
+	std::vector< gpumat::convnn_gpu > m_conv;
 	std::vector< gpumat::mlp > m_mlp;
-	gpumat::MlpOptim m_optim;
+	gpumat::MlpOptimMoment m_optim;
+	gpumat::CnvMomentumOptimizer m_cnv_optim;
 
 	std::vector< gpumat::GpuMat > m_XsIn;
 	std::vector< gpumat::GpuMat > m_Xs;
@@ -65,7 +66,6 @@ private:
 	gpumat::GpuMat m_y_ind;
 	gpumat::GpuMat m_y_ind2;
 	gpumat::GpuMat m_gyp;
-	gpumat::GpuMat m_red;
 	gpumat::GpuMat m_yp;
 	gpumat::GpuMat m_td;
 	gpumat::GpuMat m_tsub;

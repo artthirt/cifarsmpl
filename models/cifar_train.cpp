@@ -225,7 +225,7 @@ void cifar_train::init()
 
 			ct::Size szW(params.size_w, params.size_w);
 
-			cnv.init(sz, input, params.stride, params.count, szW, params.pooling, i != 0);
+			cnv.init(sz, input, params.stride, params.count, szW, ct::LEAKYRELU, params.pooling, true, i != 0);
 			cnv.setLambda(params.lambda_l2);
 			input = params.count;
 			sz = cnv.szOut();
@@ -247,7 +247,7 @@ void cifar_train::init()
 
 			int output = params.count;
 
-			mlp.init(input, output);
+			mlp.init(input, output, i != m_mlp.size() - 1? ct::LEAKYRELU : ct::SOFTMAX);
 			mlp.setDropout((float)params.prob);
 			mlp.setLambda(params.lambda_l2);
 
@@ -256,6 +256,7 @@ void cifar_train::init()
 	}
 
 	m_optim.init(m_mlp);
+	m_cnv_optim.init(m_conv);
 
 	m_init = true;
 }
@@ -283,7 +284,7 @@ void cifar_train::forward(const std::vector< ct::Matf > &X, ct::Matf &a_out,
 
 		for(size_t i = 0; i < m_conv.size(); ++i){
 			conv2::convnn<float>& cnv = m_conv[i];
-			cnv.forward(pvX, ct::RELU);
+			cnv.forward(pvX);
 			pvX = &cnv.XOut();
 		}
 
@@ -294,11 +295,7 @@ void cifar_train::forward(const std::vector< ct::Matf > &X, ct::Matf &a_out,
 		for(size_t i = 0; i < m_mlp.size(); ++i){
 			ct::mlpf& mlp = m_mlp[i];
 
-			if(i < m_mlp.size() - 1){
-				mlp.forward(pX, ct::RELU);
-			}else{
-				mlp.forward(pX, ct::SOFTMAX);
-			}
+			mlp.forward(pX, ct::RELU);
 			pX = &mlp.A1;
 		}
 		a_out = m_mlp.back().A1;
@@ -523,6 +520,7 @@ void cifar_train::pass(int batch, bool use_gpu)
 	}
 
 	m_optim.pass(m_mlp);
+	m_cnv_optim.pass(m_conv);
 }
 
 
@@ -690,9 +688,7 @@ void cifar_train::setAlpha(double alpha)
 
 void cifar_train::setAlphaCnv(double val)
 {
-	for(size_t i = 0; i < m_conv.size(); ++i){
-		m_conv[i].setAlpha(val);
-	}
+	m_cnv_optim.setAlpha(val);
 	if(m_gpu_train.isInit()){
 		m_gpu_train.setAlphaCnv(val);
 	}
@@ -753,7 +749,7 @@ ct::Matf cifar_train::cnvW(int index, bool use_gpu)
 	if(!use_gpu){
 		return m_conv[index].W;
 	}else{
-		gpumat::GpuMat& gW = m_gpu_train.conv()[index].W[0];
+		gpumat::GpuMat& gW = m_gpu_train.conv()[index].W;
 		ct::Matf W;
 		gpumat::convert_to_mat(gW, W);
 		return W;
@@ -789,8 +785,8 @@ int cifar_train::Kernels(int index, bool use_gpu)
 		index = (int)m_cnvlayers.size() - 1;
 
 	if(use_gpu)
-		return m_gpu_train.conv()[index].K;
-	return m_conv[index].K;
+		return m_gpu_train.conv()[index].kernels;
+	return m_conv[index].kernels;
 }
 
 int cifar_train::channels(int index, bool use_gpu)
