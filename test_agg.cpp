@@ -761,10 +761,17 @@ void test_agg::test_conv2()
 	batch[1].randn(1, 0.5);
 	batch[2].randn(1, 0.5);
 
-	conv2::convnnf cnv;
+	conv2::convnnf cnv, cnv2;
+
+	index = 0;
+	for(ct::Matf& item: batch){
+		ct::save_mat(item, "before_" + std::to_string(index++) + ".txt");
+	}
 
 	cnv.init(ct::Size(224, 224), 3, 4, 64, ct::Size(7, 7), ct::LEAKYRELU, true, false, false);
+	cnv2.init(cnv.szOut(), 64, 1, 128, ct::Size(3, 3), ct::LEAKYRELU, true, false, true);
 	cnv.forward(&batch);
+	cnv2.forward(&cnv.XOut());
 
 	save_mask_row_to_mat(cnv.Mask[0], 0, cnv.szA1, "mask0.txt");
 
@@ -773,7 +780,8 @@ void test_agg::test_conv2()
 //		ct::save_mat(item, "after_" + std::to_string(index++) + ".txt");
 //	}
 
-	cnv.backward(cnv.XOut());
+	cnv2.backward(cnv2.XOut());
+	cnv.backward(cnv2.Dlt);
 
 	index = 0;
 	for(ct::Matf& item: cnv.Dlt){
@@ -785,18 +793,23 @@ void test_agg::test_conv2()
 	std::vector< gpumat::GpuMat > g_batch;
 	gpumat::cnv2gpu(batch, g_batch);
 
-	gpumat::convnn_gpu g_cnv;
+	gpumat::convnn_gpu g_cnv, g_cnv2;
 	g_cnv.init(ct::Size(224, 224), 3, 4, 64, ct::Size(7, 7), gpumat::LEAKYRELU, true, false, false);
+	g_cnv2.init(g_cnv.szOut(), 64, 1, 128, ct::Size(3, 3), gpumat::LEAKYRELU, true, false, true);
 	gpumat::convert_to_gpu(cnv.W, g_cnv.W);
 	gpumat::convert_to_gpu(cnv.B, g_cnv.B);
 	g_cnv.forward(&g_batch);
+	gpumat::convert_to_gpu(cnv2.W, g_cnv2.W);
+	gpumat::convert_to_gpu(cnv2.B, g_cnv2.B);
+	g_cnv2.forward(&g_cnv.XOut());
 
 //	index = 0;
 //	for(gpumat::GpuMat& item: g_cnv.XOut()){
 //		gpumat::save_gmat(item, "after_" + std::to_string(index++) + "_gpu.txt");
 //	}
 
-	g_cnv.backward(g_cnv.XOut());
+	g_cnv2.backward(g_cnv2.XOut());
+	g_cnv.backward(g_cnv2.Dlt);
 
 	index = 0;
 	for(gpumat::GpuMat& item: g_cnv.Dlt){
