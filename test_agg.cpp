@@ -726,3 +726,99 @@ void test_agg::test_back()
 
 	check_zero(tmp - Dlt);
 }
+
+void save_mask_row_to_mat(const ct::Matf& mask, int row, const ct::Size& sz, const std::string& fn)
+{
+	if(mask.empty())
+		return;
+
+	if(mask.rows != sz.area())
+		return;
+
+	std::stringstream ss;
+	float *dM = mask.ptr(row);
+	for(int y = 0; y < sz.height; ++y){
+		int row2 = y * sz.width;
+		for(int x = 0; x < sz.width; ++x){
+			ss << dM[(row2 + x) * mask.cols] << " ";
+		}
+		ss << "\n";
+	}
+	std::fstream fs;
+	fs.open(fn, std::ios_base::out);
+	fs << ss.str();
+	fs.close();
+}
+
+void test_agg::test_conv2()
+{
+	int index;
+	std::vector< ct::Matf > batch;
+	batch.push_back(ct::Matf(3, 224 * 224));
+	batch.push_back(ct::Matf(3, 224 * 224));
+	batch.push_back(ct::Matf(3, 224 * 224));
+	batch[0].randn(1, 0.5);
+	batch[1].randn(1, 0.5);
+	batch[2].randn(1, 0.5);
+
+	conv2::convnnf cnv;
+
+	cnv.init(ct::Size(224, 224), 3, 4, 64, ct::Size(7, 7), ct::LEAKYRELU, true, false, false);
+	cnv.forward(&batch);
+
+	save_mask_row_to_mat(cnv.Mask[0], 0, cnv.szA1, "mask0.txt");
+
+//	int index = 0;
+//	for(ct::Matf& item: cnv.XOut()){
+//		ct::save_mat(item, "after_" + std::to_string(index++) + ".txt");
+//	}
+
+	cnv.backward(cnv.XOut());
+
+	index = 0;
+	for(ct::Matf& item: cnv.Dlt){
+		ct::save_mat(item, "after2_" + std::to_string(index++) + ".txt");
+	}
+
+	///////////////////////
+
+	std::vector< gpumat::GpuMat > g_batch;
+	gpumat::cnv2gpu(batch, g_batch);
+
+	gpumat::convnn_gpu g_cnv;
+	g_cnv.init(ct::Size(224, 224), 3, 4, 64, ct::Size(7, 7), gpumat::LEAKYRELU, true, false, false);
+	gpumat::convert_to_gpu(cnv.W, g_cnv.W);
+	gpumat::convert_to_gpu(cnv.B, g_cnv.B);
+	g_cnv.forward(&g_batch);
+
+//	index = 0;
+//	for(gpumat::GpuMat& item: g_cnv.XOut()){
+//		gpumat::save_gmat(item, "after_" + std::to_string(index++) + "_gpu.txt");
+//	}
+
+	g_cnv.backward(g_cnv.XOut());
+
+	index = 0;
+	for(gpumat::GpuMat& item: g_cnv.Dlt){
+		gpumat::save_gmat(item, "after2_" + std::to_string(index++) + "_gpu.txt");
+	}
+
+	std::cout << "\n";
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

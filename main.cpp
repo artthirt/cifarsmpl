@@ -29,6 +29,9 @@ int main(int argc, char *argv[])
 	return 0;
 #endif
 
+	test_agg tt;
+	tt.test_conv2();
+
 	MainWindow w;
 	w.show();
 

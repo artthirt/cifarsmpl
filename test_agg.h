@@ -14,6 +14,7 @@ public:
 	void test_file();
 	void test_norm();
 	void test_back();
+	void test_conv2();
 };
 
 #endif // TEST_AGG_H
