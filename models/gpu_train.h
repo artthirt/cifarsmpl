@@ -57,8 +57,8 @@ private:
 
 	std::vector< gpumat::convnn_gpu > m_conv;
 	std::vector< gpumat::mlp > m_mlp;
-	gpumat::MlpOptimMoment m_optim;
-	gpumat::CnvMomentumOptimizer m_cnv_optim;
+	gpumat::MlpOptimAdam m_optim;
+	gpumat::CnvAdamOptimizer m_cnv_optim;
 
 	std::vector< gpumat::GpuMat > m_XsIn;
 	std::vector< gpumat::GpuMat > m_Xs;
