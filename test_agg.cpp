@@ -781,6 +781,12 @@ void test_agg::test_conv2()
 //	}
 
 	cnv2.backward(cnv2.XOut());
+
+	index = 0;
+	for(ct::Matf& item: cnv2.Dlt){
+		ct::save_mat(item, "after1_" + std::to_string(index++) + ".txt");
+	}
+
 	cnv.backward(cnv2.Dlt);
 
 	index = 0;
@@ -809,6 +815,12 @@ void test_agg::test_conv2()
 //	}
 
 	g_cnv2.backward(g_cnv2.XOut());
+
+	index = 0;
+	for(gpumat::GpuMat& item: g_cnv2.Dlt){
+		gpumat::save_gmat(item, "after1_" + std::to_string(index++) + "_gpu.txt");
+	}
+
 	g_cnv.backward(g_cnv2.Dlt);
 
 	index = 0;
