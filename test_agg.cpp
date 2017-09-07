@@ -768,7 +768,7 @@ void test_agg::test_conv2()
 		ct::save_mat(item, "before_" + std::to_string(index++) + ".txt");
 	}
 
-	cnv.init(ct::Size(224, 224), 3, 4, 64, ct::Size(7, 7), ct::LEAKYRELU, true, false, false);
+	cnv.init(ct::Size(224, 224), 3, 4, 64, ct::Size(5, 5), ct::LEAKYRELU, true, false, false);
 	cnv2.init(cnv.szOut(), 64, 1, 128, ct::Size(3, 3), ct::LEAKYRELU, true, false, true);
 	cnv.forward(&batch);
 	cnv2.forward(&cnv.XOut());
@@ -800,7 +800,7 @@ void test_agg::test_conv2()
 	gpumat::cnv2gpu(batch, g_batch);
 
 	gpumat::convnn_gpu g_cnv, g_cnv2;
-	g_cnv.init(ct::Size(224, 224), 3, 4, 64, ct::Size(7, 7), gpumat::LEAKYRELU, true, false, false);
+	g_cnv.init(ct::Size(224, 224), 3, 4, 64, ct::Size(5, 5), gpumat::LEAKYRELU, true, false, false);
 	g_cnv2.init(g_cnv.szOut(), 64, 1, 128, ct::Size(3, 3), gpumat::LEAKYRELU, true, false, true);
 	gpumat::convert_to_gpu(cnv.W, g_cnv.W);
 	gpumat::convert_to_gpu(cnv.B, g_cnv.B);
