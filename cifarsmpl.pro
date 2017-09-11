@@ -21,7 +21,6 @@ SOURCES += main.cpp\
     models/cifar_reader.cpp \
     models/cifar_train.cpp \
     drawcnvweight.cpp \
-    qt_work_mat.cpp \
     models/gpu_train.cpp \
     test_agg.cpp \
     showmatrices.cpp \
@@ -32,7 +31,6 @@ HEADERS  += mainwindow.h \
     models/cifar_reader.h \
     models/cifar_train.h \
     drawcnvweight.h \
-    qt_work_mat.h \
     models/gpu_train.h \
     test_agg.h \
     showmatrices.h \
