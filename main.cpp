@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
 #endif
 
 	test_agg tt;
-	tt.test_conv2();
+//	tt.test_conv2();
 
 	MainWindow w;
 	w.show();
