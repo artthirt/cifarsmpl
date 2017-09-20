@@ -102,7 +102,7 @@ void gpu_train::init()
 			gpumat::convnn_gpu& cnv = m_conv[i];
 			ct::ParamsCnv& params = m_cnvlayers[i];
 			ct::Size szW(params.size_w, params.size_w);
-			cnv.init(sz, input, params.stride, params.count, szW, gpumat::LEAKYRELU, params.pooling, true, i != 0);
+			cnv.init(sz, input, params.stride, params.count, szW, gpumat::LEAKYRELU, params.pooling, true, i != 0, params.same);
 			cnv.setDropout(params.prob);
 			cnv.setLambda(params.lambda_l2);
 			input = params.count;

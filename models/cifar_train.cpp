@@ -225,7 +225,7 @@ void cifar_train::init()
 
 			ct::Size szW(params.size_w, params.size_w);
 
-			cnv.init(sz, input, params.stride, params.count, szW, ct::LEAKYRELU, params.pooling, true, i != 0);
+			cnv.init(sz, input, params.stride, params.count, szW, ct::LEAKYRELU, params.pooling, true, i != 0, params.same);
 			cnv.setLambda(params.lambda_l2);
 			input = params.count;
 			sz = cnv.szOut();
