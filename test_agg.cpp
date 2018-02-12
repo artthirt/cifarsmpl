@@ -64,7 +64,7 @@ public:
 	}
 
 	conv2::convnn<float> cnv1, cnv2;
-	ct::MlpOptimAdam< float > optim;
+    ct::MlpAdamOptimizer< float > optim;
 	std::vector< ct::mlp<float> > mlp;
 
 	ct::Size szA0, szW;

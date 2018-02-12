@@ -8,7 +8,7 @@ QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-CONFIG += console
+CONFIG += console c++11 c++17
 
 TARGET = cifarsmpl
 TEMPLATE = app
